@@ -13,7 +13,13 @@ import {
 
 import { Settings, Clock, ArrowRight, DollarSign, Wallet } from 'lucide-react'
 
-const TokenButton = ({ token, icon, onClick }) => (
+interface TokenButtonProps {
+  token: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+}
+
+const TokenButton = ({ token, icon, onClick }: TokenButtonProps) => (
   <button
     onClick={onClick}
     className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800/90 transition-colors"
