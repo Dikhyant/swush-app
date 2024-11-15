@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet, Check, Loader2, Info, ArrowLeftRight } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Settings, Clock, ArrowRight, Wallet, Check, Loader2, Info, ArrowLeftRight } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface TokenButtonProps {
   token: string;
