@@ -109,46 +109,48 @@ export default function Component() {
             {isConnected ? walletAddress : 'Connect Wallet'}
           </span>
         </Button>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon" className="bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-white transition-all duration-200">
-              <Settings className="w-5 h-5" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-slate-900 border-slate-800">
-            <DialogHeader>
-              <DialogTitle className="text-white">Settings</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label className="text-sm text-slate-400">Slippage Tolerance (%)</label>
-                <Input
-                  type="number"
-                  value={slippageTolerance}
-                  onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-              <div className="grid gap-2">
-                <label className="text-sm text-slate-400">Transaction Deadline (minutes)</label>
-                <Input
-                  type="number"
-                  value={transactionDeadline}
-                  onChange={(e) => setTransactionDeadline(parseInt(e.target.value))}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-between items-center px-1">
           <h1 className="text-2xl font-bold text-white"></h1>
-          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
-            <RotateCcw className="w-5 h-5" />
-          </Button>
+          <div className="flex gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
+                  <Settings className="w-5 h-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-slate-900 border-slate-800">
+                <DialogHeader>
+                  <DialogTitle className="text-white">Settings</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label className="text-sm text-slate-400">Slippage Tolerance (%)</label>
+                    <Input
+                      type="number"
+                      value={slippageTolerance}
+                      onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
+                      className="bg-slate-800 border-slate-700 text-white"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm text-slate-400">Transaction Deadline (minutes)</label>
+                    <Input
+                      type="number"
+                      value={transactionDeadline}
+                      onChange={(e) => setTransactionDeadline(parseInt(e.target.value))}
+                      className="bg-slate-800 border-slate-700 text-white"
+                    />
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
+              <RotateCcw className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
