@@ -9,8 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet } from 'lucide-react'
+import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet, Check, Loader2 } from 'lucide-react'
 
 
 interface TokenButtonProps {
@@ -43,6 +44,12 @@ export default function Component() {
   const [transactionDeadline, setTransactionDeadline] = useState(20)
   const [isConnected, setIsConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState('')
+  const [isSwapping, setIsSwapping] = useState(false)
+  const [swapSteps, setSwapSteps] = useState([
+    { id: 1, title: 'Approve DOT', status: 'pending' },
+    { id: 2, title: 'Swap DOT → USDC', status: 'waiting' },
+    { id: 3, title: 'Swap USDC → ETH', status: 'waiting' },
+  ])
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
@@ -52,6 +59,43 @@ export default function Component() {
   const handleWalletConnect = () => {
     setIsConnected(!isConnected)
     setWalletAddress(isConnected ? '' : '0x1234...5678')
+  }
+
+  const handleSwap = async () => {
+    setIsSwapping(true)
+    
+    // Simulate multi-step swap process
+    try {
+      // Step 1: Approve
+      setSwapSteps(steps => steps.map(step =>
+        step.id === 1 ? { ...step, status: 'loading' } : step
+      ))
+      await new Promise(r => setTimeout(r, 2000))
+      setSwapSteps(steps => steps.map(step =>
+        step.id === 1 ? { ...step, status: 'completed' } : step
+      ))
+
+      // Step 2: First swap
+      setSwapSteps(steps => steps.map(step =>
+        step.id === 2 ? { ...step, status: 'loading' } : step
+      ))
+      await new Promise(r => setTimeout(r, 3000))
+      setSwapSteps(steps => steps.map(step =>
+        step.id === 2 ? { ...step, status: 'completed' } : step
+      ))
+
+      // Step 3: Second swap
+      setSwapSteps(steps => steps.map(step =>
+        step.id === 3 ? { ...step, status: 'loading' } : step
+      ))
+      await new Promise(r => setTimeout(r, 2500))
+      setSwapSteps(steps => steps.map(step =>
+        step.id === 3 ? { ...step, status: 'completed' } : step
+      ))
+
+    } catch (error) {
+      console.error('Swap failed:', error)
+    }
   }
 
   const tokens = [
@@ -249,11 +293,71 @@ export default function Component() {
           </div>
         </div>
 
-        <Button 
-          className="w-full h-12 text-lg font-medium bg-rose-500/90 hover:bg-rose-500 text-white rounded-xl"
-        >
-          Swap
-        </Button>
+        <Dialog open={isSwapping} onOpenChange={setIsSwapping}>
+          <DialogTrigger asChild>
+            <Button 
+              className="w-full h-12 text-lg font-medium bg-rose-500/90 hover:bg-rose-500 text-white rounded-xl"
+              onClick={handleSwap}
+            >
+              Swap
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white">Confirming Swap</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4 space-y-4">
+              {swapSteps.map((step, index) => (
+                <div key={step.id} className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center
+                      ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
+                        step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
+                        'bg-slate-800 text-slate-400'}`}>
+                      {step.status === 'completed' ? (
+                        <Check className="w-5 h-5" />
+                      ) : step.status === 'loading' ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <span className="text-sm">{step.id}</span>
+                      )}
+                    </div>
+                    {index < swapSteps.length - 1 && (
+                      <div className={`absolute left-1/2 h-full border-l border-dashed
+                        ${step.status === 'completed' ? 'border-green-500/50' : 'border-slate-700'}`} />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">{step.title}</p>
+                    <p className="text-sm text-slate-400">
+                      {step.status === 'completed' ? 'Transaction confirmed' :
+                       step.status === 'loading' ? 'Waiting for confirmation...' :
+                       'Waiting to start'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <DialogFooter className="mt-6">
+              {swapSteps.every(step => step.status === 'completed') ? (
+                <Button
+                  className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  onClick={() => setIsSwapping(false)}
+                >
+                  Done
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  disabled
+                >
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Confirming Transaction
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
