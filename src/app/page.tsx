@@ -11,7 +11,8 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet, Check, Loader2 } from 'lucide-react'
+import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet, Check, Loader2, Info } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 
 interface TokenButtonProps {
@@ -104,6 +105,13 @@ export default function Component() {
     { name: 'BTC', icon: '₿', price: '$30000' },
   ]
 
+  const percentageOptions = [
+    { label: '25%', value: 0.25 },
+    { label: '50%', value: 0.50 },
+    { label: '75%', value: 0.75 },
+    { label: 'MAX', value: 1 },
+  ]
+
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-cyan-900 to-slate-900 flex flex-col items-center justify-center p-4">
       <div className="fixed top-4 right-4">
@@ -161,14 +169,28 @@ export default function Component() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="p-4 rounded-2xl bg-slate-900/90 backdrop-blur-sm border border-slate-800/50">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-sm text-slate-400">Pay</span>
-              <span className="text-sm font-medium text-white bg-slate-800 px-2 py-1 rounded-full">
-                ${(parseFloat(inputAmount) * parseFloat(inputToken.price.slice(1))).toFixed(3)}
-              </span>
+        <div className="space-y-6">
+          <div className="p-5 rounded-2xl bg-slate-900/90 backdrop-blur-sm border border-slate-800/50">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-base font-semibold text-white">Pay</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Balance: </span>
+                <span className="text-sm font-medium text-white">1,234.56 {inputToken.name}</span>
+              </div>
             </div>
+            
+            <div className="flex gap-2 mb-4">
+              {percentageOptions.map(({ label, value }) => (
+                <button
+                  key={label}
+                  onClick={() => handleInputChange((1234.56 * value).toString())}
+                  className="px-2 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            
             <div className="flex items-center gap-4">
               <Dialog>
                 <DialogTrigger asChild>
@@ -217,13 +239,81 @@ export default function Component() {
             </div>
           </div>
 
-          <div className="flex justify-center -my-2 relative z-10">
-            <div className="p-2 rounded-lg bg-slate-800/90 backdrop-blur-sm border border-slate-700/50">
-              <ArrowDownToLine className="w-4 h-4 text-slate-400" />
+          <div className="px-2 py-3 rounded-xl bg-slate-800/40">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Exchange Rate</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-4 h-4 text-slate-500 hover:text-slate-400" />
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-slate-800 border-slate-700">
+                      <div className="space-y-2">
+                        <p>Current market rate including:</p>
+                        <ul className="text-xs space-y-1 text-slate-300">
+                          <li>• Network fees</li>
+                          <li>• Price impact</li>
+                          <li>• DEX fees</li>
+                        </ul>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-white">1 {inputToken.name}</span>
+                    <span className="text-slate-400 mx-2">=</span>
+                    <span className="text-sm font-medium text-white">
+                      {(parseFloat(outputToken.price.slice(1)) / parseFloat(inputToken.price.slice(1))).toFixed(4)} {outputToken.name}
+                    </span>
+                  </div>
+                  <button className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors group">
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 16 16" 
+                      fill="none" 
+                      className="text-slate-400 group-hover:text-slate-300"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path 
+                        d="M7.2 4L4 7.2M4 7.2L7.2 10.4M4 7.2H12" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <span className="text-sm text-slate-400">
+                  ${outputToken.price.slice(1)}
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-2 flex items-center justify-between text-sm">
+              <span className="text-slate-400">Price Impact</span>
+              <span className="text-green-400">-0.03%</span>
+            </div>
+            <div className="mt-1 flex items-center justify-between text-sm">
+              <span className="text-slate-400">Minimum Received</span>
+              <span className="text-white">
+                {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
+              </span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/90 backdrop-blur-sm border border-slate-800/50">
+          <div className="flex justify-center -my-3 relative z-10">
+            <div className="p-2 rounded-lg bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 hover:bg-slate-700/90 transition-colors cursor-pointer">
+              <ArrowDownToLine className="w-5 h-5 text-slate-300" />
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-900/90 backdrop-blur-sm border border-slate-800/50">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm text-slate-400">Receive</span>
               <span className="text-sm font-medium text-white bg-slate-800 px-2 py-1 rounded-full">
@@ -277,18 +367,6 @@ export default function Component() {
                   <span className="text-sm text-slate-400">$100</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-3">
-          <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>1 {inputToken.name} = {(parseFloat(outputToken.price.slice(1)) / parseFloat(inputToken.price.slice(1))).toFixed(4)} {outputToken.name} (${outputToken.price.slice(1)})</span>
-            <div className="flex items-center gap-1">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.2 4L4 7.2M4 7.2L7.2 10.4M4 7.2H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>$2.50</span>
             </div>
           </div>
         </div>
