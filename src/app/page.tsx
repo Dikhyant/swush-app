@@ -11,28 +11,31 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet, Check, Loader2, Info } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Settings, Clock, ArrowRight, ArrowDownToLine, Wallet, Check, Loader2, Info, ArrowLeftRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface TokenButtonProps {
   token: string;
   icon: React.ReactNode;
   onClick: () => void;
-  price?: string; // Add price prop
+  price: string;
 }
-const TokenButton = ({ token, icon, onClick }: TokenButtonProps) => (
+
+const TokenButton = ({ token, icon, onClick, price }: TokenButtonProps) => (
   <button
     onClick={onClick}
-    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 transition-colors w-full"
+    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all duration-200 w-full group"
   >
-    <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
+    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-600 group-hover:from-slate-600 group-hover:to-slate-500 transition-all duration-200">
       {icon}
     </div>
     <div className="flex flex-col items-start">
-      <span className="font-medium text-white">{token}</span>
+      <span className="font-semibold text-white group-hover:text-slate-200 transition-colors duration-200">{token}</span>
+      <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors duration-200">{price}</span>
     </div>
-    <ArrowRight className="w-4 h-4 text-slate-400 ml-auto" />
+    <ArrowRight className="w-5 h-5 text-slate-400 ml-auto group-hover:text-slate-300 transition-colors duration-200" />
   </button>
 )
 
@@ -65,35 +68,16 @@ export default function Component() {
   const handleSwap = async () => {
     setIsSwapping(true)
     
-    // Simulate multi-step swap process
     try {
-      // Step 1: Approve
-      setSwapSteps(steps => steps.map(step =>
-        step.id === 1 ? { ...step, status: 'loading' } : step
-      ))
-      await new Promise(r => setTimeout(r, 2000))
-      setSwapSteps(steps => steps.map(step =>
-        step.id === 1 ? { ...step, status: 'completed' } : step
-      ))
-
-      // Step 2: First swap
-      setSwapSteps(steps => steps.map(step =>
-        step.id === 2 ? { ...step, status: 'loading' } : step
-      ))
-      await new Promise(r => setTimeout(r, 3000))
-      setSwapSteps(steps => steps.map(step =>
-        step.id === 2 ? { ...step, status: 'completed' } : step
-      ))
-
-      // Step 3: Second swap
-      setSwapSteps(steps => steps.map(step =>
-        step.id === 3 ? { ...step, status: 'loading' } : step
-      ))
-      await new Promise(r => setTimeout(r, 2500))
-      setSwapSteps(steps => steps.map(step =>
-        step.id === 3 ? { ...step, status: 'completed' } : step
-      ))
-
+      for (let i = 0; i < swapSteps.length; i++) {
+        setSwapSteps(steps => steps.map(step =>
+          step.id === i + 1 ? { ...step, status: 'loading' } : step
+        ))
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000))
+        setSwapSteps(steps => steps.map(step =>
+          step.id === i + 1 ? { ...step, status: 'completed' } : step
+        ))
+      }
     } catch (error) {
       console.error('Swap failed:', error)
     }
@@ -114,65 +98,68 @@ export default function Component() {
 
   return (
     <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-cyan-900 to-slate-900 flex flex-col items-center justify-center p-4">
-      <div className="fixed top-4 right-4">
+      <div className="fixed top-4 right-4 flex items-center gap-4">
         <Button
           onClick={handleWalletConnect}
           variant="outline"
-          className="flex items-center gap-2 bg-slate-900/90 border-slate-800/50 hover:bg-slate-800 text-white"
+          className="flex items-center gap-2 bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-white transition-all duration-200"
         >
           <Wallet className="w-4 h-4" />
           <span className="hidden sm:inline">
             {isConnected ? walletAddress : 'Connect Wallet'}
           </span>
         </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="icon" className="bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-white transition-all duration-200">
+              <Settings className="w-5 h-5" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-slate-900 border-slate-800">
+            <DialogHeader>
+              <DialogTitle className="text-white">Settings</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label className="text-sm text-slate-400">Slippage Tolerance (%)</label>
+                <Input
+                  type="number"
+                  value={slippageTolerance}
+                  onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+              <div className="grid gap-2">
+                <label className="text-sm text-slate-400">Transaction Deadline (minutes)</label>
+                <Input
+                  type="number"
+                  value={transactionDeadline}
+                  onChange={(e) => setTransactionDeadline(parseInt(e.target.value))}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-between items-center px-1">
-          <h1 className="text-xl font-medium text-white">Swap</h1>
-          <div className="flex items-center gap-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                <button className="p-2 rounded-lg hover:bg-slate-800/50">
-                  <Settings className="w-5 h-5 text-slate-400" />
-                </button>
-              </DialogTrigger>
-              <DialogContent className="bg-slate-900 border-slate-800">
-                <DialogHeader>
-                  <DialogTitle className="text-white">Settings</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <label className="text-sm text-slate-400">Slippage Tolerance (%)</label>
-                    <Input
-                      type="number"
-                      value={slippageTolerance}
-                      onChange={(e) => setSlippageTolerance(parseFloat(e.target.value))}
-                      className="bg-slate-800 border-slate-700 text-white"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <label className="text-sm text-slate-400">Transaction Deadline (minutes)</label>
-                    <Input
-                      type="number"
-                      value={transactionDeadline}
-                      onChange={(e) => setTransactionDeadline(parseInt(e.target.value))}
-                      className="bg-slate-800 border-slate-700 text-white"
-                    />
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <button className="p-2 rounded-lg hover:bg-slate-800/50">
-              <Clock className="w-5 h-5 text-slate-400" />
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-white">Swap Tokens</h1>
+          <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
+            <Clock className="w-5 h-5" />
+          </Button>
         </div>
 
         <div className="space-y-6">
-          <div className="p-5 rounded-2xl bg-slate-900/90 backdrop-blur-sm border border-slate-800/50">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-base font-semibold text-white">Pay</span>
+          <motion.div 
+            className="p-6 rounded-2xl bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-semibold text-white">Pay</span>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-slate-400">Balance: </span>
                 <span className="text-sm font-medium text-white">1,234.56 {inputToken.name}</span>
@@ -181,13 +168,15 @@ export default function Component() {
             
             <div className="flex gap-2 mb-4">
               {percentageOptions.map(({ label, value }) => (
-                <button
+                <Button
                   key={label}
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleInputChange((1234.56 * value).toString())}
-                  className="px-2 py-1 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                  className="text-xs font-medium bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white transition-all duration-200"
                 >
                   {label}
-                </button>
+                </Button>
               ))}
             </div>
             
@@ -199,9 +188,10 @@ export default function Component() {
                       token={inputToken.name}
                       icon={
                         <div className="w-full h-full bg-pink-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">{inputToken.icon}</span>
+                          <span className="text-white text-lg font-bold">{inputToken.icon}</span>
                         </div>
                       }
+                      price={inputToken.price}
                       onClick={() => {}}
                     />
                   </div>
@@ -216,8 +206,9 @@ export default function Component() {
                         key={token.name}
                         token={token.name}
                         icon={<div className={`w-full h-full ${token.name === 'DOT' ? 'bg-pink-500' : token.name === 'ETH' ? 'bg-blue-500' : 'bg-orange-500'} rounded-full flex items-center justify-center`}>
-                          <span className="text-white text-xs">{token.icon}</span>
+                          <span className="text-white text-lg font-bold">{token.icon}</span>
                         </div>}
+                        price={token.price}
                         onClick={() => setInputToken(token)}
                       />
                     ))}
@@ -229,96 +220,35 @@ export default function Component() {
                   type="number"
                   value={inputAmount}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  className="border-0 bg-transparent text-2xl text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
+                  className="border-0 bg-transparent text-3xl text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
                   placeholder="0"
                 />
-                <div className="text-right">
-                  <span className="text-sm text-slate-400">$100 </span>
-                </div>
               </div>
             </div>
-          </div>
-
-          <div className="px-2 py-3 rounded-xl bg-slate-800/40">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Exchange Rate</span>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="w-4 h-4 text-slate-500 hover:text-slate-400" />
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-slate-800 border-slate-700">
-                      <div className="space-y-2">
-                        <p>Current market rate including:</p>
-                        <ul className="text-xs space-y-1 text-slate-300">
-                          <li>• Network fees</li>
-                          <li>• Price impact</li>
-                          <li>• DEX fees</li>
-                        </ul>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-white">1 {inputToken.name}</span>
-                    <span className="text-slate-400 mx-2">=</span>
-                    <span className="text-sm font-medium text-white">
-                      {(parseFloat(outputToken.price.slice(1)) / parseFloat(inputToken.price.slice(1))).toFixed(4)} {outputToken.name}
-                    </span>
-                  </div>
-                  <button className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors group">
-                    <svg 
-                      width="14" 
-                      height="14" 
-                      viewBox="0 0 16 16" 
-                      fill="none" 
-                      className="text-slate-400 group-hover:text-slate-300"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path 
-                        d="M7.2 4L4 7.2M4 7.2L7.2 10.4M4 7.2H12" 
-                        stroke="currentColor" 
-                        strokeWidth="1.5" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </div>
-                <span className="text-sm text-slate-400">
-                  ${outputToken.price.slice(1)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-slate-400">Price Impact</span>
-              <span className="text-green-400">-0.03%</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between text-sm">
-              <span className="text-slate-400">Minimum Received</span>
-              <span className="text-white">
-                {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
-              </span>
-            </div>
-          </div>
+          </motion.div>
 
           <div className="flex justify-center -my-3 relative z-10">
-            <div className="p-2 rounded-lg bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 hover:bg-slate-700/90 transition-colors cursor-pointer">
-              <ArrowDownToLine className="w-5 h-5 text-slate-300" />
-            </div>
+            <motion.div 
+              className="p-2 rounded-lg bg-slate-700/90 backdrop-blur-sm border border-slate-600/50 shadow-lg hover:bg-slate-600/90 transition-all duration-200 cursor-pointer"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <ArrowLeftRight className="w-6 h-6 text-slate-300" />
+            </motion.div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/90 backdrop-blur-sm border border-slate-800/50">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-sm text-slate-400">Receive</span>
-              <span className="text-sm font-medium text-white bg-slate-800 px-2 py-1 rounded-full">
-                ${(parseFloat(outputAmount) * parseFloat(outputToken.price.slice(1))).toFixed(3)}
-              </span>
+          <motion.div 
+            className="p-6 rounded-2xl bg-slate-800/90 backdrop-blur-sm border border-slate-700/50 shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-semibold text-white">Receive</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">Balance: </span>
+                <span className="text-sm font-medium text-white">5,678.90 {outputToken.name}</span>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <Dialog>
@@ -328,7 +258,7 @@ export default function Component() {
                       token={outputToken.name}
                       icon={
                         <div className="w-full h-full bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs">{outputToken.icon}</span>
+                          <span className="text-white text-lg font-bold">{outputToken.icon}</span>
                         </div>
                       }
                       price={outputToken.price}
@@ -346,7 +276,7 @@ export default function Component() {
                         key={token.name}
                         token={token.name}
                         icon={<div className={`w-full h-full ${token.name === 'DOT' ? 'bg-pink-500' : token.name === 'ETH' ? 'bg-blue-500' : 'bg-orange-500'} rounded-full flex items-center justify-center`}>
-                          <span className="text-white text-xs">{token.icon}</span>
+                          <span className="text-white text-lg font-bold">{token.icon}</span>
                         </div>}
                         price={token.price}
                         onClick={() => setOutputToken(token)}
@@ -360,53 +290,113 @@ export default function Component() {
                   type="number"
                   value={outputAmount}
                   readOnly
-                  className="border-0 bg-transparent text-2xl text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
+                  className="border-0 bg-transparent text-3xl text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
                   placeholder="0"
                 />
-                <div className="text-right">
-                  <span className="text-sm text-slate-400">$100</span>
-                </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
+
+        <motion.div 
+          className="p-4 rounded-xl bg-slate-800/20 backdrop-blur-sm border border-slate-700/20 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50">
+              <TabsTrigger value="details" className="text-sm text-slate-400 data-[state=active]:bg-slate-700/50 data-[state=active]:text-white">Details</TabsTrigger>
+              <TabsTrigger value="route" className="text-sm text-slate-400 data-[state=active]:bg-slate-700/50 data-[state=active]:text-white">Route</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="mt-4 space-y-2 text-sm">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Exchange Rate</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white">1 {inputToken.name} = {(parseFloat(outputToken.price.slice(1)) / parseFloat(inputToken.price.slice(1))).toFixed(4)} {outputToken.name}</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="w-4 h-4 text-slate-500 hover:text-slate-400" />
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-slate-800 border-slate-700">
+                        <div className="space-y-2">
+                          <p>Current market rate including:</p>
+                          <ul className="text-xs space-y-1 text-slate-300">
+                            <li>• Network fees</li>
+                            <li>• Price impact</li>
+                            <li>• DEX fees</li>
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Price Impact</span>
+                <span className="text-green-400">-0.03%</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Minimum Received</span>
+                <span className="text-white">
+                  {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
+                </span>
+              </div>
+            </TabsContent>
+            <TabsContent value="route" className="mt-4 text-sm">
+              <div className="text-sm text-slate-400">
+                Best route: <span className="text-white">{inputToken.name} → USDC → {outputToken.name}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-slate-400">Estimated Time</span>
+                <span className="text-white">~2 minutes</span>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
 
         <Dialog open={isSwapping} onOpenChange={setIsSwapping}>
           <DialogTrigger asChild>
             <Button 
-              className="w-full h-12 text-lg font-medium bg-rose-500/90 hover:bg-rose-500 text-white rounded-xl"
+              className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25"
               onClick={handleSwap}
             >
-              Swap
+              Swap Tokens
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="text-white">Confirming Swap</DialogTitle>
+              <DialogTitle className="text-2xl font-bold text-white">Confirming Swap</DialogTitle>
             </DialogHeader>
-            <div className="mt-4 space-y-4">
+            <div className="mt-6 space-y-6">
               {swapSteps.map((step, index) => (
                 <div key={step.id} className="flex items-center gap-4">
                   <div className="relative">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center
-                      ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
-                        step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
-                        'bg-slate-800 text-slate-400'}`}>
+                    <motion.div 
+                      className={`w-10 h-10 rounded-full flex items-center justify-center
+                        ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
+                          step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
+                          'bg-slate-800 text-slate-400'}`}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: index * 0.2 }}
+                    >
                       {step.status === 'completed' ? (
-                        <Check className="w-5 h-5" />
+                        <Check className="w-6 h-6" />
                       ) : step.status === 'loading' ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="w-6 h-6 animate-spin" />
                       ) : (
-                        <span className="text-sm">{step.id}</span>
+                        <span className="text-lg font-semibold">{step.id}</span>
                       )}
-                    </div>
+                    </motion.div>
                     {index < swapSteps.length - 1 && (
-                      <div className={`absolute left-1/2 h-full border-l border-dashed
+                      <div className={`absolute left-1/2 top-full h-6 border-l-2 border-dashed
                         ${step.status === 'completed' ? 'border-green-500/50' : 'border-slate-700'}`} />
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">{step.title}</p>
+                    <p className="text-lg font-semibold text-white">{step.title}</p>
                     <p className="text-sm text-slate-400">
                       {step.status === 'completed' ? 'Transaction confirmed' :
                        step.status === 'loading' ? 'Waiting for confirmation...' :
@@ -416,21 +406,21 @@ export default function Component() {
                 </div>
               ))}
             </div>
-            <DialogFooter className="mt-6">
+            <DialogFooter className="mt-8">
               {swapSteps.every(step => step.status === 'completed') ? (
                 <Button
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
                   onClick={() => setIsSwapping(false)}
                 >
-                  Done
+                  Swap Complete
                 </Button>
               ) : (
                 <Button
-                  className="w-full"
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
                   disabled
                 >
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Confirming Transaction
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Confirming Swap
                 </Button>
               )}
             </DialogFooter>
