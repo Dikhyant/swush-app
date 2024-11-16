@@ -222,7 +222,7 @@ export default function Component() {
                   type="number"
                   value={inputAmount}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  className="border-0 bg-transparent text-2xl text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
+                  className="border-0 bg-transparent text-2xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   placeholder="0"
                 />
               </div>
@@ -292,7 +292,7 @@ export default function Component() {
                   type="number"
                   value={outputAmount}
                   readOnly
-                  className="border-0 bg-transparent text-2xl text-white placeholder:text-slate-500 focus-visible:ring-0 focus-visible:ring-offset-0 text-right"
+                  className="border-0 bg-transparent text-2xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   placeholder="0"
                 />
               </div>
@@ -361,7 +361,7 @@ export default function Component() {
         <Dialog open={isSwapping} onOpenChange={setIsSwapping}>
           <DialogTrigger asChild>
             <Button 
-              className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25"
+              className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25 !important"
               onClick={handleSwap}
             >
               Swap
