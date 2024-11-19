@@ -363,7 +363,7 @@ export default function Component() {
                 <span className="text-lg font-semibold text-white">Pay</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-400">Balance: </span>
-                  <span className="text-sm font-medium text-white">1,234.56 {inputToken.name}</span>
+                  <span className="text-sm font-medium text-slate-300">1,234.56 {inputToken.name}</span>
                 </div>
               </div>
               
@@ -451,7 +451,7 @@ export default function Component() {
                 <span className="text-lg font-semibold text-white">Receive</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-400">Balance: </span>
-                  <span className="text-sm font-medium text-white">5,678.90 {outputToken.name}</span>
+                  <span className="text-sm font-medium text-slate-300">5,678.90 {outputToken.name}</span>
                 </div>
               </div>
               <div className="flex items-center gap-4">
