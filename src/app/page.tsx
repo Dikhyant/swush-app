@@ -73,9 +73,42 @@ export default function Component() {
   const handleWalletConnect = () => {
     setIsConnected(!isConnected)
     setWalletAddress(isConnected ? '' : '0x1234...5678')
-    toast.success(isConnected ? 'Wallet disconnected' : 'Wallet connected', {
-      icon: isConnected ? '🔴' : '🟢',
-    })
+    
+    if (!isConnected) {
+      toast.success(
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-full bg-green-500/20">
+            <Check className="w-5 h-5 text-green-500" />
+          </div>
+          <div>
+            <h3 className="font-medium text-white">Wallet Connected</h3>
+            <p className="text-sm text-slate-400">
+              {`Connected to ${walletAddress}`}
+            </p>
+          </div>
+        </div>,
+        {
+          duration: 4000,
+        }
+      )
+    } else {
+      toast.success(
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-full bg-slate-500/20">
+            <Wallet className="w-5 h-5 text-slate-500" />
+          </div>
+          <div>
+            <h3 className="font-medium text-white">Wallet Disconnected</h3>
+            <p className="text-sm text-slate-400">
+              Your wallet has been disconnected
+            </p>
+          </div>
+        </div>,
+        {
+          duration: 4000,
+        }
+      )
+    }
   }
 
   const handleSwap = async () => {
@@ -140,6 +173,102 @@ export default function Component() {
     { label: '75%', value: 0.75 },
     { label: 'MAX', value: 1 },
   ]
+
+  // Render the main action button based on connection state
+  const renderActionButton = () => {
+    if (!isConnected) {
+      return (
+        <Button 
+          className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+          onClick={handleWalletConnect}
+        >
+          <Wallet className="w-5 h-5 mr-2" />
+          Connect Wallet
+        </Button>
+      );
+    }
+
+    return (
+      <Dialog open={isSwapping} onOpenChange={setIsSwapping}>
+        <DialogTrigger asChild>
+          <Button 
+            className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25"
+            onClick={handleSwap}
+            disabled={!inputAmount || parseFloat(inputAmount) <= 0}
+          >
+            {isSwapping ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Swapping...
+              </>
+            ) : (
+              'Swap'
+            )}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-white">Confirming Swap</DialogTitle>
+          </DialogHeader>
+          <div className="mt-6 space-y-6">
+            {swapSteps.map((step, index) => (
+              <div key={step.id} className="flex items-center gap-4">
+                <div className="relative">
+                  <motion.div 
+                    className={`w-10 h-10 rounded-full flex items-center justify-center
+                      ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
+                        step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
+                        'bg-slate-800 text-slate-400'}`}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: index * 0.2 }}
+                  >
+                    {step.status === 'completed' ? (
+                      <Check className="w-6 h-6" />
+                    ) : step.status === 'loading' ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <span className="text-lg font-semibold">{step.id}</span>
+                    )}
+                  </motion.div>
+                  {index < swapSteps.length - 1 && (
+                    <div className={`absolute left-1/2 top-full h-6 border-l-2 border-dashed
+                      ${step.status === 'completed' ? 'border-green-500/50' : 'border-slate-700'}`} />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-lg font-semibold text-white">{step.title}</p>
+                  <p className="text-sm text-slate-400">
+                    {step.status === 'completed' ? 'Transaction confirmed' :
+                     step.status === 'loading' ? 'Waiting for confirmation...' :
+                     'Waiting to start'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="mt-8">
+            {swapSteps.every(step => step.status === 'completed') ? (
+              <Button
+                className="w-full bg-green-500 hover:bg-green-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
+                onClick={() => setIsSwapping(false)}
+              >
+                Swap Complete
+              </Button>
+            ) : (
+              <Button
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
+                disabled
+              >
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Confirming Swap
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <>
@@ -430,76 +559,13 @@ export default function Component() {
             </Tabs>
           </motion.div>
 
-          <Dialog open={isSwapping} onOpenChange={setIsSwapping}>
-            <DialogTrigger asChild>
-              <Button 
-                className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25 !important"
-                onClick={handleSwap}
-              >
-                Swap
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold text-white">Confirming Swap</DialogTitle>
-              </DialogHeader>
-              <div className="mt-6 space-y-6">
-                {swapSteps.map((step, index) => (
-                  <div key={step.id} className="flex items-center gap-4">
-                    <div className="relative">
-                      <motion.div 
-                        className={`w-10 h-10 rounded-full flex items-center justify-center
-                          ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
-                            step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
-                            'bg-slate-800 text-slate-400'}`}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: index * 0.2 }}
-                      >
-                        {step.status === 'completed' ? (
-                          <Check className="w-6 h-6" />
-                        ) : step.status === 'loading' ? (
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                        ) : (
-                          <span className="text-lg font-semibold">{step.id}</span>
-                        )}
-                      </motion.div>
-                      {index < swapSteps.length - 1 && (
-                        <div className={`absolute left-1/2 top-full h-6 border-l-2 border-dashed
-                          ${step.status === 'completed' ? 'border-green-500/50' : 'border-slate-700'}`} />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-lg font-semibold text-white">{step.title}</p>
-                      <p className="text-sm text-slate-400">
-                        {step.status === 'completed' ? 'Transaction confirmed' :
-                         step.status === 'loading' ? 'Waiting for confirmation...' :
-                         'Waiting to start'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <DialogFooter className="mt-8">
-                {swapSteps.every(step => step.status === 'completed') ? (
-                  <Button
-                    className="w-full bg-green-500 hover:bg-green-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
-                    onClick={() => setIsSwapping(false)}
-                  >
-                    Swap Complete
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
-                    disabled
-                  >
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Confirming Swap
-                  </Button>
-                )}
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            {renderActionButton()}
+          </motion.div>
         </div>
       </div>
 
@@ -529,15 +595,16 @@ export default function Component() {
       </Dialog>
 
       <Toaster
-        position="bottom-right"
+        theme="dark"
+        position="top-right"
+        closeButton
+        className="!bg-slate-900 !border !border-slate-800"
         toastOptions={{
-          duration: 3000,
+          className: "!bg-slate-900 !border !border-slate-800 !text-white",
           style: {
-            background: '#1e293b',
-            color: '#fff',
-            borderRadius: '0.5rem',
-            padding: '1rem',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            background: 'rgb(15 23 42 / 0.9)',
+            border: '1px solid rgb(51 65 85 / 0.5)',
+            backdropFilter: 'blur(8px)',
           },
         }}
       />
