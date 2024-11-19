@@ -66,21 +66,41 @@ export default function Component() {
   }
 
   const handleSwap = async () => {
-    setIsSwapping(true)
+    if (!isConnected) {
+      return;
+    }
+
+    setIsSwapping(true);
     
     try {
       for (let i = 0; i < swapSteps.length; i++) {
         setSwapSteps(steps => steps.map(step =>
           step.id === i + 1 ? { ...step, status: 'loading' } : step
-        ))
-        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000))
+        ));
+
+        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000));
+
+        const success = await mockBlockchainTransaction();
+        
+        if (!success) {
+          throw new Error(`Step ${i + 1} failed`);
+        }
+
         setSwapSteps(steps => steps.map(step =>
           step.id === i + 1 ? { ...step, status: 'completed' } : step
-        ))
+        ));
       }
     } catch (error) {
-      console.error('Swap failed:', error)
+      console.error('Swap failed:', error);
+      setSwapSteps(steps => steps.map(step =>
+        step.status === 'loading' ? { ...step, status: 'pending' } : step
+      ));
     }
+  }
+
+  const mockBlockchainTransaction = async (): Promise<boolean> => {
+    const success = Math.random() > 0.1;
+    return success;
   }
 
   const tokens = [
