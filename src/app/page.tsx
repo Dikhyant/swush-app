@@ -221,7 +221,7 @@ export default function Component() {
                         'bg-slate-800 text-slate-400'}`}
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: index * 0.2 }}
+                    transition={{ delay: index * 0.4 }}
                   >
                     {step.status === 'completed' ? (
                       <Check className="w-6 h-6" />
