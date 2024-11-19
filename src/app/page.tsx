@@ -595,10 +595,7 @@ export default function Component() {
       </Dialog>
 
       <Toaster
-        theme="dark"
         position="top-right"
-        closeButton
-        className="!bg-slate-900 !border !border-slate-800"
         toastOptions={{
           className: "!bg-slate-900 !border !border-slate-800 !text-white",
           style: {
