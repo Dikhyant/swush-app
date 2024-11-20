@@ -11,7 +11,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History } from 'lucide-react'
+import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -45,6 +45,15 @@ interface SwapHistoryItem {
   timestamp: Date;
 }
 
+// First, define a proper type for step status
+type StepStatus = 'waiting' | 'pending' | 'loading' | 'completed' | 'failed';
+
+interface SwapStep {
+  id: number;
+  title: string;
+  status: StepStatus;
+}
+
 export default function Component() {
   const [inputToken, setInputToken] = useState({ name: 'DOT', icon: '●', price: '$2.00' })
   const [outputToken, setOutputToken] = useState({ name: 'ETH', icon: 'Ξ', price: '$2000' })
@@ -55,17 +64,20 @@ export default function Component() {
   const [isConnected, setIsConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState('')
   const [isSwapping, setIsSwapping] = useState(false)
-  const [swapSteps, setSwapSteps] = useState([
+  const [swapSteps, setSwapSteps] = useState<SwapStep[]>([
     { id: 1, title: 'Approve DOT', status: 'pending' },
     { id: 2, title: 'Swap DOT → USDC', status: 'waiting' },
     { id: 3, title: 'Swap USDC → ETH', status: 'waiting' },
   ])
   const [swapHistory, setSwapHistory] = useState<SwapHistoryItem[]>([])
   const [showHistory, setShowHistory] = useState(false)
+  const [balance] = useState(1234.56)
+  const [insufficientBalance, setInsufficientBalance] = useState(false)
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
     setOutputAmount((parseFloat(value) * 2).toString())
+    setInsufficientBalance(parseFloat(value) > balance)
   }
 
   const handleWalletConnect = () => {
@@ -111,46 +123,71 @@ export default function Component() {
 
   const handleSwap = async () => {
     if (!isConnected) {
-      toast.error('Please connect your wallet first', {
-        icon: '🔒',
-      })
+      toast.error('Please connect your wallet first', { icon: '🔒' })
       return
     }
 
     setIsSwapping(true)
     
     try {
+      // Reset all steps to their initial state when starting a new swap
+      setSwapSteps(steps => steps.map((step, index) => ({
+        ...step,
+        status: index === 0 ? 'pending' : 'waiting'
+      })))
+
       for (let i = 0; i < swapSteps.length; i++) {
-        setSwapSteps(steps => steps.map(step =>
-          step.id === i + 1 ? { ...step, status: 'loading' } : step
-        ))
+        // Set current step to loading
+        setSwapSteps(steps => steps.map(step => ({
+          ...step,
+          status: 
+            step.id < i + 1 ? 'completed' :
+            step.id === i + 1 ? 'loading' :
+            'waiting'
+        })))
 
         await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000))
-
         const success = await mockBlockchainTransaction()
         
         if (!success) {
+          // If transaction fails, mark current step as failed and keep subsequent steps as waiting
+          setSwapSteps(steps => steps.map(step => ({
+            ...step,
+            status: 
+              step.id < i + 1 ? 'completed' :
+              step.id === i + 1 ? 'failed' :
+              'waiting'
+          })))
           throw new Error(`Step ${i + 1} failed`)
         }
 
-        setSwapSteps(steps => steps.map(step =>
-          step.id === i + 1 ? { ...step, status: 'completed' } : step
-        ))
+        // Mark current step as completed
+        setSwapSteps(steps => steps.map(step => ({
+          ...step,
+          status: 
+            step.id <= i + 1 ? 'completed' :
+            'waiting'
+        })))
       }
 
       const successMessage = `Swapped ${inputAmount} ${inputToken.name} for ${outputAmount} ${outputToken.name}`
       toast.success(successMessage, { icon: '🎉' })
-      setSwapHistory(prev => [{ id: Date.now(), type: 'success', message: successMessage, timestamp: new Date() }, ...prev])
+      setSwapHistory(prev => [{ 
+        id: Date.now(), 
+        type: 'success', 
+        message: successMessage, 
+        timestamp: new Date() 
+      }, ...prev])
     } catch (error) {
       console.error('Swap failed:', error)
-      setSwapSteps(steps => steps.map(step =>
-        step.status === 'loading' ? { ...step, status: 'pending' } : step
-      ))
       const errorMessage = 'Swap failed. Please try again.'
       toast.error(errorMessage, { icon: '❌' })
-      setSwapHistory(prev => [{ id: Date.now(), type: 'error', message: errorMessage, timestamp: new Date() }, ...prev])
-    } finally {
-      setIsSwapping(false)
+      setSwapHistory(prev => [{ 
+        id: Date.now(), 
+        type: 'error', 
+        message: errorMessage, 
+        timestamp: new Date() 
+      }, ...prev])
     }
   }
 
@@ -172,6 +209,23 @@ export default function Component() {
     { label: 'MAX', value: 1 },
   ]
 
+  const getStepStatusMessage = (status: StepStatus) => {
+    switch (status) {
+      case 'completed':
+        return 'Transaction confirmed'
+      case 'loading':
+        return 'Processing transaction...'
+      case 'failed':
+        return 'Transaction failed'
+      case 'pending':
+        return 'Ready to process'
+      case 'waiting':
+        return 'Waiting to start'
+      default:
+        return 'Unknown status'
+    }
+  }
+
   // Render the main action button based on connection state
   const renderActionButton = () => {
     if (!isConnected) {
@@ -187,14 +241,24 @@ export default function Component() {
     }
 
     return (
-      <Dialog open={isSwapping} onOpenChange={setIsSwapping}>
+      <Dialog 
+        open={isSwapping} 
+        onOpenChange={(open) => {
+          if (!open && !swapSteps.every(step => step.status === 'completed')) {
+            return
+          }
+          setIsSwapping(open)
+        }}
+      >
         <DialogTrigger asChild>
           <Button 
             className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25"
             onClick={handleSwap}
-            disabled={!inputAmount || parseFloat(inputAmount) <= 0}
+            disabled={!inputAmount || parseFloat(inputAmount) <= 0 || insufficientBalance}
           >
-            {isSwapping ? (
+            {insufficientBalance ? (
+              'Insufficient Balance'
+            ) : isSwapping ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Swapping...
@@ -204,9 +268,18 @@ export default function Component() {
             )}
           </Button>
         </DialogTrigger>
+
+        {/* Confirming Swap Dialog */}
         <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-white">Confirming Swap</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-white">
+              {swapSteps.every(step => step.status === 'completed') 
+                ? 'Swap Complete'
+                : swapSteps.some(step => step.status === 'failed')
+                ? 'Swap Failed'
+                : 'Confirming Swap'
+              }
+            </DialogTitle>
           </DialogHeader>
           <div className="mt-6 space-y-6">
             {swapSteps.map((step, index) => (
@@ -216,6 +289,8 @@ export default function Component() {
                     className={`w-10 h-10 rounded-full flex items-center justify-center
                       ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
                         step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
+                        step.status === 'failed' ? 'bg-red-500/20 text-red-500' :
+                        step.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
                         'bg-slate-800 text-slate-400'}`}
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -225,21 +300,24 @@ export default function Component() {
                       <Check className="w-6 h-6" />
                     ) : step.status === 'loading' ? (
                       <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : step.status === 'failed' ? (
+                      <X className="w-6 h-6" />
                     ) : (
                       <span className="text-lg font-semibold">{step.id}</span>
                     )}
                   </motion.div>
                   {index < swapSteps.length - 1 && (
                     <div className={`absolute left-1/2 top-full h-6 border-l-2 border-dashed
-                      ${step.status === 'completed' ? 'border-green-500/50' : 'border-slate-700'}`} />
+                      ${step.status === 'completed' ? 'border-green-500/50' :
+                        step.status === 'failed' ? 'border-red-500/50' :
+                        'border-slate-700'}`} 
+                    />
                   )}
                 </div>
                 <div className="flex-1">
                   <p className="text-lg font-semibold text-white">{step.title}</p>
                   <p className="text-sm text-slate-400">
-                    {step.status === 'completed' ? 'Transaction confirmed' :
-                     step.status === 'loading' ? 'Waiting for confirmation...' :
-                     'Waiting to start'}
+                    {getStepStatusMessage(step.status)}
                   </p>
                 </div>
               </div>
@@ -251,7 +329,21 @@ export default function Component() {
                 className="w-full bg-green-500 hover:bg-green-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
                 onClick={() => setIsSwapping(false)}
               >
-                Swap Complete
+                Close
+              </Button>
+            ) : swapSteps.some(step => step.status === 'failed') ? (
+              <Button
+                className="w-full bg-red-500 hover:bg-red-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
+                onClick={() => {
+                  setIsSwapping(false)
+                  // Reset steps for next attempt
+                  setSwapSteps(steps => steps.map((step, index) => ({
+                    ...step,
+                    status: index === 0 ? 'pending' : 'waiting'
+                  })))
+                }}
+              >
+                Try Again
               </Button>
             ) : (
               <Button
@@ -259,7 +351,7 @@ export default function Component() {
                 disabled
               >
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Confirming Swap
+                Processing Swap
               </Button>
             )}
           </DialogFooter>
