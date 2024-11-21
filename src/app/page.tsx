@@ -85,39 +85,19 @@ export default function Component() {
     setWalletAddress(isConnected ? '' : '0x1234...5678')
     
     if (!isConnected) {
-      toast.success(
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-green-500/20">
-            <Check className="w-5 h-5 text-green-500" />
-          </div>
-          <div>
-            <h3 className="font-medium text-white">Wallet Connected</h3>
-            <p className="text-sm text-slate-400">
-              {`Connected to ${walletAddress}`}
-            </p>
-          </div>
-        </div>,
-        {
-          duration: 4000,
-        }
-      )
+      toast.success('Wallet connected successfully', {
+        icon: '👋',
+        style: {
+          borderLeft: '4px solid #22c55e', // Green border for success
+        },
+      })
     } else {
-      toast.success(
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-full bg-slate-500/20">
-            <Wallet className="w-5 h-5 text-slate-500" />
-          </div>
-          <div>
-            <h3 className="font-medium text-white">Wallet Disconnected</h3>
-            <p className="text-sm text-slate-400">
-              Your wallet has been disconnected
-            </p>
-          </div>
-        </div>,
-        {
-          duration: 4000,
-        }
-      )
+      toast.success('Wallet disconnected', {
+        icon: '👋',
+        style: {
+          borderLeft: '4px solid #64748b', // Slate border for neutral actions
+        },
+      })
     }
   }
 
