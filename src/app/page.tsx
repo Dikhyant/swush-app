@@ -11,7 +11,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X } from 'lucide-react'
+import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 
@@ -54,11 +54,36 @@ interface SwapStep {
   status: StepStatus;
 }
 
+interface SwapRoute {
+  steps: { token: string; icon: string }[];
+}
+
+const SwapRouteDisplay: React.FC<{ route: SwapRoute; inputAmount: string; outputAmount: string }> = ({ route, inputAmount, outputAmount }) => {
+  return (
+    <div className="flex flex-col items-start gap-2 p-4 bg-slate-800/50 rounded-lg text-sm">
+      <span className="text-slate-400">Route:</span>
+      <div className="flex items-center gap-1 text-slate-300">
+        {route.steps.map((step, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <ChevronRight className="w-3 h-3 text-slate-500" />}
+            <span>{step.token}</span>
+            {(index === 0 || index === route.steps.length - 1) && (
+              <span className="text-xs text-slate-400">
+                ({index === 0 ? inputAmount : outputAmount})
+              </span>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function Component() {
   const [inputToken, setInputToken] = useState({ name: 'DOT', icon: '●', price: '$2.00' })
   const [outputToken, setOutputToken] = useState({ name: 'ETH', icon: 'Ξ', price: '$2000' })
   const [inputAmount, setInputAmount] = useState('50')
-  const [outputAmount, setOutputAmount] = useState('100')
+  const [outputAmount, setOutputAmount] = useState('0')
   const [slippageTolerance, setSlippageTolerance] = useState(0.5)
   const [transactionDeadline, setTransactionDeadline] = useState(20)
   const [isConnected, setIsConnected] = useState(false)
@@ -73,11 +98,21 @@ export default function Component() {
   const [showHistory, setShowHistory] = useState(false)
   const [balance] = useState(1234.56)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
+  const [swapRoute, setSwapRoute] = useState<SwapRoute>({
+    steps: [
+      { token: 'HydraDX', icon: '' },
+      { token: 'USDC', icon: '' },
+      { token: 'ETH', icon: '' },
+      { token: 'WBTC', icon: '' },
+      { token: 'USDT', icon: '' },
+    ]
+  })
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
-    setOutputAmount((parseFloat(value) * 2).toString())
-    setInsufficientBalance(parseFloat(value) > balance)
+    const inputValue = parseFloat(value)
+    setOutputAmount(isNaN(inputValue) ? '0' : (inputValue * 2).toFixed(4))
+    setInsufficientBalance(inputValue > balance)
   }
 
   const handleWalletConnect = () => {
@@ -601,10 +636,30 @@ export default function Component() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
           >
             {renderActionButton()}
           </motion.div>
+
+          
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: 0.3 }}
+          >
+            <SwapRouteDisplay 
+              route={{
+                steps: [
+                  { token: inputToken.name, icon: inputToken.icon },
+                  ...swapRoute.steps.slice(1, -1),
+                  { token: outputToken.name, icon: outputToken.icon }
+                ]
+              }}
+              inputAmount={inputAmount}
+              outputAmount={outputAmount}
+            />
+          </motion.div>
+
         </div>
       </div>
 
