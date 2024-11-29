@@ -11,7 +11,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronRight, ChevronDown } from 'lucide-react'
+import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -55,37 +55,8 @@ interface SwapStep {
   status: StepStatus;
 }
 
-interface SwapRoute {
-  steps: { token: string; icon: string }[];
-}
-
-const SwapRouteDisplay: React.FC<{ route: SwapRoute; inputAmount: string; outputAmount: string }> = ({ route, inputAmount, outputAmount }) => {
-  return (
-    <div>
-      <span className="text-slate-400">Path:</span>
-      <div className="flex items-center gap-1 text-slate-300">
-        {route.steps.map((step, index) => (
-          <React.Fragment key={index}>
-            {index > 0 && <ChevronRight className="w-3 h-3 text-slate-500" />}
-            <span>{step.token}</span>
-            {(index === 0 || index === route.steps.length - 1) && (
-              <span className="text-xs text-slate-400">
-                ({index === 0 ? inputAmount : outputAmount})
-              </span>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // Add this new interface for detailed route info
 interface DetailedRouteInfo {
-  expectedOutput: string;
-  priceImpact: string;
-  minimumReceived: string;
-  networkFee: string;
   route: {
     path: string;
     details: string;
@@ -134,15 +105,6 @@ export default function Component() {
   const [showHistory, setShowHistory] = useState(false)
   const [balance] = useState(1234.56)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
-  const [swapRoute] = useState<SwapRoute>({
-    steps: [
-      { token: 'HydraDX', icon: '' },
-      { token: 'USDC', icon: '' },
-      { token: 'ETH', icon: '' },
-      { token: 'WBTC', icon: '' },
-      { token: 'USDT', icon: '' },
-    ]
-  })
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
@@ -683,10 +645,6 @@ export default function Component() {
                 <CollapsibleContent className="CollapsibleContent">
                   <DetailedSwapInfo
                     details={{
-                      expectedOutput: `${outputAmount} ${outputToken.name}`,
-                      priceImpact: "~0.1724%",
-                      minimumReceived: `${(parseFloat(outputAmount) * 0.995).toFixed(4)} ${outputToken.name}`,
-                      networkFee: "0.004005 SOL",
                       route: {
                         path: `${inputToken.name} → USDC → ${outputToken.name}`,
                         details: `${inputAmount} ${inputToken.name} → ${(parseFloat(inputAmount) * 1.5).toFixed(2)} USDC → ${outputAmount} ${outputToken.name}`,
