@@ -11,9 +11,10 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronRight } from 'lucide-react'
+import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronRight, ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 interface TokenButtonProps {
   token: string;
@@ -60,8 +61,8 @@ interface SwapRoute {
 
 const SwapRouteDisplay: React.FC<{ route: SwapRoute; inputAmount: string; outputAmount: string }> = ({ route, inputAmount, outputAmount }) => {
   return (
-    <div className="flex flex-col items-start gap-2 p-4 bg-slate-800/50 rounded-lg text-sm">
-      <span className="text-slate-400">Route:</span>
+    <div>
+      <span className="text-slate-400">Path:</span>
       <div className="flex items-center gap-1 text-slate-300">
         {route.steps.map((step, index) => (
           <React.Fragment key={index}>
@@ -78,6 +79,41 @@ const SwapRouteDisplay: React.FC<{ route: SwapRoute; inputAmount: string; output
     </div>
   )
 }
+
+// Add this new interface for detailed route info
+interface DetailedRouteInfo {
+  expectedOutput: string;
+  priceImpact: string;
+  minimumReceived: string;
+  networkFee: string;
+  route: {
+    path: string;
+    details: string;
+  };
+}
+
+// Add this component for the detailed info section
+const DetailedSwapInfo: React.FC<{ details: DetailedRouteInfo }> = ({ details }) => (
+  <div className="space-y-3 pt-3 border-t border-slate-700/50">
+    {/* <div className="flex items-center justify-between text-sm">
+      <span className="text-slate-400">Expected Output</span>
+      <span className="text-slate-300 font-medium">{details.expectedOutput}</span>
+    </div> */}
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-slate-400">Routing Path</span>
+      </div>
+      <div className="">
+        <p className="text-xs text-slate-300 font-medium leading-relaxed">
+          {details.route.path}
+        </p>
+        {/* <p className="text-xs text-slate-400 mt-1">
+          {details.route.details}
+        </p> */}
+      </div>
+    </div>
+  </div>
+);
 
 export default function Component() {
   const [inputToken, setInputToken] = useState({ name: 'DOT', icon: '●', price: '$2.00' })
@@ -98,7 +134,7 @@ export default function Component() {
   const [showHistory, setShowHistory] = useState(false)
   const [balance] = useState(1234.56)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
-  const [swapRoute, setSwapRoute] = useState<SwapRoute>({
+  const [swapRoute] = useState<SwapRoute>({
     steps: [
       { token: 'HydraDX', icon: '' },
       { token: 'USDC', icon: '' },
@@ -615,21 +651,50 @@ export default function Component() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Minimum Received</span>
-                <span className="text-slate-300">
-                  {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
-                </span>
+            <div className="space-y-2">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Minimum Received</span>
+                  <span className="text-slate-300">
+                    {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Max Transaction Fee</span>
+                  <span className="text-slate-300">0.004005 SOL</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Price Impact</span>
+                  <span className="text-slate-300">~0.1724%</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Route</span>
+                  <span className="text-slate-300">Moonbeam</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Max Transaction Fee</span>
-                <span className="text-slate-300">0.004005 SOL</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Price Impact</span>
-                <span className="text-slate-300">~0.1724%</span>
-              </div>
+
+              <Collapsible>
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-center gap-2 pt-2 text-sm text-slate-400 hover:text-slate-300 transition-colors">
+                    <span>Show more details</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="CollapsibleContent">
+                  <DetailedSwapInfo
+                    details={{
+                      expectedOutput: `${outputAmount} ${outputToken.name}`,
+                      priceImpact: "~0.1724%",
+                      minimumReceived: `${(parseFloat(outputAmount) * 0.995).toFixed(4)} ${outputToken.name}`,
+                      networkFee: "0.004005 SOL",
+                      route: {
+                        path: `${inputToken.name} → USDC → ${outputToken.name}`,
+                        details: `${inputAmount} ${inputToken.name} → ${(parseFloat(inputAmount) * 1.5).toFixed(2)} USDC → ${outputAmount} ${outputToken.name}`,
+                      },
+                    }}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </motion.div>
 
@@ -640,26 +705,7 @@ export default function Component() {
           >
             {renderActionButton()}
           </motion.div>
-
           
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: 0.3 }}
-          >
-            <SwapRouteDisplay 
-              route={{
-                steps: [
-                  { token: inputToken.name, icon: inputToken.icon },
-                  ...swapRoute.steps.slice(1, -1),
-                  { token: outputToken.name, icon: outputToken.icon }
-                ]
-              }}
-              inputAmount={inputAmount}
-              outputAmount={outputAmount}
-            />
-          </motion.div>
-
         </div>
       </div>
 
