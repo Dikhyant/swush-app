@@ -49,10 +49,13 @@ interface SwapHistoryItem {
 // First, define a proper type for step status
 type StepStatus = 'waiting' | 'pending' | 'loading' | 'completed' | 'failed';
 
-interface SwapStep {
+// Add new interface for signing steps
+interface SigningStep {
   id: number;
   title: string;
+  description: string;
   status: StepStatus;
+  needsSignature: boolean;
 }
 
 // Add this new interface for detailed route info
@@ -96,15 +99,34 @@ export default function Component() {
   const [isConnected, setIsConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState('')
   const [isSwapping, setIsSwapping] = useState(false)
-  const [swapSteps, setSwapSteps] = useState<SwapStep[]>([
-    { id: 1, title: 'Approve DOT', status: 'pending' },
-    { id: 2, title: 'Swap DOT → USDC', status: 'waiting' },
-    { id: 3, title: 'Swap USDC → ETH', status: 'waiting' },
+  const [swapSteps, setSwapSteps] = useState<SigningStep[]>([
+    { 
+      id: 1, 
+      title: 'Approve DOT',
+      description: 'Allow the smart contract to spend your DOT',
+      status: 'pending',
+      needsSignature: true
+    },
+    { 
+      id: 2, 
+      title: 'Swap DOT → USDC',
+      description: 'Swap DOT to USDC via Moonbeam DEX',
+      status: 'waiting',
+      needsSignature: true
+    },
+    { 
+      id: 3, 
+      title: 'Swap USDC → ETH',
+      description: 'Swap USDC to ETH via Bridge',
+      status: 'waiting',
+      needsSignature: true
+    },
   ])
   const [swapHistory, setSwapHistory] = useState<SwapHistoryItem[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [balance] = useState(1234.56)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
+  const [showSwapProgress, setShowSwapProgress] = useState(false)
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
@@ -139,68 +161,42 @@ export default function Component() {
       toast.error('Please connect your wallet first', { icon: '🔒' })
       return
     }
-
-    setIsSwapping(true)
     
+    setShowSwapProgress(true)
+    setIsSwapping(true)
+  }
+
+  const handleSignStep = async (stepId: number) => {
     try {
-      // Reset all steps to their initial state when starting a new swap
-      setSwapSteps(steps => steps.map((step, index) => ({
+      // Set current step to loading
+      setSwapSteps(steps => steps.map(step => ({
         ...step,
-        status: index === 0 ? 'pending' : 'waiting'
+        status: step.id === stepId ? 'loading' : step.status
       })))
 
-      for (let i = 0; i < swapSteps.length; i++) {
-        // Set current step to loading
+      await new Promise(r => setTimeout(r, 2000))
+      const success = await mockBlockchainTransaction()
+      
+      if (!success) {
         setSwapSteps(steps => steps.map(step => ({
           ...step,
-          status: 
-            step.id < i + 1 ? 'completed' :
-            step.id === i + 1 ? 'loading' :
-            'waiting'
+          status: step.id === stepId ? 'failed' : step.status
         })))
-
-        await new Promise(r => setTimeout(r, 2000 + Math.random() * 1000))
-        const success = await mockBlockchainTransaction()
-        
-        if (!success) {
-          // If transaction fails, mark current step as failed and keep subsequent steps as waiting
-          setSwapSteps(steps => steps.map(step => ({
-            ...step,
-            status: 
-              step.id < i + 1 ? 'completed' :
-              step.id === i + 1 ? 'failed' :
-              'waiting'
-          })))
-          throw new Error(`Step ${i + 1} failed`)
-        }
-
-        // Mark current step as completed
-        setSwapSteps(steps => steps.map(step => ({
-          ...step,
-          status: 
-            step.id <= i + 1 ? 'completed' :
-            'waiting'
-        })))
+        throw new Error(`Step ${stepId} failed`)
       }
 
-      const successMessage = `Swapped ${inputAmount} ${inputToken.name} for ${outputAmount} ${outputToken.name}`
-      toast.success(successMessage, { icon: '🎉' })
-      setSwapHistory(prev => [{ 
-        id: Date.now(), 
-        type: 'success', 
-        message: successMessage, 
-        timestamp: new Date() 
-      }, ...prev])
+      // Mark current step as completed and next step as pending
+      setSwapSteps(steps => steps.map(step => ({
+        ...step,
+        status: 
+          step.id === stepId ? 'completed' :
+          step.id === stepId + 1 ? 'pending' :
+          step.status
+      })))
+
     } catch (error) {
-      console.error('Swap failed:', error)
-      const errorMessage = 'Swap failed. Please try again.'
-      toast.error(errorMessage, { icon: '❌' })
-      setSwapHistory(prev => [{ 
-        id: Date.now(), 
-        type: 'error', 
-        message: errorMessage, 
-        timestamp: new Date() 
-      }, ...prev])
+      console.error('Step failed:', error)
+      toast.error(`Failed to complete step ${stepId}`, { icon: '❌' })
     }
   }
 
@@ -254,122 +250,22 @@ export default function Component() {
     }
 
     return (
-      <Dialog 
-        open={isSwapping} 
-        onOpenChange={(open) => {
-          if (!open && !swapSteps.every(step => step.status === 'completed')) {
-            return
-          }
-          setIsSwapping(open)
-        }}
+      <Button 
+        className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25"
+        onClick={handleSwap}
+        disabled={!inputAmount || parseFloat(inputAmount) <= 0 || insufficientBalance}
       >
-        <DialogTrigger asChild>
-          <Button 
-            className="w-full h-14 text-lg font-semibold bg-rose-500 hover:bg-rose-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-rose-500/25"
-            onClick={handleSwap}
-            disabled={!inputAmount || parseFloat(inputAmount) <= 0 || insufficientBalance}
-          >
-            {insufficientBalance ? (
-              'Insufficient Balance'
-            ) : isSwapping ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Swapping...
-              </>
-            ) : (
-              'Swap'
-            )}
-          </Button>
-        </DialogTrigger>
-
-        {/* Confirming Swap Dialog */}
-        <DialogContent className="bg-slate-900 border-slate-800 sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-white">
-              {swapSteps.every(step => step.status === 'completed') 
-                ? 'Swap Complete'
-                : swapSteps.some(step => step.status === 'failed')
-                ? 'Swap Failed'
-                : 'Confirming Swap'
-              }
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-6 space-y-6">
-            {swapSteps.map((step, index) => (
-              <div key={step.id} className="flex items-center gap-4">
-                <div className="relative">
-                  <motion.div 
-                    className={`w-10 h-10 rounded-full flex items-center justify-center
-                      ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
-                        step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
-                        step.status === 'failed' ? 'bg-red-500/20 text-red-500' :
-                        step.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                        'bg-slate-800 text-slate-400'}`}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: index * 0.4 }}
-                  >
-                    {step.status === 'completed' ? (
-                      <Check className="w-6 h-6" />
-                    ) : step.status === 'loading' ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    ) : step.status === 'failed' ? (
-                      <X className="w-6 h-6" />
-                    ) : (
-                      <span className="text-lg font-semibold">{step.id}</span>
-                    )}
-                  </motion.div>
-                  {index < swapSteps.length - 1 && (
-                    <div className={`absolute left-1/2 top-full h-6 border-l-2 border-dashed
-                      ${step.status === 'completed' ? 'border-green-500/50' :
-                        step.status === 'failed' ? 'border-red-500/50' :
-                        'border-slate-700'}`} 
-                    />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-lg font-semibold text-white">{step.title}</p>
-                  <p className="text-sm text-slate-400">
-                    {getStepStatusMessage(step.status)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <DialogFooter className="mt-8">
-            {swapSteps.every(step => step.status === 'completed') ? (
-              <Button
-                className="w-full bg-green-500 hover:bg-green-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
-                onClick={() => setIsSwapping(false)}
-              >
-                Close
-              </Button>
-            ) : swapSteps.some(step => step.status === 'failed') ? (
-              <Button
-                className="w-full bg-red-500 hover:bg-red-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
-                onClick={() => {
-                  setIsSwapping(false)
-                  // Reset steps for next attempt
-                  setSwapSteps(steps => steps.map((step, index) => ({
-                    ...step,
-                    status: index === 0 ? 'pending' : 'waiting'
-                  })))
-                }}
-              >
-                Try Again
-              </Button>
-            ) : (
-              <Button
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white text-lg font-semibold py-6 rounded-xl transition-all duration-200"
-                disabled
-              >
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                Processing Swap
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {insufficientBalance ? (
+          'Insufficient Balance'
+        ) : isSwapping ? (
+          <>
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            Swapping...
+          </>
+        ) : (
+          'Swap'
+        )}
+      </Button>
     );
   };
 
@@ -703,6 +599,144 @@ export default function Component() {
           },
         }}
       />
+
+      {showSwapProgress && (
+        <motion.div 
+          className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="w-full max-w-md space-y-8 relative"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold text-white">
+                  {swapSteps.every(step => step.status === 'completed') 
+                    ? '🎉 Swap Complete'
+                    : swapSteps.some(step => step.status === 'failed')
+                    ? '❌ Swap Failed'
+                    : '🔄 Confirming Swap'
+                  }
+                </h2>
+                <p className="text-slate-400">
+                  {inputAmount} {inputToken.name} → {outputAmount} {outputToken.name}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (!swapSteps.some(step => step.status === 'loading')) {
+                    setShowSwapProgress(false)
+                    setIsSwapping(false)
+                    setSwapSteps(steps => steps.map((step, index) => ({
+                      ...step,
+                      status: index === 0 ? 'pending' : 'waiting'
+                    })))
+                  }
+                }}
+                disabled={swapSteps.some(step => step.status === 'loading')}
+                className="text-slate-400 hover:text-white hover:bg-slate-800/50"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {swapSteps.map((step, index) => (
+                <motion.div 
+                  key={step.id}
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`p-6 rounded-xl border backdrop-blur-sm transition-all duration-300
+                    ${step.status === 'completed' ? 'bg-green-500/10 border-green-500/20 shadow-lg shadow-green-500/10' :
+                      step.status === 'loading' ? 'bg-blue-500/10 border-blue-500/20 shadow-lg shadow-blue-500/10' :
+                      step.status === 'pending' ? 'bg-yellow-500/10 border-yellow-500/20' :
+                      step.status === 'failed' ? 'bg-red-500/10 border-red-500/20 shadow-lg shadow-red-500/10' :
+                      'bg-slate-800/50 border-slate-700/50'}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
+                      ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
+                        step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
+                        step.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                        step.status === 'failed' ? 'bg-red-500/20 text-red-500' :
+                        'bg-slate-700/50 text-slate-400'}`}
+                    >
+                      {step.status === 'completed' ? (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                        >
+                          <Check className="w-6 h-6" />
+                        </motion.div>
+                      ) : step.status === 'loading' ? (
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                      ) : step.status === 'failed' ? (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                        >
+                          <X className="w-6 h-6" />
+                        </motion.div>
+                      ) : (
+                        <span className="text-lg font-semibold">{step.id}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                        <p className="text-sm text-slate-400">{step.description}</p>
+                      </div>
+                      {step.needsSignature && step.status === 'pending' && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <Button
+                            onClick={() => handleSignStep(step.id)}
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-5 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200"
+                          >
+                            Sign Transaction
+                          </Button>
+                        </motion.div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {swapSteps.every(step => step.status === 'completed') && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-8"
+              >
+                <Button
+                  onClick={() => {
+                    setShowSwapProgress(false)
+                    setIsSwapping(false)
+                  }}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white py-6 text-lg font-semibold rounded-xl shadow-lg shadow-green-500/25 transition-all duration-200"
+                >
+                  Return to Swap
+                </Button>
+              </motion.div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
     </>
   )
 }
