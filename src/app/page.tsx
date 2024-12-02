@@ -8,8 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
+  DialogTrigger
 } from "@/components/ui/dialog"
 import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
