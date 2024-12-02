@@ -11,9 +11,10 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X } from 'lucide-react'
+import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronDown } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 interface TokenButtonProps {
   token: string;
@@ -54,11 +55,42 @@ interface SwapStep {
   status: StepStatus;
 }
 
+// Add this new interface for detailed route info
+interface DetailedRouteInfo {
+  route: {
+    path: string;
+    details: string;
+  };
+}
+
+// Add this component for the detailed info section
+const DetailedSwapInfo: React.FC<{ details: DetailedRouteInfo }> = ({ details }) => (
+  <div className="space-y-3 pt-3 border-t border-slate-700/50">
+    {/* <div className="flex items-center justify-between text-sm">
+      <span className="text-slate-400">Expected Output</span>
+      <span className="text-slate-300 font-medium">{details.expectedOutput}</span>
+    </div> */}
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-slate-400">Routing Path</span>
+      </div>
+      <div className="">
+        <p className="text-xs text-slate-300 font-medium leading-relaxed">
+          {details.route.path}
+        </p>
+        {/* <p className="text-xs text-slate-400 mt-1">
+          {details.route.details}
+        </p> */}
+      </div>
+    </div>
+  </div>
+);
+
 export default function Component() {
   const [inputToken, setInputToken] = useState({ name: 'DOT', icon: '●', price: '$2.00' })
   const [outputToken, setOutputToken] = useState({ name: 'ETH', icon: 'Ξ', price: '$2000' })
   const [inputAmount, setInputAmount] = useState('50')
-  const [outputAmount, setOutputAmount] = useState('100')
+  const [outputAmount, setOutputAmount] = useState('0')
   const [slippageTolerance, setSlippageTolerance] = useState(0.5)
   const [transactionDeadline, setTransactionDeadline] = useState(20)
   const [isConnected, setIsConnected] = useState(false)
@@ -76,8 +108,9 @@ export default function Component() {
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
-    setOutputAmount((parseFloat(value) * 2).toString())
-    setInsufficientBalance(parseFloat(value) > balance)
+    const inputValue = parseFloat(value)
+    setOutputAmount(isNaN(inputValue) ? '0' : (inputValue * 2).toFixed(4))
+    setInsufficientBalance(inputValue > balance)
   }
 
   const handleWalletConnect = () => {
@@ -580,31 +613,57 @@ export default function Component() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Minimum Received</span>
-                <span className="text-slate-300">
-                  {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
-                </span>
+            <div className="space-y-2">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Minimum Received</span>
+                  <span className="text-slate-300">
+                    {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Max Transaction Fee</span>
+                  <span className="text-slate-300">0.004005 SOL</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Price Impact</span>
+                  <span className="text-slate-300">~0.1724%</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Route</span>
+                  <span className="text-slate-300">Moonbeam</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Max Transaction Fee</span>
-                <span className="text-slate-300">0.004005 SOL</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-400">Price Impact</span>
-                <span className="text-slate-300">~0.1724%</span>
-              </div>
+
+              <Collapsible>
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-center gap-2 pt-2 text-sm text-slate-400 hover:text-slate-300 transition-colors">
+                    <span>Show more details</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="CollapsibleContent">
+                  <DetailedSwapInfo
+                    details={{
+                      route: {
+                        path: `${inputToken.name} → USDC → ${outputToken.name}`,
+                        details: `${inputAmount} ${inputToken.name} → ${(parseFloat(inputAmount) * 1.5).toFixed(2)} USDC → ${outputAmount} ${outputToken.name}`,
+                      },
+                    }}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </motion.div>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
           >
             {renderActionButton()}
           </motion.div>
+          
         </div>
       </div>
 
