@@ -360,7 +360,7 @@ export default function Component() {
               transition={{ duration: 0.3 }}
             >
               <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold text-white">Pay</span>
+                <span className="font-semibold text-slate-300">Pay</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-400">Balance: </span>
                   <span className="text-sm font-medium text-slate-300">1,234.56 {inputToken.name}</span>
@@ -448,7 +448,7 @@ export default function Component() {
               transition={{ duration: 0.3, delay: 0.1 }}
             >
               <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold text-white">Receive</span>
+                <span className="font-semibold text-slate-300">Receive</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-400">Balance: </span>
                   <span className="text-sm font-medium text-slate-300">5,678.90 {outputToken.name}</span>
