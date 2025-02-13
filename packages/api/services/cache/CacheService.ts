@@ -1,4 +1,3 @@
-import { initializeRegistry, fetchXcAssetData } from '../registry/XCMRegistry';
 import CacheManager from './CacheManager';
 import { AssetService } from '../assets/AssetService';
 
