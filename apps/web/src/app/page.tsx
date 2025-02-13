@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -28,6 +28,8 @@ import {
   SubWallet,
   TalismanWallet,
 } from '@talismn/connect-wallets'
+import { api } from '@/lib/api'
+import type { AssetWithId } from '@/lib/api'
 
 interface TokenButtonProps {
   token: string;
@@ -140,6 +142,24 @@ export default function Component() {
   const [balance] = useState(1234.56)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
   const [showSwapProgress, setShowSwapProgress] = useState(false)
+  const [assets, setAssets] = useState<AssetWithId[]>([])
+  const [isLoadingAssets, setIsLoadingAssets] = useState(true)
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const assets = await api.assets.getAll();
+        setAssets(assets);
+      } catch (error) {
+        console.error('Failed to fetch assets:', error);
+        toast.error('Failed to load assets');
+      } finally {
+        setIsLoadingAssets(false);
+      }
+    };
+
+    fetchAssets();
+  }, []);
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
@@ -218,11 +238,11 @@ export default function Component() {
     return success
   }
 
-  const tokens = [
-    { name: 'DOT', icon: '●', price: '$2.00' },
-    { name: 'ETH', icon: 'Ξ', price: '$2000' },
-    { name: 'BTC', icon: '₿', price: '$30000' },
-  ]
+  const tokens = assets.map(asset => ({
+    name: asset.metadata.symbol,
+    icon: asset.metadata.symbol.charAt(0),
+    price: `$${parseFloat(asset.metadata.deposit.toString()).toFixed(2)}`  // Parse string to float for formatting
+  }));
 
   const percentageOptions = [
     { label: '25%', value: 0.25 },
