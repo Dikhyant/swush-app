@@ -51,3 +51,9 @@ packages/api/dist
 packages/api/build
 packages/api/public
 packages/api/src/app/api/
+
+#ignore all node_modules inside packages
+**/node_modules
+**/dist
+**/build
+**/public

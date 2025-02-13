@@ -157,8 +157,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(@galacticcouncil/sdk@5.5.0(@polkadot/api-augment@15.5.2)(@polkadot/api-base@15.5.2)(@polkadot/api-derive@15.5.2)(@polkadot/api@15.5.2)(@polkadot/keyring@13.3.1(@polkadot/util-crypto@13.3.1(@polkadot/util@13.3.1))(@polkadot/util@13.3.1))(@polkadot/rpc-augment@15.5.2)(@polkadot/rpc-core@15.5.2)(@polkadot/rpc-provider@15.5.2)(@polkadot/types-augment@15.5.2)(@polkadot/types-codec@15.5.2)(@polkadot/types-create@15.5.2)(@polkadot/types-known@15.5.2)(@polkadot/types@15.5.2)(@polkadot/util-crypto@13.3.1(@polkadot/util@13.3.1))(@polkadot/util@13.3.1))(@polkadot/api-augment@15.5.2)(@polkadot/api@15.5.2)(@polkadot/types@15.5.2)(@polkadot/util-crypto@13.3.1(@polkadot/util@13.3.1))(viem@2.23.2(typescript@5.7.3)(zod@3.24.2))
       '@polkadot-api/descriptors':
-        specifier: file:.papi/descriptors
-        version: file:packages/api/.papi/descriptors(polkadot-api@1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0))
+        specifier: file:../.papi/descriptors
+        version: file:packages/.papi/descriptors(polkadot-api@1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0))
       '@polkadot-labs/hdkd':
         specifier: ^0.0.10
         version: 0.0.10
@@ -177,15 +177,6 @@ importers:
       '@polkadot/util':
         specifier: ^13.2.3
         version: 13.3.1
-      '@polkadot/util-crypto':
-        specifier: ^13.2.3
-        version: 13.3.1(@polkadot/util@13.3.1)
-      '@substrate/asset-transfer-api':
-        specifier: ^0.4.5
-        version: 0.4.5(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0)
-      '@substrate/asset-transfer-api-registry':
-        specifier: ^0.2.25
-        version: 0.2.26
       polkadot-api:
         specifier: ^1.8.2
         version: 1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0)
@@ -225,6 +216,18 @@ importers:
         version: 8.3.6(jiti@1.21.7)(postcss@8.5.2)(typescript@5.7.3)(yaml@2.7.0)
       typescript:
         specifier: ^5.3.3
+        version: 5.7.3
+
+  packages/core:
+    devDependencies:
+      '@polkadot-api/descriptors':
+        specifier: file:../.papi/descriptors
+        version: file:packages/.papi/descriptors(polkadot-api@1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0))
+      tsup:
+        specifier: ^8.0.0
+        version: 8.3.6(jiti@1.21.7)(postcss@8.5.2)(typescript@5.7.3)(yaml@2.7.0)
+      typescript:
+        specifier: ^5.0.0
         version: 5.7.3
 
 packages:
@@ -918,8 +921,8 @@ packages:
   '@polkadot-api/codegen@0.13.0':
     resolution: {integrity: sha512-VU0juJz7TWohFa/tUqOSUdauGlGBJT562+POFerz1/DdXeJ4P1U7BKGM+s57PJlN8D6cHfIv1uoPvuuwnfazgg==}
 
-  '@polkadot-api/descriptors@file:packages/api/.papi/descriptors':
-    resolution: {directory: packages/api/.papi/descriptors, type: directory}
+  '@polkadot-api/descriptors@file:packages/.papi/descriptors':
+    resolution: {directory: packages/.papi/descriptors, type: directory}
     peerDependencies:
       polkadot-api: '*'
 
@@ -1680,13 +1683,6 @@ packages:
 
   '@sqltools/formatter@1.2.5':
     resolution: {integrity: sha512-Uy0+khmZqUrUGm5dmMqVlnvufZRSK0FbYzVgp0UMstm+F5+W2/jnEEQyc9vo1ZR/E5ZI/B1WjjoTqBqwJL6Krw==}
-
-  '@substrate/asset-transfer-api-registry@0.2.26':
-    resolution: {integrity: sha512-oYPjc5CIe0Qp5OkhhHWjV3acd34el1ISPy7akYVJP+mmkXyr14Lzfz+LJKEKsk/5J54CGK2adHTlenydW6qN5Q==}
-
-  '@substrate/asset-transfer-api@0.4.5':
-    resolution: {integrity: sha512-ZLCDOKkqstGNfetz/JjhsUtTsVglMiJAfIOJu485oyEcbowhkY2WN9xALtv9ft/dxmWQoSkZlM81Vx4A28sPfw==}
-    engines: {node: '>=18.14'}
 
   '@substrate/connect-extension-protocol@2.2.1':
     resolution: {integrity: sha512-GoafTgm/Jey9E4Xlj4Z5ZBt/H4drH2CNq8VrAro80rtoznrXnFDNVivLQzZN0Xaj2g8YXSn9pC9Oc9IovYZJXw==}
@@ -3595,6 +3591,7 @@ packages:
     resolution: {integrity: sha512-Quz3MvAwHxVYNXsOByL7xI5EB2WYOeFswqaHIA3qOK3isRWTxiplBEocmmru6XmxDB2L7jDNYtYA4FyimoAFEw==}
     engines: {node: '>=8.17.0'}
     hasBin: true
+    bundledDependencies: []
 
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
@@ -6257,7 +6254,7 @@ snapshots:
       '@polkadot-api/substrate-bindings': 0.11.0
       '@polkadot-api/utils': 0.1.2
 
-  '@polkadot-api/descriptors@file:packages/api/.papi/descriptors(polkadot-api@1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0))':
+  '@polkadot-api/descriptors@file:packages/.papi/descriptors(polkadot-api@1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0))':
     dependencies:
       polkadot-api: 1.9.1(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0)
 
@@ -7177,49 +7174,6 @@ snapshots:
       '@sinonjs/commons': 3.0.1
 
   '@sqltools/formatter@1.2.5': {}
-
-  '@substrate/asset-transfer-api-registry@0.2.26': {}
-
-  '@substrate/asset-transfer-api@0.4.5(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0)':
-    dependencies:
-      '@acala-network/chopsticks-core': 1.0.2
-      '@acala-network/chopsticks-testing': 1.0.2(@polkadot/util-crypto@13.3.1(@polkadot/util@13.3.1))(jiti@1.21.7)(postcss@8.5.2)(rxjs@7.8.1)(yaml@2.7.0)
-      '@polkadot/api': 15.5.2
-      '@polkadot/api-augment': 15.5.2
-      '@polkadot/types': 15.5.2
-      '@polkadot/types-codec': 15.5.2
-      '@polkadot/util': 13.3.1
-      '@polkadot/util-crypto': 13.3.1(@polkadot/util@13.3.1)
-      '@substrate/asset-transfer-api-registry': 0.2.26
-    transitivePeerDependencies:
-      - '@google-cloud/spanner'
-      - '@microsoft/api-extractor'
-      - '@sap/hana-client'
-      - '@swc/core'
-      - better-sqlite3
-      - bluebird
-      - bufferutil
-      - debug
-      - hdb-pool
-      - ioredis
-      - jiti
-      - mongodb
-      - mssql
-      - mysql2
-      - oracledb
-      - pg
-      - pg-native
-      - pg-query-stream
-      - postcss
-      - redis
-      - rxjs
-      - sql.js
-      - supports-color
-      - ts-node
-      - tsx
-      - typeorm-aurora-data-api-driver
-      - utf-8-validate
-      - yaml
 
   '@substrate/connect-extension-protocol@2.2.1': {}
 
@@ -8361,8 +8315,8 @@ snapshots:
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.1)(typescript@5.7.3)
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.1)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.1)
+      eslint-import-resolver-typescript: 3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.4(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.0.0-canary-7118f5dd7-20230705(eslint@8.57.1)
@@ -8385,7 +8339,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.1):
+  eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0
@@ -8397,22 +8351,22 @@ snapshots:
       is-glob: 4.0.3
       stable-hash: 0.0.4
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.1)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.1):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.21.0(eslint@8.57.1)(typescript@5.7.3)
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.1)
+      eslint-import-resolver-typescript: 3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.1):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8
@@ -8423,7 +8377,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.1)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.7.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3

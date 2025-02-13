@@ -1,0 +1,21 @@
+{
+  "name": "@swush/core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
+  },
+  "devDependencies": {
+    "@polkadot-api/descriptors": "file:../.papi/descriptors",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+} 
