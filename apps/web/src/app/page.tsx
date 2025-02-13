@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronDown } from 'lucide-react'
+import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronDown, Search } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -104,6 +104,131 @@ const DetailedSwapInfo: React.FC<{ details: DetailedRouteInfo }> = ({ details })
   </div>
 );
 
+// Add a new component for asset selection with dialog control
+const AssetList = ({ 
+  assets, 
+  onSelect, 
+  currentAsset,
+  onClose 
+}: { 
+  assets: any[], 
+  onSelect: (asset: any) => void,
+  currentAsset: any,
+  onClose: () => void
+}) => {
+  const [searchQuery, setSearchQuery] = useState('')
+  const filteredAssets = assets.filter(asset => 
+    asset.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const handleSelect = (asset: any) => {
+    onSelect(asset);
+    onClose();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+        <Input
+          placeholder="Search assets..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-9 bg-slate-800 border-slate-700 text-white"
+        />
+      </div>
+      <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-2">
+        {filteredAssets.map((token) => (
+          <TokenButton
+            key={token.name}
+            token={token.name}
+            icon={
+              <div className={`w-full h-full ${
+                token.name === currentAsset.name ? 'bg-blue-500' : 'bg-slate-600'
+              } rounded-full flex items-center justify-center`}>
+                <span className="text-white text-lg font-bold">{token.icon}</span>
+              </div>
+            }
+            price={token.price}
+            onClick={() => handleSelect(token)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const WalletButton = ({ 
+  isConnected, 
+  setIsConnected, 
+  setWalletAddress, 
+  variant = 'default',
+  className = '' 
+}: { 
+  isConnected: boolean;
+  setIsConnected: (value: boolean) => void;
+  setWalletAddress: (value: string) => void;
+  variant?: 'default' | 'outline';
+  className?: string;
+}) => {
+  const [hasShownError, setHasShownError] = useState(false);
+
+  const handleAccountSelected = (account: any) => {
+    setIsConnected(true);
+    setWalletAddress(account.address);
+    setHasShownError(false); // Reset error state on successful connection
+    toast.success('Wallet connected successfully', {
+      icon: '👋',
+      style: {
+        borderLeft: '4px solid #22c55e',
+      },
+    });
+  };
+
+  const handleError = (error: unknown) => {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage !== 'Wallet not found' && !hasShownError) {
+      setHasShownError(true);
+      toast.error('Failed to connect wallet', {
+        icon: '❌',
+        style: {
+          borderLeft: '4px solid #ef4444',
+        },
+      });
+      console.error('Wallet connection error:', error);
+    }
+  };
+
+  return (
+    <WalletSelect
+      dappName="Swush"
+      showAccountsList
+      walletList={[
+        new TalismanWallet(),
+        new NovaWallet(),
+        new SubWallet(),
+        new MantaWallet(),
+        new PolkaGate(),
+        new FearlessWallet(),
+        new EnkryptWallet(),
+        new PolkadotjsWallet(),
+        new AlephZeroWallet(),
+      ]}
+      triggerComponent={
+        <Button 
+          variant={variant}
+          className={className}
+        >
+          <Wallet className="w-5 h-5 mr-2" />
+          <span>Connect Wallet</span>
+        </Button>
+      }
+      onAccountSelected={handleAccountSelected}
+      onError={handleError}
+    />
+  );
+};
+
 export default function Component() {
   const [inputToken, setInputToken] = useState({ name: 'DOT', icon: '●', price: '$2.00' })
   const [outputToken, setOutputToken] = useState({ name: 'ETH', icon: 'Ξ', price: '$2000' })
@@ -144,6 +269,8 @@ export default function Component() {
   const [showSwapProgress, setShowSwapProgress] = useState(false)
   const [assets, setAssets] = useState<AssetWithId[]>([])
   const [isLoadingAssets, setIsLoadingAssets] = useState(true)
+  const [openInputDialog, setOpenInputDialog] = useState(false);
+  const [openOutputDialog, setOpenOutputDialog] = useState(false);
 
   useEffect(() => {
     const fetchAssets = async () => {
@@ -272,47 +399,11 @@ export default function Component() {
   const renderActionButton = () => {
     if (!isConnected) {
       return (
-        <WalletSelect
-          dappName="Swush"
-          showAccountsList
-          walletList={[
-            new TalismanWallet(),
-            new NovaWallet(),
-            new SubWallet(),
-            new MantaWallet(),
-            new PolkaGate(),
-            new FearlessWallet(),
-            new EnkryptWallet(),
-            new PolkadotjsWallet(),
-            new AlephZeroWallet(),
-          ]}
-          triggerComponent={
-            <Button 
-              className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
-            >
-              <Wallet className="w-5 h-5 mr-2" />
-              Connect Wallet
-            </Button>
-          }
-          onAccountSelected={(account) => {
-            setIsConnected(true);
-            setWalletAddress(account.address);
-            toast.success('Wallet connected successfully', {
-              icon: '👋',
-              style: {
-                borderLeft: '4px solid #22c55e',
-              },
-            });
-          }}
-          onError={(error) => {
-            toast.error('Failed to connect wallet', {
-              icon: '❌',
-              style: {
-                borderLeft: '4px solid #ef4444',
-              },
-            });
-            console.error('Wallet connection error:', error);
-          }}
+        <WalletButton
+          isConnected={isConnected}
+          setIsConnected={setIsConnected}
+          setWalletAddress={setWalletAddress}
+          className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
         />
       );
     }
@@ -349,48 +440,12 @@ export default function Component() {
           <History className="w-4 h-4" />
         </Button>
         {!isConnected ? (
-          <WalletSelect
-            dappName="Swush"
-            showAccountsList
-            walletList={[
-              new TalismanWallet(),
-              new NovaWallet(),
-              new SubWallet(),
-              new MantaWallet(),
-              new PolkaGate(),
-              new FearlessWallet(),
-              new EnkryptWallet(),
-              new PolkadotjsWallet(),
-              new AlephZeroWallet(),
-            ]}
-            triggerComponent={
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-slate-300 transition-all duration-200"
-              >
-                <Wallet className="w-4 h-4" />
-                <span>Connect Wallet</span>
-              </Button>
-            }
-            onAccountSelected={(account) => {
-              setIsConnected(true);
-              setWalletAddress(account.address);
-              toast.success('Wallet connected successfully', {
-                icon: '👋',
-                style: {
-                  borderLeft: '4px solid #22c55e',
-                },
-              });
-            }}
-            onError={(error) => {
-              toast.error('Failed to connect wallet', {
-                icon: '❌',
-                style: {
-                  borderLeft: '4px solid #ef4444',
-                },
-              });
-              console.error('Wallet connection error:', error);
-            }}
+          <WalletButton
+            isConnected={isConnected}
+            setIsConnected={setIsConnected}
+            setWalletAddress={setWalletAddress}
+            variant="outline"
+            className="flex items-center gap-2 bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-slate-300 transition-all duration-200"
           />
         ) : (
           <Button
@@ -497,7 +552,7 @@ export default function Component() {
               </div>
               
               <div className="flex items-center gap-4">
-                <Dialog>
+                <Dialog open={openInputDialog} onOpenChange={setOpenInputDialog}>
                   <DialogTrigger asChild>
                     <div className="flex-shrink-0">
                       <TokenButton
@@ -508,7 +563,7 @@ export default function Component() {
                           </div>
                         }
                         price={inputToken.price}
-                        onClick={() => {}}
+                        onClick={() => setOpenInputDialog(true)}
                       />
                     </div>
                   </DialogTrigger>
@@ -516,19 +571,12 @@ export default function Component() {
                     <DialogHeader>
                       <DialogTitle className="text-white">Select a token</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-2 py-4">
-                      {tokens.map((token) => (
-                        <TokenButton
-                          key={token.name}
-                          token={token.name}
-                          icon={<div className={`w-full h-full ${token.name === 'DOT' ? 'bg-pink-500' : token.name === 'ETH' ? 'bg-blue-500' : 'bg-orange-500'} rounded-full flex items-center justify-center`}>
-                            <span className="text-white text-lg font-bold">{token.icon}</span>
-                          </div>}
-                          price={token.price}
-                          onClick={() => setInputToken(token)}
-                        />
-                      ))}
-                    </div>
+                    <AssetList 
+                      assets={tokens} 
+                      onSelect={setInputToken}
+                      currentAsset={inputToken}
+                      onClose={() => setOpenInputDialog(false)}
+                    />
                   </DialogContent>
                 </Dialog>
                 <div className="flex-1">
@@ -570,7 +618,7 @@ export default function Component() {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <Dialog>
+                <Dialog open={openOutputDialog} onOpenChange={setOpenOutputDialog}>
                   <DialogTrigger asChild>
                     <div className="flex-shrink-0">
                       <TokenButton
@@ -581,7 +629,7 @@ export default function Component() {
                           </div>
                         }
                         price={outputToken.price}
-                        onClick={() => {}}
+                        onClick={() => setOpenOutputDialog(true)}
                       />
                     </div>
                   </DialogTrigger>
@@ -589,19 +637,12 @@ export default function Component() {
                     <DialogHeader>
                       <DialogTitle className="text-white">Select a token</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-2 py-4">
-                      {tokens.map((token) => (
-                        <TokenButton
-                          key={token.name}
-                          token={token.name}
-                          icon={<div className={`w-full h-full ${token.name === 'DOT' ? 'bg-pink-500' : token.name === 'ETH' ? 'bg-blue-500' : 'bg-orange-500'} rounded-full flex items-center justify-center`}>
-                            <span className="text-white text-lg font-bold">{token.icon}</span>
-                          </div>}
-                          price={token.price}
-                          onClick={() => setOutputToken(token)}
-                        />
-                      ))}
-                    </div>
+                    <AssetList 
+                      assets={tokens} 
+                      onSelect={setOutputToken}
+                      currentAsset={outputToken}
+                      onClose={() => setOpenOutputDialog(false)}
+                    />
                   </DialogContent>
                 </Dialog>
                 <div className="flex-1">

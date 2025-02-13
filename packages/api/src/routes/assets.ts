@@ -9,8 +9,7 @@ const router = express.Router();
 // GET /api/v1/assets
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const forceRefresh = req.query.forceRefresh === 'true';
-    const assets: Map<string, Asset> = await getAssets(forceRefresh);
+    const assets: Map<string, Asset> = await getAssets();
     
     // Convert Map to array and serialize using serializeKey
     const assetsArray = Array.from(assets.entries()).map(([id, asset]) => ({
