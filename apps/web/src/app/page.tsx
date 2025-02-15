@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog"
-import { Settings, RotateCcw, ArrowRight, Wallet, Check, Loader2, ChevronsDown, History, X, ChevronDown, Search } from 'lucide-react'
+import { Settings, RotateCcw, ChevronsDown, History, Search } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Toaster, toast } from 'react-hot-toast'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -30,199 +30,12 @@ import {
 } from '@talismn/connect-wallets'
 import { api } from '@/lib/api'
 import type { AssetWithId } from '@/lib/api'
-
-interface TokenButtonProps {
-  token: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-  price: string;
-}
-
-const TokenButton = ({ token, icon, onClick, price }: TokenButtonProps) => (
-  <button
-    onClick={onClick}
-    className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all duration-200 w-full group"
-  >
-    <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-600 group-hover:from-slate-600 group-hover:to-slate-500 transition-all duration-200">
-      {icon}
-    </div>
-    <div className="flex flex-col items-start">
-      <span className="font-semibold text-white group-hover:text-slate-200 transition-colors duration-200">{token}</span>
-      <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors duration-200">{price}</span>
-    </div>
-    <ArrowRight className="w-5 h-5 text-slate-400 ml-auto group-hover:text-slate-300 transition-colors duration-200" />
-  </button>
-)
-
-interface SwapHistoryItem {
-  id: number;
-  type: 'success' | 'error';
-  message: string;
-  timestamp: Date;
-}
-
-// First, define a proper type for step status
-type StepStatus = 'waiting' | 'pending' | 'loading' | 'completed' | 'failed';
-
-// Add new interface for signing steps
-interface SigningStep {
-  id: number;
-  title: string;
-  description: string;
-  status: StepStatus;
-  needsSignature: boolean;
-}
-
-// Add this new interface for detailed route info
-interface DetailedRouteInfo {
-  route: {
-    path: string;
-    details: string;
-  };
-}
-
-// Add this component for the detailed info section
-const DetailedSwapInfo: React.FC<{ details: DetailedRouteInfo }> = ({ details }) => (
-  <div className="space-y-3 pt-3 border-t border-slate-700/50">
-    {/* <div className="flex items-center justify-between text-sm">
-      <span className="text-slate-400">Expected Output</span>
-      <span className="text-slate-300 font-medium">{details.expectedOutput}</span>
-    </div> */}
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-slate-400">Routing Path</span>
-      </div>
-      <div className="">
-        <p className="text-xs text-slate-300 font-medium leading-relaxed">
-          {details.route.path}
-        </p>
-        {/* <p className="text-xs text-slate-400 mt-1">
-          {details.route.details}
-        </p> */}
-      </div>
-    </div>
-  </div>
-);
-
-// Add a new component for asset selection with dialog control
-const AssetList = ({ 
-  assets, 
-  onSelect, 
-  currentAsset,
-  onClose 
-}: { 
-  assets: any[], 
-  onSelect: (asset: any) => void,
-  currentAsset: any,
-  onClose: () => void
-}) => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const filteredAssets = assets.filter(asset => 
-    asset.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  const handleSelect = (asset: any) => {
-    onSelect(asset);
-    onClose();
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-        <Input
-          placeholder="Search assets..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 bg-slate-800 border-slate-700 text-white"
-        />
-      </div>
-      <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-2">
-        {filteredAssets.map((token) => (
-          <TokenButton
-            key={token.name}
-            token={token.name}
-            icon={
-              <div className={`w-full h-full ${
-                token.name === currentAsset.name ? 'bg-blue-500' : 'bg-slate-600'
-              } rounded-full flex items-center justify-center`}>
-                <span className="text-white text-lg font-bold">{token.icon}</span>
-              </div>
-            }
-            price={token.price}
-            onClick={() => handleSelect(token)}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-const shortenAddress = (address: string): string => {
-  if (!address) return '';
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-};
-
-const WalletMenu = ({
-  address,
-  onDisconnect,
-  className = ''
-}: {
-  address: string;
-  onDisconnect: () => void;
-  className?: string;
-}) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-
-    if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showMenu]);
-
-  const handleDisconnect = () => {
-    onDisconnect();
-    setShowMenu(false);
-  };
-
-  return (
-    <div className="relative" ref={menuRef}>
-      <Button
-        variant="outline"
-        className={`flex items-center gap-2 ${className}`}
-        onClick={() => setShowMenu(!showMenu)}
-      >
-        <Wallet className="w-4 h-4" />
-        <span>{shortenAddress(address)}</span>
-        <ChevronDown className={`w-4 h-4 ml-1 transition-transform duration-200 ${showMenu ? 'rotate-180' : ''}`} />
-      </Button>
-
-      {showMenu && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="absolute right-0 mt-2 w-48 rounded-xl bg-slate-800 border border-slate-700 shadow-lg z-50"
-        >
-          <button
-            onClick={handleDisconnect}
-            className="w-full px-4 py-2 text-left text-rose-400 hover:bg-slate-700/50 transition-colors rounded-xl"
-          >
-            Disconnect
-          </button>
-        </motion.div>
-      )}
-    </div>
-  );
-};
+import { TokenButton } from '@/components/swap/TokenButton'
+import { AssetList } from '@/components/swap/AssetList'
+import { WalletMenu } from '@/components/swap/WalletMenu'
+import { SwapProgress } from '@/components/swap/SwapProgress'
+import { SigningStep, TokenInfo } from '@/components/swap/types'
+import { calculateOutputAmount, calculateMinimumReceived, mockBlockchainTransaction } from '@/components/swap/utils'
 
 const WalletButton = ({ 
   isConnected, 
@@ -268,8 +81,7 @@ const WalletButton = ({
           variant={variant}
           className={className}
         >
-          <Wallet className="w-5 h-5 mr-2" />
-          <span>Connect Wallet</span>
+          Connect Wallet
         </Button>
       }
       onAccountSelected={handleAccountSelected}
@@ -277,9 +89,9 @@ const WalletButton = ({
   );
 };
 
-export default function Component() {
-  const [inputToken, setInputToken] = useState({ name: 'DOT', icon: '●', price: '$2.00' })
-  const [outputToken, setOutputToken] = useState({ name: 'ETH', icon: 'Ξ', price: '$2000' })
+export default function SwapPage() {
+  const [inputToken, setInputToken] = useState<TokenInfo>({ name: 'DOT', icon: '●', price: '$2.00' })
+  const [outputToken, setOutputToken] = useState<TokenInfo>({ name: 'ETH', icon: 'Ξ', price: '$2000' })
   const [inputAmount, setInputAmount] = useState('50')
   const [outputAmount, setOutputAmount] = useState('0')
   const [slippageTolerance, setSlippageTolerance] = useState(0.5)
@@ -310,7 +122,6 @@ export default function Component() {
       needsSignature: true
     },
   ])
-  const [swapHistory] = useState<SwapHistoryItem[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [balance] = useState(1234.56)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
@@ -338,9 +149,8 @@ export default function Component() {
 
   const handleInputChange = (value: string) => {
     setInputAmount(value)
-    const inputValue = parseFloat(value)
-    setOutputAmount(isNaN(inputValue) ? '0' : (inputValue * 2).toFixed(4))
-    setInsufficientBalance(inputValue > balance)
+    setOutputAmount(calculateOutputAmount(value))
+    setInsufficientBalance(parseFloat(value) > balance)
   }
 
   const handleSwap = async () => {
@@ -355,7 +165,6 @@ export default function Component() {
 
   const handleSignStep = async (stepId: number) => {
     try {
-      // Set current step to loading
       setSwapSteps(steps => steps.map(step => ({
         ...step,
         status: step.id === stepId ? 'loading' : step.status
@@ -372,7 +181,6 @@ export default function Component() {
         throw new Error(`Step ${stepId} failed`)
       }
 
-      // Mark current step as completed and next step as pending
       setSwapSteps(steps => steps.map(step => ({
         ...step,
         status: 
@@ -387,15 +195,10 @@ export default function Component() {
     }
   }
 
-  const mockBlockchainTransaction = async (): Promise<boolean> => {
-    const success = Math.random() > 0.1
-    return success
-  }
-
   const tokens = assets.map(asset => ({
     name: asset.metadata.symbol,
     icon: asset.metadata.symbol.charAt(0),
-    price: `$${parseFloat(asset.metadata.deposit.toString()).toFixed(2)}`  // Parse string to float for formatting
+    price: `$${parseFloat(asset.metadata.deposit.toString()).toFixed(2)}`
   }));
 
   const percentageOptions = [
@@ -405,24 +208,6 @@ export default function Component() {
     { label: 'MAX', value: 1 },
   ]
 
-/*   const getStepStatusMessage = (status: StepStatus) => {
-    switch (status) {
-      case 'completed':
-        return 'Transaction confirmed'
-      case 'loading':
-        return 'Processing transaction...'
-      case 'failed':
-        return 'Transaction failed'
-      case 'pending':
-        return 'Ready to process'
-      case 'waiting':
-        return 'Waiting to start'
-      default:
-        return 'Unknown status'
-    }
-  } */
-
-  // Render the main action button based on connection state
   const renderActionButton = () => {
     if (!isConnected) {
       return (
@@ -430,7 +215,7 @@ export default function Component() {
           isConnected={isConnected}
           setIsConnected={setIsConnected}
           setWalletAddress={setWalletAddress}
-          className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+              className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
         />
       );
     }
@@ -441,21 +226,11 @@ export default function Component() {
         onClick={handleSwap}
         disabled={!inputAmount || parseFloat(inputAmount) <= 0 || insufficientBalance}
       >
-        {insufficientBalance ? (
-          'Insufficient Balance'
-        ) : isSwapping ? (
-          <>
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-            Swapping...
-          </>
-        ) : (
-          'Swap'
-        )}
+        {insufficientBalance ? 'Insufficient Balance' : isSwapping ? 'Swapping...' : 'Swap'}
       </Button>
     );
   };
 
-  // Update the main component's disconnect handler
   const handleDisconnect = () => {
     setIsConnected(false);
     setWalletAddress('');
@@ -530,45 +305,11 @@ export default function Component() {
                       />
                     </div>
                   </div>
-                  <div className="sm:hidden pt-4 border-t border-slate-800">
-                    {!isConnected ? (
-                      <WalletButton
-                        isConnected={isConnected}
-                        setIsConnected={setIsConnected}
-                        setWalletAddress={setWalletAddress}
-                        variant="outline"
-                        className="w-full flex items-center justify-center gap-2 bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-white transition-all duration-200"
-                      />
-                    ) : (
-                      <WalletMenu
-                        address={walletAddress}
-                        onDisconnect={handleDisconnect}
-                        className="w-full bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-white transition-all duration-200"
-                      />
-                    )}
-                  </div>
                 </DialogContent>
               </Dialog>
               <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
                 <RotateCcw className="w-5 h-5" />
               </Button>
-              <div className="sm:hidden">
-                {!isConnected ? (
-                  <WalletButton
-                    isConnected={isConnected}
-                    setIsConnected={setIsConnected}
-                    setWalletAddress={setWalletAddress}
-                    variant="ghost"
-                    className="text-slate-400 hover:text-white hover:bg-slate-800/50"
-                  />
-                ) : (
-                  <WalletMenu
-                    address={walletAddress}
-                    onDisconnect={handleDisconnect}
-                    className="text-slate-400 hover:text-white hover:bg-slate-800/50"
-                  />
-                )}
-              </div>
             </div>
           </div>
 
@@ -583,7 +324,7 @@ export default function Component() {
                 <span className="font-semibold text-slate-300">Pay</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-slate-400">Balance: </span>
-                  <span className="text-sm font-medium text-slate-300">1,234.56 {inputToken.name}</span>
+                  <span className="text-sm font-medium text-slate-300">{balance} {inputToken.name}</span>
                 </div>
               </div>
               
@@ -593,7 +334,7 @@ export default function Component() {
                     key={label}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleInputChange((1234.56 * value).toString())}
+                    onClick={() => handleInputChange((balance * value).toString())}
                     className="text-xs font-medium bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white transition-all duration-200"
                   >
                     {label}
@@ -613,7 +354,7 @@ export default function Component() {
                           </div>
                         }
                         price={inputToken.price}
-                        onClick={() => setOpenInputDialog(true)}
+                        onClick={() => {}}
                       />
                     </div>
                   </DialogTrigger>
@@ -679,7 +420,7 @@ export default function Component() {
                           </div>
                         }
                         price={outputToken.price}
-                        onClick={() => setOpenOutputDialog(true)}
+                        onClick={() => {}}
                       />
                     </div>
                   </DialogTrigger>
@@ -719,17 +460,13 @@ export default function Component() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-400">Minimum Received</span>
                   <span className="text-slate-300">
-                    {(parseFloat(outputAmount) * 0.995).toFixed(4)} {outputToken.name}
+                    {calculateMinimumReceived(outputAmount)} {outputToken.name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-400">Max Transaction Fee</span>
                   <span className="text-slate-300">0.004005</span>
                 </div>
-                {/* <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">Price Impact</span>
-                  <span className="text-slate-300">~0.1724%</span>
-                </div> */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-400">Route</span>
                   <span className="text-slate-300">Moonbeam</span>
@@ -740,18 +477,22 @@ export default function Component() {
                 <CollapsibleTrigger className="w-full">
                   <div className="flex items-center justify-center gap-2 pt-2 text-sm text-slate-400 hover:text-slate-300 transition-colors">
                     <span>Show more details</span>
-                    <ChevronDown className="w-4 h-4" />
+                    <Search className="w-4 h-4" />
                   </div>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="CollapsibleContent">
-                  <DetailedSwapInfo
-                    details={{
-                      route: {
-                        path: `${inputToken.name} → USDC → ${outputToken.name}`,
-                        details: `${inputAmount} ${inputToken.name} → ${(parseFloat(inputAmount) * 1.5).toFixed(2)} USDC → ${outputAmount} ${outputToken.name}`,
-                      },
-                    }}
-                  />
+                <CollapsibleContent>
+                  <div className="space-y-3 pt-3 border-t border-slate-700/50">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-400">Routing Path</span>
+                      </div>
+                      <div className="">
+                        <p className="text-xs text-slate-300 font-medium leading-relaxed">
+                          {`${inputToken.name} → USDC → ${outputToken.name}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
             </div>
@@ -764,7 +505,6 @@ export default function Component() {
           >
             {renderActionButton()}
           </motion.div>
-          
         </div>
       </div>
 
@@ -774,21 +514,7 @@ export default function Component() {
             <DialogTitle className="text-2xl font-bold text-white">Swap History</DialogTitle>
           </DialogHeader>
           <div className="mt-4 space-y-4 max-h-96 overflow-y-auto">
-            {swapHistory.length === 0 ? (
               <p className="text-slate-400">No swap history yet.</p>
-            ) : (
-              swapHistory.map((item) => (
-                <div key={item.id} className="bg-slate-800 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-sm ${item.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                      {item.type === 'success' ? '✅ Success' : '❌ Error'}
-                    </span>
-                    <span className="text-xs text-slate-400">{item.timestamp.toLocaleString()}</span>
-                  </div>
-                  <p className="mt-2 text-white">{item.message}</p>
-                </div>
-              ))
-            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -806,142 +532,18 @@ export default function Component() {
       />
 
       {showSwapProgress && (
-        <motion.div 
-          className="fixed inset-0 z-50 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 flex items-center justify-center p-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <motion.div 
-            className="w-full max-w-md space-y-8 relative"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex items-center justify-between mb-8">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-bold text-white">
-                  {swapSteps.every(step => step.status === 'completed') 
-                    ? '🎉 Swap Complete'
-                    : swapSteps.some(step => step.status === 'failed')
-                    ? '❌ Swap Failed'
-                    : '🔄 Confirming Swap'
-                  }
-                </h2>
-                <p className="text-slate-400">
-                  {inputAmount} {inputToken.name} → {outputAmount} {outputToken.name}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (!swapSteps.some(step => step.status === 'loading')) {
-                    setShowSwapProgress(false)
-                    setIsSwapping(false)
-                    setSwapSteps(steps => steps.map((step, index) => ({
-                      ...step,
-                      status: index === 0 ? 'pending' : 'waiting'
-                    })))
-                  }
-                }}
-                disabled={swapSteps.some(step => step.status === 'loading')}
-                className="text-slate-400 hover:text-white hover:bg-slate-800/50"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {swapSteps.map((step, index) => (
-                <motion.div 
-                  key={step.id}
-                  initial={{ x: 20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`p-6 rounded-xl border backdrop-blur-sm transition-all duration-300
-                    ${step.status === 'completed' ? 'bg-green-500/10 border-green-500/20 shadow-lg shadow-green-500/10' :
-                      step.status === 'loading' ? 'bg-blue-500/10 border-blue-500/20 shadow-lg shadow-blue-500/10' :
-                      step.status === 'pending' ? 'bg-yellow-500/10 border-yellow-500/20' :
-                      step.status === 'failed' ? 'bg-red-500/10 border-red-500/20 shadow-lg shadow-red-500/10' :
-                      'bg-slate-800/50 border-slate-700/50'}`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
-                      ${step.status === 'completed' ? 'bg-green-500/20 text-green-500' :
-                        step.status === 'loading' ? 'bg-blue-500/20 text-blue-500' :
-                        step.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                        step.status === 'failed' ? 'bg-red-500/20 text-red-500' :
-                        'bg-slate-700/50 text-slate-400'}`}
-                    >
-                      {step.status === 'completed' ? (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                        >
-                          <Check className="w-6 h-6" />
-                        </motion.div>
-                      ) : step.status === 'loading' ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      ) : step.status === 'failed' ? (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                        >
-                          <X className="w-6 h-6" />
-                        </motion.div>
-                      ) : (
-                        <span className="text-lg font-semibold">{step.id}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-                        <p className="text-sm text-slate-400">{step.description}</p>
-                      </div>
-                      {step.needsSignature && step.status === 'pending' && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2 }}
-                        >
-                          <Button
-                            onClick={() => handleSignStep(step.id)}
-                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-5 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-200"
-                          >
-                            Sign Transaction
-                          </Button>
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-
-            {swapSteps.every(step => step.status === 'completed') && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-8"
-              >
-                <Button
-                  onClick={() => {
-                    setShowSwapProgress(false)
-                    setIsSwapping(false)
-                  }}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white py-6 text-lg font-semibold rounded-xl shadow-lg shadow-green-500/25 transition-all duration-200"
-                >
-                  Return to Swap
-                </Button>
-              </motion.div>
-            )}
-          </motion.div>
-        </motion.div>
+        <SwapProgress
+          steps={swapSteps}
+          onClose={() => setShowSwapProgress(false)}
+          onSignStep={handleSignStep}
+          inputAmount={inputAmount}
+          inputToken={inputToken.name}
+          outputAmount={outputAmount}
+          outputToken={outputToken.name}
+          isSwapping={isSwapping}
+          setIsSwapping={setIsSwapping}
+        />
       )}
     </>
-  )
+  );
 }
