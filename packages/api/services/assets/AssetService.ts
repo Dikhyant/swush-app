@@ -8,7 +8,6 @@ import { base, degen } from './external';
 import { ConnectionManager } from '../network/ConnectionManager';
 import { AssetHubRouter } from './AssetHubRouter';
 import { CACHE_KEYS } from '../constants';
-import { saveAssetsToFile } from '@/utils';
 import { NATIVE_DOT_ASSET } from './metadata';
 
 export class AssetService {
