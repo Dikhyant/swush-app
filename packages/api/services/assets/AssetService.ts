@@ -8,6 +8,7 @@ import { CACHE_KEYS } from '../constants';
 import { NATIVE_DOT_ASSET } from './metadata';
 import { TradeRouterService } from '../network/TradeRouterService';
 import { CacheService } from '../cache/CacheService';
+import { TokenGraph } from './TokenGraph';
 
 export class AssetService {
     private static instance: AssetService;
@@ -253,20 +254,28 @@ export class AssetService {
         }
 
         // Initialize router only with assets that are in pools
-        const assetHubRouter = new AssetHubRouter(api, assetHubPoolAssets);
+        const tokenGraph = new TokenGraph();
+        
+        // Initialize graph with pool assets
+        for (const [assetId, asset] of assetHubPoolAssets) {
+            tokenGraph.addNode(assetId, asset);
+        }
 
         // Add pools using the stored pairs
         for (const pairStr of poolAssetPairs) {
             const [assetOneId, assetTwoId] = pairStr.split('-');
-            assetHubRouter.addPool(assetOneId, assetTwoId);
+            tokenGraph.addEdge(
+                assetOneId,
+                assetTwoId,
+                `${assetOneId}-${assetTwoId}`,
+                BigInt(0), // Placeholder liquidity
+                0.003,
+                'assetHub'
+            );
         }
-        //saveAssetsToFile(assetHubPoolAssets, 'assetHubAssets.json');
-
 
         // Cache router and graph
-        this.cacheService.set(CACHE_KEYS.ASSET_HUB_ROUTER, assetHubRouter);
-        this.cacheService.set(CACHE_KEYS.TOKEN_GRAPH, assetHubRouter.getTokenGraph());
-
+        this.cacheService.set(CACHE_KEYS.TOKEN_GRAPH, tokenGraph);
     
         // Get HydraDX assets and merge them
         const mergedAssets = await this.enrichWithHydraDxData(assetHubPoolAssets, nativeAssetsInfo, foreignAssetsInfo);

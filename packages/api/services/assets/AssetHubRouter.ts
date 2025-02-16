@@ -72,48 +72,6 @@ export class AssetHubRouter {
         }
     }
 
-    private async calculatePathQuote(
-        path: string[],
-        fromAsset: RouterAsset,
-        toAsset: RouterAsset,
-        amountIn: bigint
-    ): Promise<RouteQuote | null> {
-        try {
-            const hops: RouteQuote['hops'] = [];
-            let currentAmount = amountIn;
-            
-            // Calculate quote for the path
-            const quote = await this.api.apis.AssetConversionApi.quote_price_exact_tokens_for_tokens(
-                fromAsset.xcmLocation,
-                toAsset.xcmLocation,
-                currentAmount,
-                true // include_fee parameter
-            );
-
-            if (!quote) return null;
-
-            hops.push({
-                from: fromAsset.id,
-                to: toAsset.id,
-                amountIn: currentAmount,
-                amountOut: quote
-            });
-
-            const finalAmount = quote / BigInt(10 ** toAsset.metadata.decimals);
-            return {
-                path,
-                expectedOutput: finalAmount,
-                hops,
-                dex: 'assetHub'
-            };
-
-        } catch (error) {
-            console.error('Error calculating path quote:', error);
-            return null;
-        }
-    }
-
-    
     private async getHydraDxQuote(
         fromAsset: RouterAsset,
         toAsset: RouterAsset,
@@ -164,10 +122,10 @@ export class AssetHubRouter {
             const validQuotes = pathQuotes.filter((quote): quote is RouteQuote => quote !== null);
             if (validQuotes.length === 0) return null;
 
-            const bestAssetHubQuote = validQuotes.reduce((best, current) => 
+            const bestAssetHubQuote = validQuotes.reduce((best, current) =>
                 current.expectedOutput > best.expectedOutput ? current : best
             );
-            
+
             return { ...bestAssetHubQuote, dex: 'assetHub' as const };
         } catch (error) {
             console.error('Error getting Asset Hub quote:', error);
@@ -175,4 +133,45 @@ export class AssetHubRouter {
         }
     }
 
+    private async calculatePathQuote(
+        path: string[],
+        fromAsset: RouterAsset,
+        toAsset: RouterAsset,
+        amountIn: bigint
+    ): Promise<RouteQuote | null> {
+        try {
+            const hops: RouteQuote['hops'] = [];
+            let currentAmount = amountIn;
+
+            // Calculate quote for the path
+            const quote = await this.api.apis.AssetConversionApi.quote_price_exact_tokens_for_tokens(
+                fromAsset.xcmLocation,
+                toAsset.xcmLocation,
+                currentAmount,
+                true // include_fee parameter
+            );
+
+            if (!quote) return null;
+
+            hops.push({
+                from: fromAsset.id,
+                to: toAsset.id,
+                amountIn: currentAmount,
+                amountOut: quote
+            });
+
+            const finalAmount = quote / BigInt(10 ** toAsset.metadata.decimals);
+            return {
+                path,
+                expectedOutput: finalAmount,
+                hops,
+                dex: 'assetHub'
+            };
+
+        } catch (error) {
+            console.error('Error calculating path quote:', error);
+            return null;
+        }
+    }
+    
 }
