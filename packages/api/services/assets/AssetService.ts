@@ -1,9 +1,7 @@
 import { TypedApi } from 'polkadot-api';
 import { polkadot_asset_hub } from '@polkadot-api/descriptors';
-import { PoolService, TradeRouter } from '@galacticcouncil/sdk';
 import { Asset, AssetType, XcmV4Location } from './types';
 import { getXcmV3Multilocation, serializeKey } from './utils';
-import { base, degen } from './external';
 import { ConnectionManager } from '../network/ConnectionManager';
 import { AssetHubRouter } from './AssetHubRouter';
 import { CACHE_KEYS } from '../constants';
@@ -16,6 +14,7 @@ export class AssetService {
     private cacheService: CacheService;
     private connectionManager: ConnectionManager;
     private initialized: boolean = false;
+    private forceRefresh: boolean = false;
 
     // Cache refresh intervals in milliseconds
     private static REFRESH_INTERVALS = {
@@ -51,7 +50,7 @@ export class AssetService {
     }
 
     public async initialize(): Promise<void> {
-        if (this.initialized) return;
+        if (this.initialized && !this.forceRefresh) return;
 
         try {
             // Initialize network connections first
@@ -72,18 +71,22 @@ export class AssetService {
     }
 
     public async getAssets(forceRefresh = false): Promise<Map<string, Asset>> {
-        const cachedAssets = this.cacheService.get<Map<string, Asset>>(CACHE_KEYS.MERGED_ASSETS);
-        if (!forceRefresh && cachedAssets) {
-            console.log('Returning cached assets');
-            return cachedAssets;
+        if (!this.initialized) {
+            throw new Error('AssetService not initialized. Call initialize() first');
         }
-        console.log('Fetching assets from API');
 
-        const api = this.connectionManager.getAssetHubApi();
-        if (!api) throw new Error('Asset Hub API not initialized');
-        
-        const allAssets = await this.fetchAllAssetsPapi(api);
-        return allAssets;
+        if (forceRefresh) {
+            this.forceRefresh = true;
+            await this.initialize();
+        }
+
+        const cachedAssets = this.cacheService.get<Map<string, Asset>>(CACHE_KEYS.MERGED_ASSETS);
+        if (!cachedAssets) {
+            throw new Error('Assets cache not found. This should not happen as assets are cached during initialization');
+        }
+
+        console.log('Returning cached assets');
+        return cachedAssets;
     }
 
         

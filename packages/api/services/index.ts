@@ -27,7 +27,6 @@ export async function initializeSDK(): Promise<void> {
         await AssetService.getInstance().initialize();
 
         isInitialized = true;
-        console.log('SDK initialized successfully');
     } catch (error) {
         console.error('SDK initialization failed:', error);
         // Attempt cleanup on failure

@@ -27,7 +27,7 @@ export const NATIVE_DOT_ASSET: Asset = {
         parents: 1,
         interior: {
             type: 'Here',
-            value: null
+            value: undefined
         }
     }
 };
