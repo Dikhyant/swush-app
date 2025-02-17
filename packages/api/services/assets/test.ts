@@ -5,12 +5,12 @@ import { initializeSDK } from '../index';
 import fs from 'fs';
 import path from 'path';
 import { ConnectionManager } from '../network/ConnectionManager';
-import { AssetHubRouter } from './AssetHubRouter';
+import { AssetHubRouter } from './router/AssetHubRouter';
 import { Asset } from './types';
 import { saveAssetsToFile } from '../utils';
 import { CACHE_KEYS } from '../constants';
 import { CacheService } from '../cache/CacheService';
-import { TokenGraph } from './TokenGraph';
+import { TokenGraph } from './router/TokenGraph';
 // await CacheService.getInstance().initializeAllCaches();
 // const assetService = AssetService.getInstance();
 // await assetService.getAssets();
@@ -30,7 +30,7 @@ async function testAssetHubQuotes() {
 
         // Get cached router or create new one
         const tokenGraph = cacheManager.get<TokenGraph>(CACHE_KEYS.TOKEN_GRAPH);
-        const router = AssetHubRouter.fromCachedGraph(api, assets, tokenGraph);
+        const router = new AssetHubRouter(api, tokenGraph);
 
         // Helper function to find asset by symbol
         const findAssetBySymbol = (symbol: string): [string, Asset] | undefined => {

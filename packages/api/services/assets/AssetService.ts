@@ -3,12 +3,11 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { Asset, AssetType, XcmV4Location } from './types';
 import { getXcmV3Multilocation, serializeKey } from './utils';
 import { ConnectionManager } from '../network/ConnectionManager';
-import { AssetHubRouter } from './AssetHubRouter';
 import { CACHE_KEYS } from '../constants';
 import { NATIVE_DOT_ASSET } from './metadata';
 import { TradeRouterService } from '../network/TradeRouterService';
 import { CacheService } from '../cache/CacheService';
-import { TokenGraph } from './TokenGraph';
+import { TokenGraph } from './router/TokenGraph';
 
 export class AssetService {
     private static instance: AssetService;
@@ -394,15 +393,3 @@ export class AssetService {
         }
     }
 }    
-    // async function main() {
-    //     try {
-    //         const { api, client } = await connectPapi(RPC_URL, "asset-hub");
-    
-    //         await fetchAllAssetsPapi(api);
-    //         client.destroy();
-    //     } catch (error) {
-    //         console.error("Error:", error);
-    //     }
-    // }
-    
-    // main();

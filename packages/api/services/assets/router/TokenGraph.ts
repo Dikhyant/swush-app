@@ -1,6 +1,6 @@
 import { TypedApi } from 'polkadot-api';
 import { polkadot_asset_hub } from '@polkadot-api/descriptors';
-import { Asset, XcmV4Location } from './types';
+import { Asset, XcmV4Location } from '../types';
 
 export interface Node {
     assetId: string;      // Using assetId as unique identifier

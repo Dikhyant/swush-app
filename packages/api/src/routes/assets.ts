@@ -3,11 +3,11 @@ import { z } from 'zod';
 import { getAssets } from '../../services';
 import type { Asset } from '@swush/core';
 import { serializeKey } from '../../services/assets/utils';
-import { AssetHubRouter, RouterAsset } from '../../services/assets/AssetHubRouter';
+import { AssetHubRouter, RouterAsset } from '../../services/assets/router/AssetHubRouter';
 import { CacheService } from '../../services/cache/CacheService';
 import { ConnectionManager } from '../../services/network/ConnectionManager';
 import { CACHE_KEYS } from '../../services/constants';
-import { TokenGraph } from '../../services/assets/TokenGraph';
+import { TokenGraph } from '../../services/assets/router/TokenGraph';
 
 const router = express.Router();
 

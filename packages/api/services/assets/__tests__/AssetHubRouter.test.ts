@@ -1,4 +1,4 @@
-import { AssetHubRouter } from '../AssetHubRouter';
+import { AssetHubRouter } from '../router/AssetHubRouter';
 import { Asset, AssetType } from '../types';
 import { TypedApi } from 'polkadot-api';
 import { polkadot_asset_hub } from '@polkadot-api/descriptors';

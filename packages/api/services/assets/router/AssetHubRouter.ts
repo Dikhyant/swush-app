@@ -1,8 +1,8 @@
 import { TypedApi } from 'polkadot-api';
 import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { TokenGraph } from './TokenGraph';
-import { XcmV4Location } from './types';
-import { TradeRouterService } from '../network/TradeRouterService';
+import { XcmV4Location } from '../types';
+import { TradeRouterService } from '../../network/TradeRouterService';
 
 export interface RouterAsset {
     id: string;
