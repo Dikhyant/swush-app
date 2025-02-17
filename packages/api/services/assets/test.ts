@@ -5,7 +5,7 @@ import { initializeSDK } from '../index';
 import fs from 'fs';
 import path from 'path';
 import { ConnectionManager } from '../network/ConnectionManager';
-import { AssetHubRouter } from './router/AssetHubRouter';
+import { AssetHubRouter, RouterAsset } from './router/AssetHubRouter';
 import { Asset } from './types';
 import { saveAssetsToFile } from '../utils';
 import { CACHE_KEYS } from '../constants';
@@ -50,19 +50,31 @@ async function testAssetHubQuotes() {
             throw new Error('Could not find required test assets');
         }
 
-        // Test cases using actual asset IDs
+        // Convert Asset to RouterAsset
+        const createRouterAsset = (assetId: string, asset: Asset): RouterAsset => ({
+            id: assetId,
+            xcmLocation: asset.xcmLocation,
+            metadata: {
+                decimals: asset.metadata.decimals
+            },
+            hydradx: asset.hydradx ? {
+                assetId: asset.hydradx.assetId
+            } : undefined
+        });
+
+        // Test cases using RouterAsset format
         const testCases = [
             {
-                from: dotAsset[0],
-                to: usdcAsset[0],
+                fromAsset: createRouterAsset(dotAsset[0], dotAsset[1]),
+                toAsset: createRouterAsset(usdcAsset[0], usdcAsset[1]),
                 fromSymbol: dotAsset[1].metadata.symbol,
                 toSymbol: usdcAsset[1].metadata.symbol,
                 amount: BigInt(1) * BigInt(10 ** dotAsset[1].metadata.decimals), // 1 DOT
                 decimals: dotAsset[1].metadata.decimals
             },
             {
-                from: usdcAsset[0],
-                to: mythAsset[0],
+                fromAsset: createRouterAsset(usdcAsset[0], usdcAsset[1]),
+                toAsset: createRouterAsset(mythAsset[0], mythAsset[1]),
                 fromSymbol: usdcAsset[1].metadata.symbol,
                 toSymbol: mythAsset[1].metadata.symbol,
                 amount: BigInt(1) * BigInt(10 ** usdcAsset[1].metadata.decimals), // 1 USDC
@@ -77,8 +89,8 @@ async function testAssetHubQuotes() {
             console.log(`Amount In: ${test.amount} (${test.decimals} decimals)`);
             
             const route = await router.findBestRoute(
-                test.from,
-                test.to,
+                test.fromAsset,
+                test.toAsset,
                 test.amount
             );
 

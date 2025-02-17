@@ -143,24 +143,47 @@ export class AssetHubRouter {
             const hops: RouteQuote['hops'] = [];
             let currentAmount = amountIn;
 
-            // Calculate quote for the path
-            const quote = await this.api.apis.AssetConversionApi.quote_price_exact_tokens_for_tokens(
-                fromAsset.xcmLocation,
-                toAsset.xcmLocation,
-                currentAmount,
-                true // include_fee parameter
-            );
+            // Handle multi-hop paths
+            for (let i = 0; i < path.length - 1; i++) {
+                const fromId = path[i];
+                const toId = path[i + 1];
 
-            if (!quote) return null;
+                // Get node information from the graph
+                const fromNode = this.tokenGraph.getNode(fromId);
+                const toNode = this.tokenGraph.getNode(toId);
 
-            hops.push({
-                from: fromAsset.id,
-                to: toAsset.id,
-                amountIn: currentAmount,
-                amountOut: quote
-            });
+                if (!fromNode || !toNode) {
+                    console.error(`Node not found for ${fromId} or ${toId}`);
+                    return null;
+                }
 
-            const finalAmount = quote / BigInt(10 ** toAsset.metadata.decimals);
+                // Calculate quote for this hop
+                const quote = await this.api.apis.AssetConversionApi.quote_price_exact_tokens_for_tokens(
+                    fromNode.xcmLocation,
+                    toNode.xcmLocation,
+                    currentAmount,
+                    true // include_fee parameter
+                );
+
+                if (!quote) {
+                    console.error(`No quote available for hop ${fromId} to ${toId}`);
+                    return null;
+                }
+
+                hops.push({
+                    from: fromId,
+                    to: toId,
+                    amountIn: currentAmount,
+                    amountOut: quote
+                });
+
+                // Update current amount for next hop
+                currentAmount = quote;
+            }
+
+            // Calculate final amount considering the last asset's decimals
+            const finalAmount = currentAmount / BigInt(10 ** toAsset.metadata.decimals);
+            
             return {
                 path,
                 expectedOutput: finalAmount,
