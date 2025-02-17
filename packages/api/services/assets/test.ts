@@ -47,8 +47,8 @@ async function testAssetHubQuotes() {
         console.log('\n=== Testing Asset Hub Router Quotes ===\n');
         
             const route = await router.findBestRoute(
-                { id: dotAsset?.[0] ?? '' },
-                { id: mythAsset?.[0] ?? '' },
+                usdcAsset?.[0] ?? '',
+                mythAsset?.[0] ?? '',
                 BigInt(1)
             );
 

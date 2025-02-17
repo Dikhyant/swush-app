@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getAssets } from '../../services';
 import type { Asset } from '@swush/core';
 import { serializeKey } from '../../services/assets/utils';
-import { AssetHubRouter, RouterAsset } from '../../services/assets/router/AssetHubRouter';
+import { AssetHubRouter } from '../../services/assets/router/AssetHubRouter';
 import { CacheService } from '../../services/cache/CacheService';
 import { ConnectionManager } from '../../services/network/ConnectionManager';
 import { CACHE_KEYS } from '../../services/constants';
@@ -12,15 +12,15 @@ import { TokenGraph } from '../../services/assets/router/TokenGraph';
 const router = express.Router();
 
 // Validation schema for the request body
-const findRouteSchema = z.object({
-    fromAsset: z.object({
-        id: z.string()
-    }),
-    toAsset: z.object({
-        id: z.string()
-    }),
-    amountIn: z.string()
-});
+// const findRouteSchema = z.object({
+//     fromAsset: z.object({
+//         id: z.string()
+//     }),
+//     toAsset: z.object({
+//         id: z.string()
+//     }),
+//     amountIn: z.string()
+// });
 
 // GET /api/v1/assets
 router.get('/', async (req: Request, res: Response) => {
@@ -59,7 +59,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/find-route', async (req: Request, res: Response) => {
     try {
         // Validate request body
-        const { fromAsset, toAsset, amountIn } = findRouteSchema.parse(req.body);
+        const { fromAsset, toAsset, amountIn } = req.body;
 
         // Get cached token graph
         const tokenGraph = CacheService.getInstance().get<TokenGraph>(CACHE_KEYS.TOKEN_GRAPH);
@@ -78,8 +78,8 @@ router.post('/find-route', async (req: Request, res: Response) => {
         
         // Find best route
         const route = await router.findBestRoute(
-            fromAsset as RouterAsset,
-            toAsset as RouterAsset,
+            fromAsset,
+            toAsset,
             BigInt(amountIn)
         );
 
@@ -92,7 +92,7 @@ router.post('/find-route', async (req: Request, res: Response) => {
 
         res.json({
             status: 'success',
-            data: route
+            data: JSON.parse(serializeKey(route))
         });
     } catch (error: unknown) {
         console.error('Error finding route:', error);

@@ -4,10 +4,6 @@ import { TokenGraph, Node } from './TokenGraph';
 import { XcmV4Location } from '../types';
 import { TradeRouterService } from '../../network/TradeRouterService';
 
-// Simplified to just contain the asset ID
-export interface RouterAsset {
-    id: string;
-}
 
 export interface RouteQuote {
     path: string[];
@@ -34,17 +30,17 @@ export class AssetHubRouter {
     }
 
     public async findBestRoute(
-        fromAsset: RouterAsset,
-        toAsset: RouterAsset,
+        fromAsset: string,
+        toAsset: string,
         amountIn: bigint
     ): Promise<RouteQuote | null> {
         try {
             // Get both nodes upfront
-            const fromNode = this.tokenGraph.getNode(fromAsset.id);
-            const toNode = this.tokenGraph.getNode(toAsset.id);
+            const fromNode = this.tokenGraph.getNode(fromAsset);
+            const toNode = this.tokenGraph.getNode(toAsset);
 
             if (!fromNode || !toNode) {
-                console.error(`Asset nodes not found: ${fromAsset.id} or ${toAsset.id}`);
+                console.error(`Asset nodes not found: ${fromAsset} or ${toAsset}`);
                 return null;
             }
 
