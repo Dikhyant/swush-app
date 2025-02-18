@@ -124,7 +124,7 @@ class PapiWrapper implements IApiWrapper {
 
   async disconnect(): Promise<void> {
     if (this.client) {
-      // Add appropriate cleanup for PAPI client
+      this.client.destroy(); // Ensure to call the destroy method to clean up subscriptions and connections
       this.client = null;
     }
     
