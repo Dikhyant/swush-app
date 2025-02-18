@@ -17,8 +17,8 @@ export interface SwapHistoryItem {
 
 export interface TokenInfo {
   name: string;
+  symbol: string;
   icon: string;
-  price: string;
 }
 
 export interface DetailedRouteInfo {
@@ -37,9 +37,9 @@ export interface AssetListProps {
 
 export interface TokenButtonProps {
   token: string;
+  symbol: string;
   icon: React.ReactNode;
   onClick: () => void;
-  price: string;
 }
 
 export interface WalletMenuProps {

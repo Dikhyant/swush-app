@@ -31,7 +31,7 @@ export const SwapField = ({
   setOpenDialog,
   availableTokens,
   percentageOptions,
-  onPercentageSelect
+  onPercentageSelect,
 }: SwapFieldProps) => {
   const isInput = type === 'input';
   const bgColor = isInput ? 'bg-pink-500' : 'bg-blue-500';
@@ -47,7 +47,7 @@ export const SwapField = ({
         <span className="font-semibold text-slate-300">{isInput ? 'Pay' : 'Receive'}</span>
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-400">Balance: </span>
-          <span className="text-sm font-medium text-slate-300">{balance} {token.name}</span>
+          <span className="text-sm font-medium text-slate-300">{balance} {token.symbol}</span>
         </div>
       </div>
       
@@ -66,19 +66,19 @@ export const SwapField = ({
           ))}
         </div>
       )}
-      
+
       <div className="flex items-center gap-4">
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <DialogTrigger asChild>
             <div className="flex-shrink-0">
               <TokenButton
                 token={token.name}
+                symbol={token.symbol}
                 icon={
                   <div className={`w-full h-full ${bgColor} rounded-full flex items-center justify-center`}>
                     <span className="text-white text-lg font-bold">{token.icon}</span>
                   </div>
                 }
-                price={token.price}
                 onClick={() => {}}
               />
             </div>

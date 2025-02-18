@@ -31,6 +31,7 @@ export const AssetList = ({ assets, onSelect, currentAsset, onClose }: AssetList
         {filteredAssets.map((token) => (
           <TokenButton
             key={token.name}
+            symbol={token.symbol}
             token={token.name}
             icon={
               <div className={`w-full h-full ${
@@ -39,7 +40,6 @@ export const AssetList = ({ assets, onSelect, currentAsset, onClose }: AssetList
                 <span className="text-white text-lg font-bold">{token.icon}</span>
               </div>
             }
-            price={token.price}
             onClick={() => handleSelect(token)}
           />
         ))}

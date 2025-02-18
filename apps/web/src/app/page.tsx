@@ -17,16 +17,16 @@ import {
   SwapAction,
   WalletButton,
   SigningStep,
-  TokenInfo,
   calculateOutputAmount,
   calculateMinimumReceived,
   mockBlockchainTransaction
 } from '@/components/swap'
+import type { TokenInfo } from '@/components/swap/types'
 
 export default function SwapPage() {
   // State management
-  const [inputToken, setInputToken] = useState<TokenInfo>({ name: 'DOT', icon: '●', price: '$2.00' })
-  const [outputToken, setOutputToken] = useState<TokenInfo>({ name: 'ETH', icon: 'Ξ', price: '$2000' })
+  const [inputToken, setInputToken] = useState<TokenInfo | null>(null)
+  const [outputToken, setOutputToken] = useState<TokenInfo | null>(null)
   const [inputAmount, setInputAmount] = useState('50')
   const [outputAmount, setOutputAmount] = useState('0')
   const [slippageTolerance, setSlippageTolerance] = useState(0.5)
@@ -69,8 +69,55 @@ export default function SwapPage() {
   useEffect(() => {
     const fetchAssets = async () => {
       try {
-        const assets = await api.assets.getAll();
-        setAssets(assets);
+        const fetchedAssets = await api.assets.getAll();
+        setAssets(fetchedAssets);
+        
+        // Set default tokens if not already set
+        if (!inputToken) {
+          const defaultInput = fetchedAssets.find(asset => 
+            asset.metadata.symbol.toUpperCase() === 'DOT'
+          );
+          if (defaultInput) {
+            setInputToken({
+              name: defaultInput.metadata.name,
+              symbol: defaultInput.metadata.symbol,
+              icon: defaultInput.metadata.symbol.charAt(0),
+            });
+          } else {
+            // If DOT not found, set the first asset as default
+            const firstAsset = fetchedAssets[0];
+            if (firstAsset) {
+              setInputToken({
+                name: firstAsset.metadata.name,
+                symbol: firstAsset.metadata.symbol,
+                icon: firstAsset.metadata.symbol.charAt(0),
+              });
+            }
+          }
+        }
+        
+        if (!outputToken) {
+          const defaultOutput = fetchedAssets.find(asset => 
+            asset.metadata.symbol.toUpperCase() === 'ETH'
+          );
+          if (defaultOutput) {
+            setOutputToken({
+              name: defaultOutput.metadata.name,
+              symbol: defaultOutput.metadata.symbol,
+              icon: defaultOutput.metadata.symbol.charAt(0),
+            });
+          } else {
+            // If ETH not found, set the second asset as default
+            const secondAsset = fetchedAssets[1];
+            if (secondAsset) {
+              setOutputToken({
+                name: secondAsset.metadata.name,
+                symbol: secondAsset.metadata.symbol,
+                icon: secondAsset.metadata.symbol.charAt(0),
+              });
+            }
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch assets:', error);
         toast.error('Failed to load assets');
@@ -141,9 +188,9 @@ export default function SwapPage() {
   };
 
   const tokens = assets.map(asset => ({
-    name: asset.metadata.symbol,
+    name: asset.metadata.name,
+    symbol: asset.metadata.symbol,
     icon: asset.metadata.symbol.charAt(0),
-    price: `$${parseFloat(asset.metadata.deposit.toString()).toFixed(2)}`
   }));
 
   const percentageOptions = [
@@ -152,6 +199,14 @@ export default function SwapPage() {
     { label: '75%', value: 0.75 },
     { label: 'MAX', value: 1 },
   ]
+
+  if (!inputToken || !outputToken) {
+    return (
+      <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-cyan-900 to-slate-900 flex flex-col items-center justify-center">
+        <div className="animate-pulse text-white">Loading assets...</div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -198,7 +253,7 @@ export default function SwapPage() {
               token={inputToken}
               amount={inputAmount}
               balance={balance.toString()}
-              onTokenSelect={setInputToken}
+              onTokenSelect={(token: TokenInfo) => setInputToken(token)}
               onAmountChange={handleInputChange}
               openDialog={openInputDialog}
               setOpenDialog={setOpenInputDialog}
@@ -214,7 +269,7 @@ export default function SwapPage() {
               token={outputToken}
               amount={outputAmount}
               balance="5,678.90"
-              onTokenSelect={setOutputToken}
+              onTokenSelect={(token: TokenInfo) => setOutputToken(token)}
               openDialog={openOutputDialog}
               setOpenDialog={setOpenOutputDialog}
               availableTokens={tokens}
@@ -273,9 +328,9 @@ export default function SwapPage() {
           onClose={() => setShowSwapProgress(false)}
           onSignStep={handleSignStep}
           inputAmount={inputAmount}
-          inputToken={inputToken.name}
+          inputToken={inputToken.symbol}
           outputAmount={outputAmount}
-          outputToken={outputToken.name}
+          outputToken={outputToken.symbol}
           isSwapping={isSwapping}
           setIsSwapping={setIsSwapping}
         />
