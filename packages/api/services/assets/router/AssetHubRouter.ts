@@ -3,7 +3,7 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { TokenGraph } from './TokenGraph';
 import { TradeRouterService } from './TradeRouterService';
 import { CacheService } from '../../cache/CacheService';
-import { CACHE_KEYS, NUMBER_FORMAT_OPTIONS } from '../../constants';
+import { CACHE_KEYS, NETWORKS_SUPPORTED, NUMBER_FORMAT_OPTIONS } from '../../constants';
 import { Asset } from '../types';
 import { convertToPlank, formatAmount } from '../utils';
 
@@ -40,13 +40,15 @@ export class AssetHubRouter {
     public async findBestRoute(
         fromAsset: string,
         toAsset: string,
-        amountIn: string | number
+        amountIn: string | number,
+        dex?: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.HYDRA_DX
     ): Promise<RouteQuote | null> {
         try {
             console.log('Starting findBestRoute:', {
                 fromAsset,
                 toAsset,
-                amountIn
+                amountIn,
+                dex
             });
 
             // Get asset details from cache
@@ -65,20 +67,25 @@ export class AssetHubRouter {
             const fromInGraph = this.tokenGraph.getNode(fromAsset);
             const toInGraph = this.tokenGraph.getNode(toAsset);
 
-            // Get quotes from both DEXes in parallel
+            // Get quotes from both DEXes in parallel if no specific DEX is requested
             const [assetHubQuote, hydraDxQuote] = await Promise.all([
                 // For Asset Hub, check if both assets are in the graph first
-                fromInGraph && toInGraph ? 
+                (!dex || dex === NETWORKS_SUPPORTED.ASSET_HUB) && fromInGraph && toInGraph ? 
                     this.getBestAssetHubQuote(
                         fromAsset,
                         toAsset,
                         amountInPlanck
                     ) : null,
                 // For HydraDX, check if both assets have HydraDX info
-                fromAssetDetails.hydradx && toAssetDetails.hydradx ?
-                    this.getHydraDxQuote(fromAsset, toAsset, amountInPlanck) : null
+                (!dex || dex === NETWORKS_SUPPORTED.HYDRA_DX) && fromAssetDetails.hydradx && toAssetDetails.hydradx ?
+                    this.getHydraDxQuote(fromAsset, toAsset, amountIn.toString()) : null
             ]);
 
+            // Return based on dex preference and availability
+            if (dex === NETWORKS_SUPPORTED.ASSET_HUB) return assetHubQuote;
+            if (dex === NETWORKS_SUPPORTED.HYDRA_DX) return hydraDxQuote;
+
+            // If no specific dex requested, compare available quotes
             if (!assetHubQuote && !hydraDxQuote) return null;
             if (!assetHubQuote) return hydraDxQuote;
             if (!hydraDxQuote) return assetHubQuote;
@@ -98,7 +105,7 @@ export class AssetHubRouter {
     public async getHydraDxQuote(
         fromAssetId: string,
         toAssetId: string,
-        amountIn: bigint
+        amountIn: string
     ): Promise<RouteQuote | null> {
         try {
             const fromAsset = this.assets?.get(fromAssetId);
@@ -112,7 +119,7 @@ export class AssetHubRouter {
             const trade = await tradeRouter.getBestSell(
                 fromAsset.hydradx.assetId,
                 toAsset.hydradx.assetId,
-                amountIn.toString()
+                amountIn
             );
 
             console.log('HydraDx Quote:', trade?.toHuman());
@@ -122,21 +129,24 @@ export class AssetHubRouter {
             // Use constant format options
             const formatOptions = NUMBER_FORMAT_OPTIONS;
 
-            const formattedAmountIn = formatAmount(trade.amountIn.toString(), fromAsset.metadata.decimals, formatOptions);
+            // const formattedAmountIn = formatAmount(trade.amountIn.toString(), fromAsset.metadata.decimals, formatOptions);
             const formattedAmountOut = formatAmount(trade.amountOut.toString(), toAsset.metadata.decimals, formatOptions);
 
-            if (!formattedAmountIn || !formattedAmountOut) {
-                console.error('Error formatting amounts for HydraDX quote');
-                return null;
-            }
+            // if (!formattedAmountIn || !formattedAmountOut) {
+            //     console.error('Error formatting amounts for HydraDX quote');
+            //     return null;
+            // }
 
             return {
                 path: [fromAssetId, toAssetId],
-                expectedOutput: formattedAmountOut,
+                expectedOutput: {
+                    raw: trade.amountOut.toString(),
+                    decimal: formattedAmountOut.decimal
+                },
                 hops: [{
                     from: fromAssetId,
                     to: toAssetId,
-                    amountIn: formattedAmountIn.decimal,
+                    amountIn: amountIn,
                     amountOut: formattedAmountOut.decimal
                 }],
                 dex: 'hydraDx'

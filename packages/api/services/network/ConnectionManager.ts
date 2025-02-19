@@ -3,6 +3,7 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { ApiPromise } from '@polkadot/api';
 import { connectPapi, connectPolkadotjs } from './types';
 import { RpcEndpointManager } from './Rpc/RpcEndpointManager';
+import { NETWORKS_SUPPORTED } from 'services/constants';
 
 type NetworkConnections = {
     assetHub: { api: TypedApi<typeof polkadot_asset_hub>; client: PolkadotClient } | null;
@@ -46,10 +47,10 @@ export class ConnectionManager {
             const endpoint = this.rpcManager.getEndpoint(network);
             
             switch (network) {
-                case 'assetHub':
-                    this.connections.assetHub = await connectPapi(endpoint, 'asset-hub');
+                case NETWORKS_SUPPORTED.ASSET_HUB:
+                    this.connections.assetHub = await connectPapi(endpoint, NETWORKS_SUPPORTED.ASSET_HUB);
                     break;
-                case 'hydradx':
+                case NETWORKS_SUPPORTED.HYDRA_DX:
                     this.connections.hydradx = await connectPolkadotjs(endpoint);
                     break;
             }
@@ -68,28 +69,28 @@ export class ConnectionManager {
 
         try {
             // Initialize Asset Hub connection
-            const assetHubEndpoint = this.rpcManager.getEndpoint('assetHub');
+            const assetHubEndpoint = this.rpcManager.getEndpoint(NETWORKS_SUPPORTED.ASSET_HUB);
             try {
-                this.connections.assetHub = await connectPapi(assetHubEndpoint, 'asset-hub');
+                this.connections.assetHub = await connectPapi(assetHubEndpoint, NETWORKS_SUPPORTED.ASSET_HUB);
             } catch (error) {
                 if (error instanceof Error) {
                     this.rpcManager.markEndpointError('assetHub', assetHubEndpoint, error);
                 }
                 // Try next endpoint
-                const nextAssetHubEndpoint = this.rpcManager.getEndpoint('assetHub');
-                this.connections.assetHub = await connectPapi(nextAssetHubEndpoint, 'asset-hub');
+                const nextAssetHubEndpoint = this.rpcManager.getEndpoint(NETWORKS_SUPPORTED.ASSET_HUB);
+                this.connections.assetHub = await connectPapi(nextAssetHubEndpoint, NETWORKS_SUPPORTED.ASSET_HUB);
             }
             
             // Initialize HydraDX connection
-            const hydradxEndpoint = this.rpcManager.getEndpoint('hydradx');
+            const hydradxEndpoint = this.rpcManager.getEndpoint(NETWORKS_SUPPORTED.HYDRA_DX);
             try {
                 this.connections.hydradx = await connectPolkadotjs(hydradxEndpoint);
             } catch (error) {
                 if (error instanceof Error) {
-                    this.rpcManager.markEndpointError('hydradx', hydradxEndpoint, error);
+                    this.rpcManager.markEndpointError(NETWORKS_SUPPORTED.HYDRA_DX, hydradxEndpoint, error);
                 }
                 // Try next endpoint
-                const nextHydradxEndpoint = this.rpcManager.getEndpoint('hydradx');
+                const nextHydradxEndpoint = this.rpcManager.getEndpoint(NETWORKS_SUPPORTED.HYDRA_DX);
                 this.connections.hydradx = await connectPolkadotjs(nextHydradxEndpoint);
             }
             

@@ -4,6 +4,7 @@ import {
     polkadot,
     hydration 
 } from '@polkadot-api/descriptors';
+import { NETWORKS_SUPPORTED } from '../../services/constants';
 import RpcConnection from './Rpc/RpcConnection';
 import { ApiPromise } from '@polkadot/api';
 
@@ -46,12 +47,12 @@ export function createHydrationConnection(connection: { api: TypedApi<any>; clie
 }
 
 // Chain-specific connect functions with proper return types
-export async function connectPapi(rpcUrl: string, chainType: 'asset-hub'): Promise<PapiConnection<typeof polkadot_asset_hub>>;
-export async function connectPapi(rpcUrl: string, chainType: 'polkadot'): Promise<PapiConnection<typeof polkadot>>;
-export async function connectPapi(rpcUrl: string, chainType: 'hydration'): Promise<PapiConnection<typeof hydration>>;
+export async function connectPapi(rpcUrl: string, chainType: typeof NETWORKS_SUPPORTED.ASSET_HUB): Promise<PapiConnection<typeof polkadot_asset_hub>>;
+export async function connectPapi(rpcUrl: string, chainType: typeof NETWORKS_SUPPORTED.POLKADOT): Promise<PapiConnection<typeof polkadot>>;
+export async function connectPapi(rpcUrl: string, chainType: typeof NETWORKS_SUPPORTED.HYDRA_DX): Promise<PapiConnection<typeof hydration>>;
 export async function connectPapi(
     rpcUrl: string, 
-    chainType: 'asset-hub' | 'polkadot' | 'hydration'
+    chainType: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.POLKADOT | typeof NETWORKS_SUPPORTED.HYDRA_DX
 ): Promise<PapiConnection<SupportedChains>> {
     const papiConn = RpcConnection.getInstance('papi');
     const result = await papiConn.connect(rpcUrl, chainType);
@@ -61,11 +62,11 @@ export async function connectPapi(
     }
     
     switch (chainType) {
-        case 'asset-hub':
+        case NETWORKS_SUPPORTED.ASSET_HUB:
             return createAssetHubConnection(result);
-        case 'polkadot':
+        case NETWORKS_SUPPORTED.POLKADOT:
             return createPolkadotConnection(result);
-        case 'hydration':
+        case NETWORKS_SUPPORTED.HYDRA_DX:
             return createHydrationConnection(result);
         default:
             throw new Error(`Unsupported chain type: ${chainType}`);

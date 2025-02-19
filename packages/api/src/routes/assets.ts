@@ -58,7 +58,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/find-route', async (req: Request, res: Response) => {
     try {
         // Validate request body
-        const { fromAsset, toAsset, amountIn } = req.body;
+        const { fromAsset, toAsset, amountIn, dex } = req.body;
 
         // Get cached token graph
         const tokenGraph = CacheService.getInstance().get<TokenGraph>(CACHE_KEYS.TOKEN_GRAPH);
@@ -79,7 +79,8 @@ router.post('/find-route', async (req: Request, res: Response) => {
         const route = await router.findBestRoute(
             fromAsset,
             toAsset,
-            amountIn
+            amountIn,
+            dex
         );
 
         if (!route) {

@@ -5,7 +5,11 @@ export const CACHE_KEYS = {
     ASSET_HUB_ROUTER: 'asset_hub_router'
 };
 
-export const NETWORKS_SUPPORTED = ['polkadot'];
+export const NETWORKS_SUPPORTED = {
+  ASSET_HUB: 'asset_hub',
+  HYDRA_DX: 'hydra_dx',
+  POLKADOT: 'polkadot'
+} as const;
 
 export const AH_RPC_URL = 'wss://asset-hub-polkadot.dotters.network';
 //TEST_RPC
@@ -24,7 +28,7 @@ export const HEALTH_CHECK = {
 } as const;
 
 export const RPC_ENDPOINTS =  {
-    assetHub: {
+  [NETWORKS_SUPPORTED.ASSET_HUB]: {
       endpoints: [
         // Primary endpoints (major providers)
         { url: 'wss://polkadot-asset-hub-rpc.polkadot.io', priority: 1, isActive: true }, // Parity (Official)
@@ -45,7 +49,7 @@ export const RPC_ENDPOINTS =  {
         timeout: HEALTH_CHECK.TIMEOUT,
       },
     },
-    hydradx: {
+    [NETWORKS_SUPPORTED.HYDRA_DX]: {
       endpoints: [
         // Primary endpoints (major providers)
         { url: 'wss://rpc.hydradx.cloud', priority: 1, isActive: true },          // Galactic Council (Official)
