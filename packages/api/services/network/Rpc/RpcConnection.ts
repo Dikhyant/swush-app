@@ -3,7 +3,8 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { createClient, PolkadotClient, TypedApi } from 'polkadot-api';
 import { getWsProvider } from 'polkadot-api/ws-provider/node';
 import { withPolkadotSdkCompat } from 'polkadot-api/polkadot-sdk-compat';
-import { polkadot_asset_hub, polkadot, hydration } from '@polkadot-api/descriptors';
+import { NETWORKS_SUPPORTED } from '../../constants';
+import { CHAIN_DESCRIPTORS, NetworkType, PapiConnection, SupportedChains } from '../types';
 
 /**
  * Example usage:
@@ -22,11 +23,11 @@ const papiApi = papiConn.getApi();
 
 type ApiType = 'polkadotjs' | 'papi';
 
-type ApiReturnType = ApiPromise | TypedApi<any> | { api: TypedApi<any>, client: PolkadotClient };
+type ApiReturnType = ApiPromise | PapiConnection;
 
 interface IApiWrapper {
-  connect(rpcUrl: string, chainType?: 'asset-hub' | 'polkadot' | 'hydration'): Promise<ApiReturnType>;
-  getApi(): ApiPromise | TypedApi<any> | null;
+  connect(rpcUrl: string, chainType?: NetworkType): Promise<ApiReturnType>;
+  getApi(): ApiPromise | TypedApi<SupportedChains> | null;
   getSigner(): any;
   disconnect(): Promise<void>;
 }
@@ -82,27 +83,23 @@ class PolkadotApiWrapper implements IApiWrapper {
 }
 
 class PapiWrapper implements IApiWrapper {
-  private client: ReturnType<typeof createClient> | null = null;
-  private typedApi: TypedApi<any> | null = null;
+  private client: PolkadotClient | null = null;
+  private typedApi: TypedApi<SupportedChains> | null = null;
   private currentUrl: string | null = null;
   private signer: any = null;
 
-  async connect(rpcUrl: string, chainType: 'asset-hub' | 'polkadot' | 'hydration' = 'polkadot'): Promise<{ api: TypedApi<any>, client: PolkadotClient }> {
+  async connect(rpcUrl: string, chainType: NetworkType = NETWORKS_SUPPORTED.POLKADOT): Promise<PapiConnection> {
     try {
       if (!this.client || this.currentUrl !== rpcUrl) {
         const wsProvider = getWsProvider(rpcUrl);
         this.client = createClient(withPolkadotSdkCompat(wsProvider));
         
-        const chainDescriptor = (() => {
-          switch (chainType) {
-            case 'asset-hub': return polkadot_asset_hub;
-            case 'polkadot': return polkadot;
-            case 'hydration': return hydration;
-            default: throw new Error(`Unsupported chain type: ${chainType}`);
-          }
-        })();
+        const chainDescriptor = CHAIN_DESCRIPTORS[chainType];
+        if (!chainDescriptor) {
+          throw new Error(`Unsupported chain type: ${chainType}`);
+        }
         
-        this.typedApi = this.client.getTypedApi(chainDescriptor);
+        this.typedApi = this.client.getTypedApi(chainDescriptor) as TypedApi<SupportedChains>;
         this.currentUrl = rpcUrl;
         console.log(`Connected to ${rpcUrl} using PAPI`);
       }
@@ -132,7 +129,7 @@ class PapiWrapper implements IApiWrapper {
     this.currentUrl = null;
   }
 
-  getApi(): TypedApi<any> | null {
+  getApi(): TypedApi<SupportedChains> | null {
     return this.typedApi;
   }
 
@@ -169,7 +166,7 @@ class RpcConnection {
     this.instances.clear();
   }
 
-  public async connect(rpcUrl: string, chainType?: 'asset-hub' | 'polkadot' | 'hydration'): Promise<ApiReturnType> {
+  public async connect(rpcUrl: string, chainType?: NetworkType): Promise<ApiReturnType> {
     return this.apiWrapper.connect(rpcUrl, chainType);
   }
 
