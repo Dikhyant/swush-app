@@ -3,7 +3,7 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { TokenGraph } from './TokenGraph';
 import { TradeRouterService } from './TradeRouterService';
 import { CacheService } from '../../cache/CacheService';
-import { CACHE_KEYS } from '../../constants';
+import { CACHE_KEYS, NUMBER_FORMAT_OPTIONS } from '../../constants';
 import { Asset } from '../types';
 import { convertToPlank, formatAmount } from '../utils';
 
@@ -119,17 +119,25 @@ export class AssetHubRouter {
 
             if (!trade) return null;
 
-            // Format amounts with UI-friendly options
-            const formatOptions = { round: 2, trim: true, commify: true };
+            // Use constant format options
+            const formatOptions = NUMBER_FORMAT_OPTIONS;
+
+            const formattedAmountIn = formatAmount(trade.amountIn.toString(), fromAsset.metadata.decimals, formatOptions);
+            const formattedAmountOut = formatAmount(trade.amountOut.toString(), toAsset.metadata.decimals, formatOptions);
+
+            if (!formattedAmountIn || !formattedAmountOut) {
+                console.error('Error formatting amounts for HydraDX quote');
+                return null;
+            }
 
             return {
                 path: [fromAssetId, toAssetId],
-                expectedOutput: formatAmount(trade.amountOut.toString(), toAsset.metadata.decimals, formatOptions),
+                expectedOutput: formattedAmountOut,
                 hops: [{
                     from: fromAssetId,
                     to: toAssetId,
-                    amountIn: formatAmount(trade.amountIn.toString(), fromAsset.metadata.decimals, formatOptions)?.decimal,
-                    amountOut: formatAmount(trade.amountOut.toString(), toAsset.metadata.decimals, formatOptions)?.decimal
+                    amountIn: formattedAmountIn.decimal,
+                    amountOut: formattedAmountOut.decimal
                 }],
                 dex: 'hydraDx'
             };
@@ -181,8 +189,8 @@ export class AssetHubRouter {
                 return null;
             }
 
-            // Format options for UI display
-            const formatOptions = { round: 6, trim: true, commify: true };
+            // Use constant format options
+            const formatOptions = NUMBER_FORMAT_OPTIONS;
 
             // Calculate quotes for each hop
             for (let i = 0; i < path.length - 1; i++) {
@@ -201,11 +209,19 @@ export class AssetHubRouter {
                     return null;
                 }
 
+                const formattedAmountIn = formatAmount(currentAmount.toString(), fromAsset.metadata.decimals, formatOptions);
+                const formattedAmountOut = formatAmount(quote.toString(), toAsset.metadata.decimals, formatOptions);
+
+                if (!formattedAmountIn || !formattedAmountOut) {
+                    console.error('Error formatting amounts for hop');
+                    return null;
+                }
+
                 hops.push({
                     from: path[i],
                     to: path[i + 1],
-                    amountIn: formatAmount(currentAmount.toString(), fromAsset.metadata.decimals, formatOptions)?.decimal,
-                    amountOut: formatAmount(quote.toString(), toAsset.metadata.decimals, formatOptions)?.decimal
+                    amountIn: formattedAmountIn.decimal,
+                    amountOut: formattedAmountOut.decimal
                 });
 
                 currentAmount = quote;
@@ -214,9 +230,15 @@ export class AssetHubRouter {
             // Get final asset for decimals calculation
             const finalAsset = pathAssets[pathAssets.length - 1]!;
             
+            const finalAmount = formatAmount(currentAmount.toString(), finalAsset.metadata.decimals, formatOptions);
+            if (!finalAmount) {
+                console.error('Error formatting final amount');
+                return null;
+            }
+
             return {
                 path,
-                expectedOutput: formatAmount(currentAmount.toString(), finalAsset.metadata.decimals, formatOptions),
+                expectedOutput: finalAmount,
                 hops,
                 dex: 'assetHub'
             };
