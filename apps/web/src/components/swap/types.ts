@@ -16,6 +16,7 @@ export interface SwapHistoryItem {
 }
 
 export interface TokenInfo {
+  id: string;
   name: string;
   symbol: string;
   icon: string;
@@ -54,4 +55,20 @@ export interface WalletButtonProps {
   setWalletAddress: (value: string) => void;
   variant?: 'default' | 'outline' | 'ghost';
   className?: string;
+}
+
+export interface SwapFieldProps {
+  type: 'input' | 'output';
+  token: TokenInfo;
+  amount: string;
+  balance: string;
+  onTokenSelect: (token: TokenInfo) => void;
+  onAmountChange?: (value: string) => void;
+  openDialog: boolean;
+  setOpenDialog: (value: boolean) => void;
+  availableTokens: TokenInfo[];
+  percentageOptions?: Array<{ label: string; value: number }>;
+  onPercentageSelect?: (value: number) => void;
+  isLoading?: boolean;
+  error?: string | null;
 } 

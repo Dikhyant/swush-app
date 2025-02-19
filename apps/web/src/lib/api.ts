@@ -15,6 +15,39 @@ export interface AssetWithId extends Asset {
   id: string;
 }
 
+// New types for route finding and balances
+export interface RouteQuote {
+  path: string[];
+  expectedOutput: {
+    raw: string;
+    decimal: string;
+  };
+  hops: {
+    from: string;
+    to: string;
+    amountIn: string;
+    amountOut: string;
+  }[];
+  dex: 'assetHub' | 'hydraDx';
+}
+
+export interface Balance {
+  free: string;
+  reserved: string;
+  frozen: string;
+  total: string;
+}
+
+export interface BatchBalanceResponse {
+  status: 'success' | 'error';
+  request: { 
+    address: string; 
+    assetId: string; 
+  };
+  data?: Balance;
+  error?: string;
+}
+
 export const api = {
   assets: {
     getAll: async (forceRefresh = false): Promise<AssetWithId[]> => {
@@ -31,6 +64,77 @@ export const api = {
       
       if (result.status === 'error' || !result.data) {
         throw new Error(result.message || 'Failed to fetch assets');
+      }
+
+      return result.data;
+    },
+
+    findRoute: async (params: {
+      fromAsset: string;
+      toAsset: string;
+      amountIn: string;
+    }): Promise<RouteQuote> => {
+      const response = await fetch(`${API_BASE_URL}/assets/find-route`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to find route');
+      }
+
+      const result: ApiResponse<RouteQuote> = await response.json();
+      
+      if (result.status === 'error' || !result.data) {
+        throw new Error(result.message || 'Failed to find route');
+      }
+
+      return result.data;
+    }
+  },
+
+  balances: {
+    get: async (address: string, assetId: string): Promise<Balance> => {
+      const response = await fetch(`${API_BASE_URL}/balances/${address}/${assetId}`);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch balance');
+      }
+
+      const result: ApiResponse<Balance> = await response.json();
+      
+      if (result.status === 'error' || !result.data) {
+        throw new Error(result.message || 'Failed to fetch balance');
+      }
+
+      return result.data;
+    },
+
+    batch: async (params: {
+      requests: Array<{ address: string; assetId: string; }>;
+    }): Promise<BatchBalanceResponse[]> => {
+      const response = await fetch(`${API_BASE_URL}/balances/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch balances');
+      }
+
+      const result: ApiResponse<BatchBalanceResponse[]> = await response.json();
+      
+      if (result.status === 'error' || !result.data) {
+        throw new Error(result.message || 'Failed to fetch balances');
       }
 
       return result.data;

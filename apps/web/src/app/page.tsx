@@ -1,12 +1,13 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { History } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Toaster, toast } from 'react-hot-toast'
+import debounce from 'lodash.debounce'
 import { api } from '@/lib/api'
-import type { AssetWithId } from '@/lib/api'
+import type { AssetWithId, RouteQuote } from '@/lib/api'
 import {
   ArrowSymbolDown,
   WalletMenu,
@@ -17,17 +18,19 @@ import {
   SwapAction,
   WalletButton,
   SigningStep,
-  calculateOutputAmount,
   calculateMinimumReceived,
   mockBlockchainTransaction
 } from '@/components/swap'
 import type { TokenInfo } from '@/components/swap/types'
+import {
+  calculateOutputAmount
+} from '@/components/swap'
 
 export default function SwapPage() {
   // State management
   const [inputToken, setInputToken] = useState<TokenInfo | null>(null)
   const [outputToken, setOutputToken] = useState<TokenInfo | null>(null)
-  const [inputAmount, setInputAmount] = useState('50')
+  const [inputAmount, setInputAmount] = useState('0')
   const [outputAmount, setOutputAmount] = useState('0')
   const [slippageTolerance, setSlippageTolerance] = useState(0.5)
   const [transactionDeadline, setTransactionDeadline] = useState(20)
@@ -64,6 +67,18 @@ export default function SwapPage() {
   const [assets, setAssets] = useState<AssetWithId[]>([])
   const [openInputDialog, setOpenInputDialog] = useState(false)
   const [openOutputDialog, setOpenOutputDialog] = useState(false)
+  const [routeState, setRouteState] = useState<{
+    isLoading: boolean;
+    error: string | null;
+    data: RouteQuote | null;
+  }>({
+    isLoading: false,
+    error: null,
+    data: null
+  });
+
+  const [inputBalance, setInputBalance] = useState('0');
+  const [outputBalance, setOutputBalance] = useState('0');
 
   // Effects
   useEffect(() => {
@@ -79,6 +94,7 @@ export default function SwapPage() {
           );
           if (defaultInput) {
             setInputToken({
+              id: defaultInput.id,
               name: defaultInput.metadata.name,
               symbol: defaultInput.metadata.symbol,
               icon: defaultInput.metadata.symbol.charAt(0),
@@ -88,6 +104,7 @@ export default function SwapPage() {
             const firstAsset = fetchedAssets[0];
             if (firstAsset) {
               setInputToken({
+                id: firstAsset.id,
                 name: firstAsset.metadata.name,
                 symbol: firstAsset.metadata.symbol,
                 icon: firstAsset.metadata.symbol.charAt(0),
@@ -102,6 +119,7 @@ export default function SwapPage() {
           );
           if (defaultOutput) {
             setOutputToken({
+              id: defaultOutput.id,
               name: defaultOutput.metadata.name,
               symbol: defaultOutput.metadata.symbol,
               icon: defaultOutput.metadata.symbol.charAt(0),
@@ -111,6 +129,7 @@ export default function SwapPage() {
             const secondAsset = fetchedAssets[1];
             if (secondAsset) {
               setOutputToken({
+                id: secondAsset.id,
                 name: secondAsset.metadata.name,
                 symbol: secondAsset.metadata.symbol,
                 icon: secondAsset.metadata.symbol.charAt(0),
@@ -127,12 +146,120 @@ export default function SwapPage() {
     fetchAssets();
   }, []);
 
+  // Fetch route and update output amount
+  const fetchRouteAndUpdateOutput = async () => {
+    if (!inputToken || !outputToken || !inputAmount || parseFloat(inputAmount) <= 0) {
+      setOutputAmount('0');
+      setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
+      return;
+    }
+
+    // Set loading state immediately
+    setRouteState(prev => ({ ...prev, isLoading: true, error: null }));
+    // Clear previous output amount while loading
+    setOutputAmount('0');
+
+    try {
+      const route = await api.assets.findRoute({
+        fromAsset: inputToken.id,
+        toAsset: outputToken.id,
+        amountIn: inputAmount
+      });
+
+      // Only update if the input amount hasn't changed during the request
+      setRouteState({
+        isLoading: false,
+        error: null,
+        data: route
+      });
+      setOutputAmount(route.expectedOutput.decimal);
+    } catch (error: unknown) {
+      console.error('Failed to fetch route:', error);
+      let errorMessage = 'Failed to find route';
+      
+      if (error instanceof Error && error.message.includes('no route found')) {
+        errorMessage = `No route available from ${inputToken.symbol} to ${outputToken.symbol}`;
+      }
+
+      setRouteState({
+        isLoading: false,
+        error: errorMessage,
+        data: null
+      });
+      setOutputAmount('0');
+    }
+  };
+
+  // Debounced route fetch with shorter delay
+  const debouncedFetchRoute = useCallback(
+    debounce((amount: string) => {
+      if (parseFloat(amount) > 0) {
+        fetchRouteAndUpdateOutput();
+      } else {
+        setOutputAmount('0');
+        setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
+      }
+    }, 300), // Reduced from 500ms to 300ms for better responsiveness
+    [inputToken?.id, outputToken?.id]
+  );
+
+  // Fetch balances
+  const fetchBalances = async () => {
+    if (!isConnected || !walletAddress || !inputToken?.id || !outputToken?.id) return;
+
+    try {
+      const response = await api.balances.batch({
+        requests: [
+          { address: walletAddress, assetId: inputToken.id },
+          { address: walletAddress, assetId: outputToken.id }
+        ]
+      });
+
+      response.forEach(result => {
+        if (result.status === 'success' && result.data) {
+          if (result.request.assetId === inputToken.id) {
+            setInputBalance(result.data.free);
+          } else if (result.request.assetId === outputToken.id) {
+            setOutputBalance(result.data.free);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Failed to fetch balances:', error);
+      toast.error('Failed to fetch balances');
+    }
+  };
+
+  // Effect for route updates
+  useEffect(() => {
+    if (inputToken && outputToken && inputAmount) {
+      debouncedFetchRoute(inputAmount);
+    }
+  }, [inputToken, outputToken, inputAmount]);
+
+  // Effect for balance updates
+  useEffect(() => {
+    if (isConnected && walletAddress) {
+      fetchBalances();
+      // Optional: Set up periodic refresh
+      const interval = setInterval(fetchBalances, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isConnected, walletAddress, inputToken?.id, outputToken?.id]);
+
   // Event handlers
   const handleInputChange = (value: string) => {
-    setInputAmount(value)
-    setOutputAmount(calculateOutputAmount(value))
-    setInsufficientBalance(parseFloat(value) > balance)
-  }
+    setInputAmount(value);
+    // Show loading state immediately
+    if (value && parseFloat(value) > 0) {
+      setRouteState(prev => ({ ...prev, isLoading: true }));
+      debouncedFetchRoute(value);
+    } else {
+      setOutputAmount('0');
+      setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
+    }
+    setInsufficientBalance(parseFloat(value) > parseFloat(inputBalance));
+  };
 
   const handleSwap = async () => {
     if (!isConnected) {
@@ -188,6 +315,7 @@ export default function SwapPage() {
   };
 
   const tokens = assets.map(asset => ({
+    id: asset.id,
     name: asset.metadata.name,
     symbol: asset.metadata.symbol,
     icon: asset.metadata.symbol.charAt(0),
@@ -252,14 +380,14 @@ export default function SwapPage() {
               type="input"
               token={inputToken}
               amount={inputAmount}
-              balance={balance.toString()}
+              balance={inputBalance}
               onTokenSelect={(token: TokenInfo) => setInputToken(token)}
               onAmountChange={handleInputChange}
               openDialog={openInputDialog}
               setOpenDialog={setOpenInputDialog}
               availableTokens={tokens}
               percentageOptions={percentageOptions}
-              onPercentageSelect={(value) => handleInputChange((balance * value).toString())}
+              onPercentageSelect={(value) => handleInputChange((parseFloat(inputBalance) * value).toString())}
             />
 
             <ArrowSymbolDown />
@@ -268,11 +396,13 @@ export default function SwapPage() {
               type="output"
               token={outputToken}
               amount={outputAmount}
-              balance="5,678.90"
+              balance={outputBalance}
               onTokenSelect={(token: TokenInfo) => setOutputToken(token)}
               openDialog={openOutputDialog}
               setOpenDialog={setOpenOutputDialog}
               availableTokens={tokens}
+              isLoading={routeState.isLoading}
+              error={routeState.error}
             />
           </div>
 

@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { TokenButton } from '../TokenButton';
-import { AssetListProps } from '../types';
+import { AssetListProps, TokenInfo } from '../types';
 
 export const AssetList = ({ assets, onSelect, currentAsset, onClose }: AssetListProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   
-  const filteredAssets = assets.filter(asset => 
-    asset.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAssets = assets.filter((asset: TokenInfo) => 
+    asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSelect = (asset: any) => {

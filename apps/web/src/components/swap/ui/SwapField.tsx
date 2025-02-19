@@ -4,23 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TokenButton } from '../TokenButton';
 import { AssetList } from './AssetList';
-import { TokenInfo } from '../types';
+import { SwapFieldProps, TokenInfo } from '../types';
 
-interface SwapFieldProps {
-  type: 'input' | 'output';
-  token: TokenInfo;
-  amount: string;
-  balance: string;
-  onTokenSelect: (token: TokenInfo) => void;
-  onAmountChange?: (value: string) => void;
-  openDialog: boolean;
-  setOpenDialog: (open: boolean) => void;
-  availableTokens: any[];
-  percentageOptions?: Array<{ label: string; value: number; }>;
-  onPercentageSelect?: (value: number) => void;
-}
-
-export const SwapField = ({
+export function SwapField({
   type,
   token,
   amount,
@@ -32,7 +18,9 @@ export const SwapField = ({
   availableTokens,
   percentageOptions,
   onPercentageSelect,
-}: SwapFieldProps) => {
+  isLoading,
+  error
+}: SwapFieldProps) {
   const isInput = type === 'input';
   const bgColor = isInput ? 'bg-pink-500' : 'bg-blue-500';
 
@@ -108,4 +96,4 @@ export const SwapField = ({
       </div>
     </motion.div>
   );
-}; 
+} 
