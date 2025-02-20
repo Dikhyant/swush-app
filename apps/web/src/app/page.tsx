@@ -25,6 +25,7 @@ import type { TokenInfo } from '@/components/swap/types'
 import {
   calculateOutputAmount
 } from '@/components/swap'
+import { BALANCE_FETCH_TIMEOUT, ROUTE_FETCH_TIMEOUT } from '@/lib/const'
 
 export default function SwapPage() {
   // State management
@@ -199,7 +200,7 @@ export default function SwapPage() {
         setOutputAmount('0');
         setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
       }
-    }, 300), // Reduced from 500ms to 300ms for better responsiveness
+    }, ROUTE_FETCH_TIMEOUT), // Reduced from 500ms to 300ms for better responsiveness
     [inputToken?.id, outputToken?.id]
   );
 
@@ -242,7 +243,7 @@ export default function SwapPage() {
     if (isConnected && walletAddress) {
       fetchBalances();
       // Optional: Set up periodic refresh
-      const interval = setInterval(fetchBalances, 30000);
+      const interval = setInterval(fetchBalances, BALANCE_FETCH_TIMEOUT);
       return () => clearInterval(interval);
     }
   }, [isConnected, walletAddress, inputToken?.id, outputToken?.id]);

@@ -88,7 +88,7 @@ class PapiWrapper implements IApiWrapper {
   private currentUrl: string | null = null;
   private signer: any = null;
 
-  async connect(rpcUrl: string, chainType: NetworkType = NETWORKS_SUPPORTED.POLKADOT): Promise<PapiConnection> {
+  async connect(rpcUrl: string, chainType: NetworkType): Promise<PapiConnection> {
     try {
       if (!this.client || this.currentUrl !== rpcUrl) {
         const wsProvider = getWsProvider(rpcUrl);
