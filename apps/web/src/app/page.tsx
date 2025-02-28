@@ -148,8 +148,8 @@ export default function SwapPage() {
   }, []);
 
   // Fetch route and update output amount
-  const fetchRouteAndUpdateOutput = async () => {
-    if (!inputToken || !outputToken || !inputAmount || parseFloat(inputAmount) <= 0) {
+  const fetchRouteAndUpdateOutput = useCallback(async (currentInputAmount: string) => {
+    if (!inputToken || !outputToken || !currentInputAmount || parseFloat(currentInputAmount) <= 0) {
       setOutputAmount('0');
       setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
       return;
@@ -164,16 +164,18 @@ export default function SwapPage() {
       const route = await api.assets.findRoute({
         fromAsset: inputToken.id,
         toAsset: outputToken.id,
-        amountIn: inputAmount
+        amountIn: currentInputAmount
       });
 
       // Only update if the input amount hasn't changed during the request
-      setRouteState({
-        isLoading: false,
-        error: null,
-        data: route
-      });
-      setOutputAmount(route.expectedOutput.decimal);
+      if (currentInputAmount === inputAmount) {
+        setRouteState({
+          isLoading: false,
+          error: null,
+          data: route
+        });
+        setOutputAmount(route.expectedOutput.decimal);
+      }
     } catch (error: unknown) {
       console.error('Failed to fetch route:', error);
       let errorMessage = 'Failed to find route';
@@ -182,26 +184,29 @@ export default function SwapPage() {
         errorMessage = `No route available from ${inputToken.symbol} to ${outputToken.symbol}`;
       }
 
-      setRouteState({
-        isLoading: false,
-        error: errorMessage,
-        data: null
-      });
-      setOutputAmount('0');
+      // Only update state if the input amount hasn't changed
+      if (currentInputAmount === inputAmount) {
+        setRouteState({
+          isLoading: false,
+          error: errorMessage,
+          data: null
+        });
+        setOutputAmount('0');
+      }
     }
-  };
+  }, [inputToken, outputToken, inputAmount]);
 
-  // Debounced route fetch with shorter delay
+  // Debounced route fetch with race condition handling
   const debouncedFetchRoute = useCallback(
     debounce((amount: string) => {
       if (parseFloat(amount) > 0) {
-        fetchRouteAndUpdateOutput();
+        fetchRouteAndUpdateOutput(amount);
       } else {
         setOutputAmount('0');
         setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
       }
-    }, ROUTE_FETCH_TIMEOUT), // Reduced from 500ms to 300ms for better responsiveness
-    [inputToken?.id, outputToken?.id]
+    }, ROUTE_FETCH_TIMEOUT),
+    [fetchRouteAndUpdateOutput]
   );
 
   // Fetch balances
@@ -250,16 +255,22 @@ export default function SwapPage() {
 
   // Event handlers
   const handleInputChange = (value: string) => {
-    setInputAmount(value);
-    // Show loading state immediately
-    if (value && parseFloat(value) > 0) {
-      setRouteState(prev => ({ ...prev, isLoading: true }));
-      debouncedFetchRoute(value);
-    } else {
-      setOutputAmount('0');
-      setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
+    // Validate input to ensure it's a valid number
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setInputAmount(value);
+      
+      // Show loading state immediately
+      if (value && parseFloat(value) > 0) {
+        setRouteState(prev => ({ ...prev, isLoading: true }));
+        debouncedFetchRoute(value);
+      } else {
+        setOutputAmount('0');
+        setRouteState(prev => ({ ...prev, isLoading: false, error: null }));
+      }
+      
+      // Check for insufficient balance
+      setInsufficientBalance(value !== '' && parseFloat(value) > parseFloat(inputBalance));
     }
-    setInsufficientBalance(parseFloat(value) > parseFloat(inputBalance));
   };
 
   const handleSwap = async () => {
@@ -332,7 +343,16 @@ export default function SwapPage() {
   if (!inputToken || !outputToken) {
     return (
       <div className="min-h-screen w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-cyan-900 to-slate-900 flex flex-col items-center justify-center">
-        <div className="animate-pulse text-white">Loading assets...</div>
+        <div className="w-full max-w-md space-y-8">
+          <div className="h-12 w-full bg-slate-800/50 rounded-lg animate-pulse" />
+          <div className="space-y-6">
+            <div className="h-24 w-full bg-slate-800/50 rounded-lg animate-pulse" />
+            <div className="h-8 w-8 mx-auto bg-slate-800/50 rounded-full animate-pulse" />
+            <div className="h-24 w-full bg-slate-800/50 rounded-lg animate-pulse" />
+          </div>
+          <div className="h-32 w-full bg-slate-800/50 rounded-lg animate-pulse" />
+          <div className="h-12 w-full bg-slate-800/50 rounded-lg animate-pulse" />
+        </div>
       </div>
     );
   }

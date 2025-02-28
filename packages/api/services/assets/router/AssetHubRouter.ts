@@ -209,29 +209,21 @@ export class AssetHubRouter {
                 const toAsset = pathAssets[i + 1]!;
 
                 // Enhanced debug logging for XCM locations
-                console.log(`Detailed debug - From Asset (${fromAsset.metadata.symbol}):`, {
-                    raw: fromAsset.rawXcmLocation ? safeStringify(fromAsset.rawXcmLocation) : 'undefined',
-                    serialized: fromAsset.xcmLocation
-                });
+                // console.log(`Detailed debug - From Asset (${fromAsset.metadata.symbol}):`, {
+                //     raw: fromAsset.rawXcmLocation ? safeStringify(fromAsset.rawXcmLocation) : 'undefined',
+                //     serialized: fromAsset.xcmLocation
+                // });
 
-                console.log(`Detailed debug - To Asset (${toAsset.metadata.symbol}):`, {
-                    raw: toAsset.rawXcmLocation ? safeStringify(toAsset.rawXcmLocation) : 'undefined',
-                    serialized: toAsset.xcmLocation
-                });
+                // console.log(`Detailed debug - To Asset (${toAsset.metadata.symbol}):`, {
+                //     raw: toAsset.rawXcmLocation ? safeStringify(toAsset.rawXcmLocation) : 'undefined',
+                //     serialized: toAsset.xcmLocation
+                // });
 
                 // Extract the actual XCM location from the asset objects
                 // const fromXcmLocation = fromAsset.rawXcmLocation;
                 const fromXcmLocation = fromAsset.rawXcmLocation;
                 const toXcmLocation = toAsset.rawXcmLocation;
                 
-                // Add comparison debug to verify difference
-                console.log('XCM Location Comparison:');
-                console.log('Parsed fromXcmLocation:', safeParse<XcmV4Location>(fromAsset.xcmLocation));
-                console.log('Raw fromXcmLocation:', fromAsset.rawXcmLocation);
-
-                // const fromAssetInfo = await this.api.query.ForeignAssets.Asset.getValue(fromXcmLocation);   
-                // console.log('fromAssetInfo', fromAssetInfo);
-
                 const toAssetInfo = await this.api.query.ForeignAssets.Asset.getValue(toXcmLocation);   
                 console.log('toAssetInfo', toAssetInfo);
 

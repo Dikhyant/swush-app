@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { TokenButton } from '../TokenButton';
 import { AssetList } from './AssetList';
 import { SwapFieldProps, TokenInfo } from '../types';
+import { Loader2 } from 'lucide-react';
 
 export function SwapField({
   type,
@@ -23,6 +24,16 @@ export function SwapField({
 }: SwapFieldProps) {
   const isInput = type === 'input';
   const bgColor = isInput ? 'bg-pink-500' : 'bg-blue-500';
+
+  // Handle input change with validation
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Only allow valid number inputs
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      onAmountChange?.(value);
+    }
+  };
 
   return (
     <motion.div 
@@ -83,17 +94,31 @@ export function SwapField({
             />
           </DialogContent>
         </Dialog>
-        <div className="flex-1">
+        <div className="flex-1 relative">
           <Input
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={amount}
-            onChange={(e) => onAmountChange?.(e.target.value)}
+            onChange={handleInputChange}
             readOnly={!isInput}
             className="border-0 bg-transparent text-2xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             placeholder="0"
           />
+          {/* TODO: loading not required for input field 
+          {!isInput && isLoading && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <Loader2 className="h-4 w-4 text-slate-400 animate-spin" />
+            </div>
+          )}
+          */}
         </div>
       </div>
+      
+      {error && (
+        <div className="mt-2 text-sm text-red-400">
+          {error}
+        </div>
+      )}
     </motion.div>
   );
 } 
