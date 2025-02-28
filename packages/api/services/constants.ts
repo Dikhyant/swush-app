@@ -27,6 +27,14 @@ export const HEALTH_CHECK = {
   REACTIVATION: 10 * 60 * 1000 // Reactivate after 10 minutes, wait for time to recover
 } as const;
 
+// Connection management constants
+export const CONNECTION_CONFIG = {
+  MAX_RECONNECT_ATTEMPTS: 5,
+  BASE_RECONNECT_DELAY: 1000, // 1 second base delay
+  MAX_RECONNECT_DELAY: 30000, // Maximum delay of 30 seconds
+  ATTEMPT_RESET_TIMEOUT: 60000 // Reset attempts after 1 minute
+} as const;
+
 export const RPC_ENDPOINTS =  {
   [NETWORKS_SUPPORTED.ASSET_HUB]: {
       endpoints: [

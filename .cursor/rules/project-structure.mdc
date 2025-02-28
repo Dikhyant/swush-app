@@ -1,39 +1,9 @@
 ---
 description: high-level overview of codebase structure
 globs: 
+alwaysApply: false
 ---
 high-level overview of your codebase structure:
-
-```
-swush-me-app/
-├── apps/
-│   └── web/                 # Next.js web application
-│       └── src/
-│           ├── app/        # Next.js App Router pages
-│           └── lib/        # Shared utilities and API clients
-│
-├── packages/
-│   ├── api/                # Core API and Services
-│   │   ├── services/
-│   │   │   ├── assets/    # Asset-related services
-│   │   │   │   ├── AssetService.ts       # Main asset management
-│   │   │   │   ├── types.ts    
-│   │   │   |   └── router/
-│   │   │   │        ├── AssetHubRouter.ts     # Asset Hub routing logic
-│   │   │   │        ├── TokenGraph.ts         # Token relationship graph
-│   │   │   ├── network/
-│   │   │   │   ├── ConnectionManager.ts   # Network connection handling
-│   │   │   │   └── TradeRouterService.ts  # Trading route management
-│   │   │   └── cache/
-│   │   │       └── CacheService.ts       # Caching layer
-│   │   └── src/
-│   │       └── routes/    # API endpoints
-│   │
-│   ├── core/              # Shared core functionality
-│   │   └── src/
-│   │
-│   └── .papi/             # Polkadot API related code
-```
 
 Key Architecture Points:
 1. **Monorepo Structure**:
