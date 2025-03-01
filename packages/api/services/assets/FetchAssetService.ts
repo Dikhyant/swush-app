@@ -185,16 +185,15 @@ export class FetchAssetService {
         }
 
         console.log('All assets and metadata fetched and cached');
-        const mergedAssets = await this.fetchPoolsPapi(nativeAssetsMap, foreignAssetsMap);
+        const mergedAssets = await this.fetchPoolsPapi(api, nativeAssetsMap, foreignAssetsMap);
         return mergedAssets;
     }
 
     public async fetchPoolsPapi(
+        api: TypedApi<typeof polkadot_asset_hub>,
         nativeAssetsInfo: Map<string, Asset>,
         foreignAssetsInfo: Map<string, Asset>
     ) {
-        const api = this.connectionManager.getAssetHubApi();
-        if (!api) throw new Error('API not initialized');
 
         const pools = await api.query.AssetConversion.Pools.getEntries();
 
