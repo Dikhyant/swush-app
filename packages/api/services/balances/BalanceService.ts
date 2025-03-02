@@ -56,7 +56,7 @@ export class BalanceService {
             const result = await api.query.Assets.Account.getValue(assetId, address);
             return result as RawBalanceResponse;
         } else if (asset.assetType === AssetType.Foreign) {
-            const result = await api.query.ForeignAssets.Account.getValue(asset.xcmLocation, address);
+            const result = await api.query.ForeignAssets.Account.getValue(asset.rawXcmLocation, address);
             return result as RawBalanceResponse;
         }
 
