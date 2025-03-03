@@ -8,6 +8,7 @@ import { Toaster, toast } from 'react-hot-toast'
 import debounce from 'lodash.debounce'
 import { api } from '@/lib/api'
 import type { AssetWithId, RouteQuote } from '@/lib/api'
+//import Link from 'next/link'
 import {
   ArrowSymbolDown,
   WalletMenu,
@@ -373,6 +374,9 @@ export default function SwapPage() {
         >
           <History className="w-4 h-4" />
         </Button>
+        {/* <Link href="/sign-test" className="text-sm text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md transition-colors">
+          Test Signing
+        </Link> */}
         {!isConnected ? (
           <WalletButton
             isConnected={isConnected}

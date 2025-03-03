@@ -12,6 +12,7 @@ import {
   SubWallet,
   TalismanWallet,
   WalletAccount,
+  getWalletBySource,
 } from '@talismn/connect-wallets';
 import { toast } from 'react-hot-toast';
 import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
@@ -29,6 +30,91 @@ const NETWORK_CONFIG = {
     prefix: 2, // Kusama SS58 prefix
     assetHubPrefix: 2 // Asset Hub Kusama uses the same prefix
   }
+};
+
+// New component for signing messages
+export const SignMessageButton = () => {
+  const [isSigning, setIsSigning] = useState(false);
+  const [signedMessage, setSignedMessage] = useState<string | null>(null);
+
+  // Sign a message using the connected wallet
+  const signMessage = async () => {
+    try {
+      setIsSigning(true);
+      
+      // Get the wallet source and address from localStorage
+      const walletSource = localStorage.getItem('walletSource');
+      const walletAddress = localStorage.getItem('walletAddress');
+      
+      if (!walletSource || !walletAddress) {
+        throw new Error('Wallet not connected');
+      }
+      
+      // Get the wallet by source
+      const wallet = getWalletBySource(walletSource);
+      
+      if (!wallet) {
+        throw new Error('Wallet not found');
+      }
+      
+      // Enable the wallet if not already enabled
+      if (!wallet.extension) {
+        await wallet.enable('Swush');
+      }
+      
+      // Get the signer from the wallet
+      const signer = wallet.signer;
+      
+      if (!signer) {
+        throw new Error('Signer not available');
+      }
+      
+      // The message to sign
+      const message = 'Hello from Swush!';
+      
+      // Sign the message
+      const signRaw = signer.signRaw;
+      
+      if (!signRaw) {
+        throw new Error('signRaw not available on signer');
+      }
+      
+      const { signature } = await signRaw({
+        address: walletAddress,
+        data: message,
+        type: 'bytes'
+      });
+      
+      console.log('Message signed successfully:', signature);
+      setSignedMessage(signature);
+      toast.success('Message signed successfully!');
+      
+    } catch (error) {
+      console.error('Error signing message:', error);
+      toast.error(`Error signing message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSigning(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        onClick={signMessage}
+        variant="outline"
+        disabled={isSigning}
+      >
+        {isSigning ? 'Signing...' : 'Sign Message'}
+      </Button>
+      
+      {signedMessage && (
+        <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-hidden">
+          <p className="font-semibold">Signature:</p>
+          <p className="break-all">{signedMessage}</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const WalletButton = ({ 

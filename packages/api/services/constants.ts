@@ -44,7 +44,7 @@ export const RPC_ENDPOINTS =  {
         // Secondary endpoints (reliable providers)
         { url: 'wss://asset-hub-polkadot.dotters.network', priority: 2, isActive: true }, // IBP2
         { url: 'wss://sys.ibp.network/asset-hub-polkadot', priority: 1, isActive: true }, // IBP1
-  //      { url: 'wss://rpc-asset-hub-polkadot.luckyfriday.io', priority: 4, isActive: true }, // LuckyFriday
+        { url: 'wss://rpc-asset-hub-polkadot.luckyfriday.io', priority: 4, isActive: true }, // LuckyFriday
   
         // Tertiary endpoints (additional providers)
    //      { url: 'wss://asset-hub-polkadot-rpc.dwellir.com', priority: 5, isActive: true }, // Dwellir (Main)
@@ -61,14 +61,14 @@ export const RPC_ENDPOINTS =  {
       endpoints: [
         // Primary endpoints (major providers)
         { url: 'wss://rpc.hydradx.cloud', priority: 1, isActive: true },          // Galactic Council (Official)
-     //   { url: 'wss://hydradx-rpc.dwellir.com', priority: 2, isActive: true },    // Dwellir
+        { url: 'wss://hydradx-rpc.dwellir.com', priority: 2, isActive: true },    // Dwellir
         
         // Secondary endpoints (reliable providers)
-        { url: 'wss://hydradx.paras.ibp.network', priority: 2, isActive: true },  // IBP1
+     //   { url: 'wss://hydradx.paras.ibp.network', priority: 2, isActive: true },  // IBP1
         { url: 'wss://hydration.dotters.network', priority: 3, isActive: true },   // IBP2
         
         // Tertiary endpoint
-       // { url: 'wss://rpc.helikon.io/hydradx', priority: 5, isActive: true }      // Helikon
+       { url: 'wss://rpc.helikon.io/hydradx', priority: 4, isActive: true }      // Helikon
       ],
       currentIndex: 0,
       healthCheck: {
