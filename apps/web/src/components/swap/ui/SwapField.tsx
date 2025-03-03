@@ -7,6 +7,30 @@ import { AssetList } from './AssetList';
 import { SwapFieldProps, TokenInfo } from '../types';
 import { Loader2 } from 'lucide-react';
 
+// Helper function to format balance display
+function formatBalance(balance: string | undefined, isLoading: boolean | undefined): string {
+  if (isLoading === true) return '...';
+  if (!balance || balance === '0') return '0';
+  
+  const numBalance = parseFloat(balance);
+  if (numBalance < 0.0001 && numBalance > 0) return '< 0.0001';
+  
+  // For numbers less than 1, show more decimals
+  if (numBalance < 1) {
+    return numBalance.toFixed(4);
+  }
+  
+  // For larger numbers, show fewer decimals
+  if (numBalance > 1000000) {
+    return `${(numBalance / 1000000).toFixed(2)}M`;
+  }
+  if (numBalance > 1000) {
+    return `${(numBalance / 1000).toFixed(2)}K`;
+  }
+  
+  return numBalance.toFixed(2);
+}
+
 export function SwapField({
   type,
   token,
@@ -24,6 +48,7 @@ export function SwapField({
 }: SwapFieldProps) {
   const isInput = type === 'input';
   const bgColor = isInput ? 'bg-pink-500' : 'bg-blue-500';
+  const displayBalance = formatBalance(balance, isLoading);
 
   // Handle input change with validation
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,7 +71,10 @@ export function SwapField({
         <span className="font-semibold text-slate-300">{isInput ? 'Pay' : 'Receive'}</span>
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-400">Balance: </span>
-          <span className="text-sm font-medium text-slate-300">{balance} {token.symbol}</span>
+          <div className="flex items-center gap-1">
+            {isLoading && <Loader2 className="h-3 w-3 text-slate-400 animate-spin" />}
+            <span className="text-sm font-medium text-slate-300">{displayBalance} {token?.symbol || ''}</span>
+          </div>
         </div>
       </div>
       
@@ -59,6 +87,7 @@ export function SwapField({
               size="sm"
               onClick={() => onPercentageSelect?.(value)}
               className="text-xs font-medium bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-600 hover:text-white transition-all duration-200"
+              disabled={isLoading || !balance || parseFloat(balance) <= 0}
             >
               {label}
             </Button>

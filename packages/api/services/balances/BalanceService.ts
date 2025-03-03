@@ -48,15 +48,19 @@ export class BalanceService {
 
     private async fetchBalanceByType(asset: Asset, address: string, assetId: number): Promise<RawBalanceResponse> {
         const api = await this.ensureConnection();
-
+        //print the address and assetId
+        console.log("address", address);
+        console.log("assetId", assetId);
         if (asset.assetType === AssetType.Native) {
             if (isNaN(assetId)) {
                 throw new Error('Invalid asset ID');
             }
             const result = await api.query.Assets.Account.getValue(assetId, address);
+            console.log("balance of native asset", result);
             return result as RawBalanceResponse;
         } else if (asset.assetType === AssetType.Foreign) {
             const result = await api.query.ForeignAssets.Account.getValue(asset.rawXcmLocation, address);
+            console.log("balance of foreign asset", result);
             return result as RawBalanceResponse;
         }
 

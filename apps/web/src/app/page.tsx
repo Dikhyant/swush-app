@@ -80,6 +80,7 @@ export default function SwapPage() {
 
   const [inputBalance, setInputBalance] = useState('0');
   const [outputBalance, setOutputBalance] = useState('0');
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 
   // Effects
   useEffect(() => {
@@ -213,6 +214,7 @@ export default function SwapPage() {
   const fetchBalances = async () => {
     if (!isConnected || !walletAddress || !inputToken?.id || !outputToken?.id) return;
 
+    setIsBalanceLoading(true);
     try {
       const response = await api.balances.batch({
         requests: [
@@ -224,15 +226,17 @@ export default function SwapPage() {
       response.forEach(result => {
         if (result.status === 'success' && result.data) {
           if (result.request.assetId === inputToken.id) {
-            setInputBalance(result.data.free);
+            setInputBalance(result.data.balance.toString());
           } else if (result.request.assetId === outputToken.id) {
-            setOutputBalance(result.data.free);
+            setOutputBalance(result.data.balance.toString());
           }
         }
       });
     } catch (error) {
       console.error('Failed to fetch balances:', error);
       toast.error('Failed to fetch balances');
+    } finally {
+      setIsBalanceLoading(false);
     }
   };
 
@@ -247,7 +251,7 @@ export default function SwapPage() {
   useEffect(() => {
     if (isConnected && walletAddress) {
       fetchBalances();
-      // Optional: Set up periodic refresh
+      // Set up periodic refresh
       const interval = setInterval(fetchBalances, BALANCE_FETCH_TIMEOUT);
       return () => clearInterval(interval);
     }
@@ -409,6 +413,7 @@ export default function SwapPage() {
               availableTokens={tokens}
               percentageOptions={percentageOptions}
               onPercentageSelect={(value) => handleInputChange((parseFloat(inputBalance) * value).toString())}
+              isLoading={isBalanceLoading}
             />
 
             <ArrowSymbolDown />
@@ -422,7 +427,7 @@ export default function SwapPage() {
               openDialog={openOutputDialog}
               setOpenDialog={setOpenOutputDialog}
               availableTokens={tokens}
-              isLoading={routeState.isLoading}
+              isLoading={routeState.isLoading || isBalanceLoading}
               error={routeState.error}
             />
           </div>

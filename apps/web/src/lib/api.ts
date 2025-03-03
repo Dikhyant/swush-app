@@ -32,10 +32,10 @@ export interface RouteQuote {
 }
 
 export interface Balance {
-  free: string;
-  reserved: string;
-  frozen: string;
-  total: string;
+  balance: number;
+  status: string;
+  reason: string;
+  extra: any;
 }
 
 export interface BatchBalanceResponse {
