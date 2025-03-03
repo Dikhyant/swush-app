@@ -1,4 +1,4 @@
-import type { Asset } from '@swush/core';
+import type { Asset } from '@swush/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 

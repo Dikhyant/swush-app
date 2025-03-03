@@ -23,3 +23,16 @@ export interface RawBalanceResponse {
     DepositRefunded?: undefined;
   };
 } 
+
+export interface SystemAccountData {
+  nonce: number;
+  consumers: number;
+  providers: number;
+  sufficients: number;
+  data: {
+      free: bigint;
+      reserved: bigint;
+      frozen: bigint;
+      flags: bigint;
+  };
+}

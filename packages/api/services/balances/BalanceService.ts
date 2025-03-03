@@ -1,5 +1,5 @@
-import { Asset, AssetType, XcmV4Location } from '../assets/types';
-import { BalanceRequest, BalanceResponse, RawBalanceResponse } from './types';
+import { Asset, AssetType } from '../assets/types';
+import { BalanceRequest, BalanceResponse, RawBalanceResponse, SystemAccountData } from './types';
 import { fetchCachedAssets, formatAmount } from '../assets/utils';
 import { TypedApi } from 'polkadot-api';
 import { polkadot_asset_hub } from '@polkadot-api/descriptors';
@@ -42,22 +42,37 @@ export class BalanceService {
             throw new Error(`Asset not found: ${assetId}`);
         }
 
-        const rawBalance = await this.fetchBalanceByType(asset, address, Number(assetId));
+        const rawBalance = await this.fetchBalanceByType(asset, address, assetId);
         return this.formatBalanceResponse(rawBalance, asset);
     }
 
-    private async fetchBalanceByType(asset: Asset, address: string, assetId: number): Promise<RawBalanceResponse> {
+    private async fetchBalanceByType(asset: Asset, address: string, assetId: number | string): Promise<RawBalanceResponse> {
         const api = await this.ensureConnection();
-        //print the address and assetId
         console.log("address", address);
         console.log("assetId", assetId);
+
         if (asset.assetType === AssetType.Native) {
-            if (isNaN(assetId)) {
-                throw new Error('Invalid asset ID');
+            if (assetId === "DOT") {
+                // Handle DOT balance using System.Account
+                const accountData = await api.query.System.Account.getValue(address) as SystemAccountData;
+                console.log("balance of DOT asset", accountData);
+                
+                // Convert System.Account data to RawBalanceResponse format
+                return {
+                    balance: accountData.data.free - accountData.data.frozen,
+                    status: accountData.data.frozen > 0n ? { Frozen: undefined } : { Liquid: undefined },
+                    reason: {
+                        Sufficient: undefined
+                    }
+                } as RawBalanceResponse;
+            } else {
+                if (isNaN(Number(assetId))) {
+                    throw new Error('Invalid asset ID');
+                }
+                const result = await api.query.Assets.Account.getValue(Number(assetId), address);
+                console.log("balance of native asset", result);
+                return result as RawBalanceResponse;
             }
-            const result = await api.query.Assets.Account.getValue(assetId, address);
-            console.log("balance of native asset", result);
-            return result as RawBalanceResponse;
         } else if (asset.assetType === AssetType.Foreign) {
             const result = await api.query.ForeignAssets.Account.getValue(asset.rawXcmLocation, address);
             console.log("balance of foreign asset", result);
