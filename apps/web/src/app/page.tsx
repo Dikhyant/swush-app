@@ -17,10 +17,10 @@ import {
   WalletButton,
   calculateMinimumReceived,
 } from '@/components/swap'
-import { useSwapTokens } from '@/hooks/useSwapTokens'
-import { useTokenBalances } from '@/hooks/useTokenBalances'
-import { useSwapRoute } from '@/hooks/useSwapRoute'
-import { useSwapSteps } from '@/hooks/useSwapSteps'
+import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
+import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
+import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
+import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
 import { LoadState } from '@/components/swap/ui/LoadState'
 
 export default function SwapPage() {

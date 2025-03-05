@@ -72,7 +72,7 @@ export function SwapField({
         <div className="flex items-center gap-2">
           <span className="text-sm text-slate-400">Balance: </span>
           <div className="flex items-center gap-1">
-            {isLoading && <Loader2 className="h-3 w-3 text-slate-400 animate-spin" />}
+            {/* {isLoading && <Loader2 className="h-3 w-3 text-slate-400 animate-spin" />} */}
             <span className="text-sm font-medium text-slate-300">{displayBalance} {token?.symbol || ''}</span>
           </div>
         </div>
