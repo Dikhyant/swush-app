@@ -28,10 +28,9 @@
     "clean": "rimraf dist .papi",
     "lint": "eslint services --ext .ts",
     "test": "jest",
-    "build:descriptors": "papi",
+    "papi": "papi",
     "start": "node dist/server.js",
-    "dev:server": "tsx watch src/server.ts",
-    "postinstall": "cd $(pwd) && papi"
+    "dev:server": "tsx watch src/server.ts"
   },
   "dependencies": {
     "@acala-network/chopsticks": "^1.0.1",
