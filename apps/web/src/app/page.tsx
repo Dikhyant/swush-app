@@ -24,6 +24,7 @@ import {
 } from '@/components/swap'
 import type { TokenInfo } from '@/components/swap/types'
 import { BALANCE_FETCH_TIMEOUT, ROUTE_FETCH_TIMEOUT } from '@/lib/const'
+import { getNetworkDisplayName } from '@/lib/utils'
 
 export default function SwapPage() {
   // State management
@@ -169,7 +170,7 @@ export default function SwapPage() {
         toAsset: outputToken.id,
         amountIn: currentInputAmount
       });
-      setRouteDex(route.dex);
+      setRouteDex(getNetworkDisplayName(route.dex));
       // Only update if the input amount hasn't changed during the request
       if (currentInputAmount === inputAmount) {
         setRouteState({

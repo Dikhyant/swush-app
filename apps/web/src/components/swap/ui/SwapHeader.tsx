@@ -46,15 +46,6 @@ export const SwapHeader = ({
                   className="bg-slate-800 border-slate-700 text-white"
                 />
               </div>
-              <div className="grid gap-2">
-                <label className="text-sm text-slate-400">Transaction Deadline (minutes)</label>
-                <Input
-                  type="number"
-                  value={transactionDeadline}
-                  onChange={(e) => setTransactionDeadline(parseInt(e.target.value))}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
             </div>
           </DialogContent>
         </Dialog>

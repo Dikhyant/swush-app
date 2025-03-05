@@ -19,7 +19,7 @@ export interface RouteQuote {
         amountIn: string;
         amountOut: string;
     }[];
-    dex: 'assetHub' | 'hydraDx';
+    dex: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.HYDRA_DX;
 }
 
 export class AssetHubRouter {
@@ -149,7 +149,7 @@ export class AssetHubRouter {
                     amountIn: amountIn,
                     amountOut: formattedAmountOut.decimal
                 }],
-                dex: 'hydraDx'
+                dex: NETWORKS_SUPPORTED.HYDRA_DX
             };
         } catch (error) {
             console.error('Error getting HydraDX quote:', error);
@@ -206,20 +206,7 @@ export class AssetHubRouter {
             for (let i = 0; i < path.length - 1; i++) {
                 const fromAsset = pathAssets[i]!;
                 const toAsset = pathAssets[i + 1]!;
-
-                // Enhanced debug logging for XCM locations
-                // console.log(`Detailed debug - From Asset (${fromAsset.metadata.symbol}):`, {
-                //     raw: fromAsset.rawXcmLocation ? safeStringify(fromAsset.rawXcmLocation) : 'undefined',
-                //     serialized: fromAsset.xcmLocation
-                // });
-
-                // console.log(`Detailed debug - To Asset (${toAsset.metadata.symbol}):`, {
-                //     raw: toAsset.rawXcmLocation ? safeStringify(toAsset.rawXcmLocation) : 'undefined',
-                //     serialized: toAsset.xcmLocation
-                // });
-
-                // Extract the actual XCM location from the asset objects
-                // const fromXcmLocation = fromAsset.rawXcmLocation;
+                
                 const fromXcmLocation = fromAsset.rawXcmLocation;
                 const toXcmLocation = toAsset.rawXcmLocation;
                 
@@ -277,7 +264,7 @@ export class AssetHubRouter {
                 path,
                 expectedOutput: finalAmount,
                 hops,
-                dex: 'assetHub'
+                dex: NETWORKS_SUPPORTED.ASSET_HUB
             };
 
         } catch (error) {
