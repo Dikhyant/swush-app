@@ -16,7 +16,7 @@ import {
   SwapHeader,
   SwapField,
   SwapDetails,
-  SwapAction,
+  SubmitButtonAction,
   WalletButton,
   SigningStep,
   calculateMinimumReceived,
@@ -448,7 +448,7 @@ export default function SwapPage() {
             route={routeDex}
           />
 
-          <SwapAction
+          <SubmitButtonAction
             isConnected={isConnected}
             setIsConnected={setIsConnected}
             setWalletAddress={setWalletAddress}

@@ -9,7 +9,7 @@ export { ArrowSymbolDown } from './ui/ArrowSymbolDown'
 export { SwapHeader } from './ui/SwapHeader'
 export { SwapField } from './ui/SwapField'
 export { SwapDetails } from './ui/SwapDetails'
-export { SwapAction } from './ui/SwapAction'
+export { SubmitButtonAction } from './ui/SwapAction'
 
 // Types
 export * from './types'
