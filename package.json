@@ -15,8 +15,7 @@
     "lint": "turbo run lint",
     "clean": "turbo run clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "pnpm install --filter=@swush/api",
-    "postinstall": "pnpm run prepare && turbo run build:descriptors --filter=@swush/api"
+    "postinstall": "cd packages/api && pnpm run build:descriptors"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",
