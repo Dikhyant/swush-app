@@ -3,7 +3,6 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { createClient, PolkadotClient, TypedApi } from 'polkadot-api';
 import { getWsProvider } from 'polkadot-api/ws-provider/node';
 import { withPolkadotSdkCompat } from 'polkadot-api/polkadot-sdk-compat';
-import { NETWORKS_SUPPORTED } from '../../constants';
 import { CHAIN_DESCRIPTORS, NetworkType, PapiConnection, SupportedChains } from '../types';
 import { CONNECTION_CONFIG } from '../../constants';
 
