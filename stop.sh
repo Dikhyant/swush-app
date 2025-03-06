@@ -1,21 +1,20 @@
 #!/bin/bash
 
-# Find and kill the process running on port 3000
-PORT_3000_PID=$(lsof -ti :3000)
-if [ ! -z "$PORT_3000_PID" ]; then
-    echo "Stopping Node.js app on port 3000 (PID: $PORT_3000_PID)"
-    kill -9 $PORT_3000_PID
-else
-    echo "No application running on port 3000"
-fi
+# Function to find and kill process by port
+kill_process_on_port() {
+    PORT=$1
+    PID=$(sudo netstat -tulpn | grep ":$PORT" | awk '{print $7}' | cut -d'/' -f1)
 
-# Find and kill the process running on port 3001
-PORT_3001_PID=$(lsof -ti :3001)
-if [ ! -z "$PORT_3001_PID" ]; then
-    echo "Stopping Node.js app on port 3001 (PID: $PORT_3001_PID)"
-    kill -9 $PORT_3001_PID
-else
-    echo "No application running on port 3001"
-fi
+    if [ ! -z "$PID" ]; then
+        echo "Stopping process on port $PORT (PID: $PID)"
+        sudo kill -9 $PID
+    else
+        echo "No application running on port $PORT"
+    fi
+}
 
-echo "Done."
+# Kill processes running on ports 3000 and 3001
+kill_process_on_port 3000
+kill_process_on_port 3001
+
+echo "All done."
