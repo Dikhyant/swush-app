@@ -22,18 +22,18 @@ export const NUMBER_FORMAT_OPTIONS = { round: 2, trim: true, commify: false };
 
 // Time constants in milliseconds
 export const HEALTH_CHECK = {
-  INTERVAL: 60 * 1000,        // Check every 1 minute if RPC endpoint is healthy
-  TIMEOUT: 5000,              // 5 seconds timeout for health checks
-  REACTIVATION: 2 * 60 * 1000 // Reactivate after 2 minutes, shorter recovery time
+  INTERVAL: 2 * 60 * 1000,    // Check every 2 minutes if RPC endpoint is healthy
+  TIMEOUT: 15000,             // 15 seconds timeout for health checks
+  REACTIVATION: 5 * 60 * 1000 // Reactivate after 5 minutes, longer recovery time for stability
 } as const;
 
 // Connection management constants
 export const CONNECTION_CONFIG = {
-  MAX_RECONNECT_ATTEMPTS: 5,
-  BASE_RECONNECT_DELAY: 1000,   // 1 second base delay
-  MAX_RECONNECT_DELAY: 30000,   // Maximum delay of 30 seconds
-  ATTEMPT_RESET_TIMEOUT: 30000, // Reset attempts after 30 seconds
-  CONNECTION_TIMEOUT: 15000     // 15 seconds timeout for initial connections
+  MAX_RECONNECT_ATTEMPTS: 10,    // Increased max attempts
+  BASE_RECONNECT_DELAY: 2000,    // 2 seconds base delay
+  MAX_RECONNECT_DELAY: 60000,    // Maximum delay of 1 minute
+  ATTEMPT_RESET_TIMEOUT: 60000,  // Reset attempts after 1 minute
+  CONNECTION_TIMEOUT: 30000      // 30 seconds timeout for initial connections
 } as const;
 
 export const RPC_ENDPOINTS =  {

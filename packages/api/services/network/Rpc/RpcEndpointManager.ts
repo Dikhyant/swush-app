@@ -1,4 +1,4 @@
-import { NetworkConfig, DEFAULT_RPC_CONFIG } from './rpc-config';
+import { NetworkConfig, DEFAULT_RPC_CONFIG, RpcEndpoint } from './rpc-config';
 import { HEALTH_CHECK } from '../../constants';
 import EventEmitter from 'events';
 import WebSocket from 'ws';
@@ -7,6 +7,7 @@ interface EndpointEvent {
   network: string;
   url: string;
   error?: string;
+  nextUrl?: string;
 }
 
 export class RpcEndpointManager extends EventEmitter {
@@ -43,6 +44,21 @@ export class RpcEndpointManager extends EventEmitter {
 
     for (const endpoint of config.endpoints) {
       try {
+        await this.checkSingleEndpoint(network, endpoint);
+      } catch (error) {
+        // Only mark as error if all retries fail
+        await this.handleEndpointError(network, endpoint, error);
+      }
+    }
+  }
+
+  private async checkSingleEndpoint(network: string, endpoint: RpcEndpoint): Promise<void> {
+    const config = this.networkConfigs[network];
+    const maxRetries = 2; // Number of retries before marking as failed
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
         const ws = new WebSocket(endpoint.url);
         let isConnectionClosed = false;
 
@@ -55,7 +71,6 @@ export class RpcEndpointManager extends EventEmitter {
           }, config.healthCheck.timeout);
 
           ws.onopen = () => {
-            // Send a basic request to check if the node responds
             ws.send(JSON.stringify({
               id: 1,
               jsonrpc: '2.0',
@@ -74,7 +89,6 @@ export class RpcEndpointManager extends EventEmitter {
                 resolve(true);
               }
             } catch (error) {
-              // If we can't parse the response, consider it a failure
               clearTimeout(timeout);
               isConnectionClosed = true;
               ws.close();
@@ -98,6 +112,7 @@ export class RpcEndpointManager extends EventEmitter {
           };
         });
 
+        // If we reach here, the health check was successful
         endpoint.isActive = true;
         endpoint.lastChecked = new Date();
         endpoint.lastError = undefined;
@@ -109,20 +124,36 @@ export class RpcEndpointManager extends EventEmitter {
             url: endpoint.url
           });
         }
-      } catch (error) {
-        endpoint.isActive = false;
-        endpoint.lastChecked = new Date();
-        endpoint.lastError = error instanceof Error ? error.message : 'Unknown error';
         
-        this.emit('endpointError', {
-          network,
-          url: endpoint.url,
-          error: endpoint.lastError
-        } as EndpointEvent);
-
-        // Log the error for debugging
-        console.warn(`Health check failed for ${endpoint.url}: ${endpoint.lastError}`);
+        return; // Success, exit the retry loop
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        if (attempt < maxRetries) {
+          // Wait before retrying (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        }
       }
+    }
+
+    // If we get here, all retries failed
+    throw lastError;
+  }
+
+  private async handleEndpointError(network: string, endpoint: RpcEndpoint, error: unknown): Promise<void> {
+    endpoint.isActive = false;
+    endpoint.lastChecked = new Date();
+    endpoint.lastError = error instanceof Error ? error.message : 'Unknown error';
+    
+    this.emit('endpointError', {
+      network,
+      url: endpoint.url,
+      error: endpoint.lastError
+    });
+
+    // Check if all endpoints are down for this network
+    const allEndpointsDown = this.networkConfigs[network].endpoints.every(e => !e.isActive);
+    if (allEndpointsDown) {
+      this.emit('networkDown', { network });
     }
   }
 
@@ -132,52 +163,84 @@ export class RpcEndpointManager extends EventEmitter {
       throw new Error(`No configuration found for network: ${network}`);
     }
 
+    // Get active endpoints sorted by priority
     const activeEndpoints = config.endpoints
       .filter(e => e.isActive)
       .sort((a, b) => a.priority - b.priority);
 
     if (activeEndpoints.length === 0) {
-      // If no active endpoints, try the first one from the original list
-      const fallbackEndpoint = config.endpoints[0];
-      if (!fallbackEndpoint) {
+      // If no active endpoints, try to reactivate the highest priority endpoint
+      const highestPriorityEndpoint = [...config.endpoints].sort((a, b) => a.priority - b.priority)[0];
+      if (!highestPriorityEndpoint) {
         throw new Error(`No endpoints available for network: ${network}`);
       }
-      return fallbackEndpoint.url;
+      highestPriorityEndpoint.isActive = true;
+      return highestPriorityEndpoint.url;
     }
 
-    // Get the next endpoint using round-robin
-    config.currentIndex = (config.currentIndex + 1) % activeEndpoints.length;
-    return activeEndpoints[config.currentIndex].url;
+    // Get the current endpoint
+    const currentIndex = config.currentIndex % activeEndpoints.length;
+    return activeEndpoints[currentIndex].url;
   }
 
-  public markEndpointError(network: string, url: string, error: Error): void {
+  public async markEndpointError(network: string, url: string, error: Error): Promise<string | null> {
     const config = this.networkConfigs[network];
-    if (!config) return;
+    if (!config) return null;
 
     const endpoint = config.endpoints.find(e => e.url === url);
-    if (endpoint) {
-      endpoint.isActive = false;
-      endpoint.lastError = error.message;
-      endpoint.lastChecked = new Date();
+    if (!endpoint) return null;
 
-      this.emit('endpointError', {
-        network,
-        url,
-        error: error.message
-      } as EndpointEvent);
+    // Mark current endpoint as inactive
+    endpoint.isActive = false;
+    endpoint.lastError = error.message;
+    endpoint.lastChecked = new Date();
 
-      // Schedule re-activation after configured time
-      setTimeout(() => {
-        if (endpoint.lastError === error.message) {
-          endpoint.isActive = true;
-          endpoint.lastError = undefined;
-          this.emit('endpointRecovered', {
-            network,
-            url
-          } as EndpointEvent);
-        }
-      }, HEALTH_CHECK.REACTIVATION);
+    // Try to find next best endpoint
+    const activeEndpoints = config.endpoints
+      .filter(e => e.isActive && e.url !== url)
+      .sort((a, b) => a.priority - b.priority);
+
+    let nextUrl: string | null = null;
+
+    if (activeEndpoints.length > 0) {
+      // Update the current index to point to the next best endpoint
+      const nextEndpoint = activeEndpoints[0];
+      config.currentIndex = config.endpoints.findIndex(e => e.url === nextEndpoint.url);
+      nextUrl = nextEndpoint.url;
+    } else {
+      // If no active endpoints, try to reactivate the highest priority endpoint
+      const highestPriorityEndpoint = [...config.endpoints]
+        .filter(e => e.url !== url) // Don't reactivate the one that just failed
+        .sort((a, b) => a.priority - b.priority)[0];
+
+      if (highestPriorityEndpoint) {
+        highestPriorityEndpoint.isActive = true;
+        config.currentIndex = config.endpoints.findIndex(e => e.url === highestPriorityEndpoint.url);
+        nextUrl = highestPriorityEndpoint.url;
+      }
     }
+
+    // Emit the error event with the next URL if available
+    this.emit('endpointError', {
+      network,
+      url,
+      error: error.message,
+      nextUrl
+    } as EndpointEvent);
+
+    // Schedule reactivation after configured time
+    setTimeout(() => {
+      if (endpoint.lastError === error.message) {
+        endpoint.isActive = true;
+        endpoint.lastError = undefined;
+        this.emit('endpointRecovered', {
+          network,
+          url
+        } as EndpointEvent);
+      }
+    }, HEALTH_CHECK.REACTIVATION);
+
+    return nextUrl;
   }
 
   public getNetworkConfig(network: string): NetworkConfig | undefined {
