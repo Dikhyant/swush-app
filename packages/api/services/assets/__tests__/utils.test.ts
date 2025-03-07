@@ -1,4 +1,4 @@
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, jest } from '@jest/globals';
 import { formatAmount, convertToPlank } from '../utils';
 
 // Mock CacheService and CACHE_KEYS
