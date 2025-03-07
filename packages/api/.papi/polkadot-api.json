@@ -14,8 +14,5 @@
       "wsUrl": "wss://hydration.dotters.network",
       "metadata": ".papi/metadata/hydration.scale"
     }
-  },
-  "options": {
-    "noDescriptorsPackage": true
   }
 }
