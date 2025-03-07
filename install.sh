@@ -1,5 +1,3 @@
-# Clean everything
-pnpm clean
 
 # Remove node_modules
 rm -rf node_modules
