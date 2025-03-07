@@ -5,8 +5,7 @@ export default {
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
-    '^services/(.*)$': '<rootDir>/services/$1',
-    "^@/(.*)$": "<rootDir>/src/$1"
+    '^@/(.*)$': '<rootDir>/services/$1'
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {

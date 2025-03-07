@@ -2,20 +2,20 @@ import { describe, it, expect, jest } from '@jest/globals';
 import { formatAmount, convertToPlank } from '../utils';
 
 // Mock CacheService and CACHE_KEYS
-jest.mock('services/cache/CacheService', () => ({
-  CacheService: {
-    getInstance: jest.fn().mockReturnValue({
-      get: jest.fn().mockReturnValue(new Map()),
-      set: jest.fn(),
-    }),
-  },
-}));
+// jest.mock('services/cache/CacheService', () => ({
+//   CacheService: {
+//     getInstance: jest.fn().mockReturnValue({
+//       get: jest.fn().mockReturnValue(new Map()),
+//       set: jest.fn(),
+//     }),
+//   },
+// }));
 
-jest.mock('services/constants', () => ({
-  CACHE_KEYS: {
-    MERGED_ASSETS: 'MERGED_ASSETS',
-  },
-}));
+// jest.mock('services/constants', () => ({
+//   CACHE_KEYS: {
+//     MERGED_ASSETS: 'MERGED_ASSETS',
+//   },
+  // }));
 
 describe('formatAmount', () => {
   it('should handle zero amount correctly', () => {
