@@ -10,6 +10,13 @@ type NetworkConnections = {
     hydradx: ApiPromise | null;
 };
 
+type ConnectionState = {
+    isConnecting: boolean;
+    lastError?: Error;
+    lastAttempt?: Date;
+    consecutiveFailures: number;
+};
+
 export class ConnectionManager {
     private static instance: ConnectionManager;
     private connections: NetworkConnections = {
@@ -18,82 +25,111 @@ export class ConnectionManager {
     };
     private initialized: boolean = false;
     private rpcManager: RpcEndpointManager;
-    private reconnectAttempts: Record<string, number> = {};
+    private connectionStates: Map<string, ConnectionState> = new Map();
     private reconnectTimeouts: Record<string, NodeJS.Timeout> = {};
+    private isShuttingDown: boolean = false;
 
     private constructor() {
         this.rpcManager = RpcEndpointManager.getInstance();
-        this.initializeReconnectAttempts();
+        this.initializeConnectionStates();
         
         // Listen for RPC endpoint events
         this.rpcManager.on('endpointError', async (event) => {
+            if (!this.initialized || this.isShuttingDown) return;
+            
+            const state = this.connectionStates.get(event.network);
+            if (!state || state.isConnecting) return; // Prevent recursive handling
+            
             console.warn(`RPC endpoint error for ${event.network}: ${event.error}`);
-            if (this.initialized) {
-                await this.handleConnectionError(event.network, new Error(event.error));
+            await this.handleEndpointFailure(event.network, new Error(event.error));
+        });
+
+        this.rpcManager.on('endpointRecovered', (event) => {
+            const state = this.connectionStates.get(event.network);
+            if (state) {
+                state.consecutiveFailures = 0;
+                state.lastError = undefined;
             }
         });
     }
 
-    private initializeReconnectAttempts(): void {
+    private initializeConnectionStates(): void {
         Object.values(NETWORKS_SUPPORTED).forEach(network => {
-            this.reconnectAttempts[network] = 0;
+            this.connectionStates.set(network, {
+                isConnecting: false,
+                consecutiveFailures: 0
+            });
         });
     }
 
-    private calculateReconnectDelay(network: string): number {
-        const attempts = this.reconnectAttempts[network];
-        // Exponential backoff with jitter
+    private shouldAttemptReconnect(network: string): boolean {
+        const state = this.connectionStates.get(network);
+        if (!state) return false;
+
+        // Check if we're in a circuit breaker state
+        if (state.consecutiveFailures >= CONNECTION_CONFIG.MAX_RECONNECT_ATTEMPTS) {
+            const lastAttempt = state.lastAttempt?.getTime() || 0;
+            const timeSinceLastAttempt = Date.now() - lastAttempt;
+            
+            // Only retry after the reset timeout
+            return timeSinceLastAttempt >= CONNECTION_CONFIG.ATTEMPT_RESET_TIMEOUT;
+        }
+
+        return true;
+    }
+
+    private calculateBackoff(failures: number): number {
+        const baseDelay = CONNECTION_CONFIG.BASE_RECONNECT_DELAY;
+        const maxDelay = CONNECTION_CONFIG.MAX_RECONNECT_DELAY;
+        const jitter = 0.5 + Math.random() * 0.5; // 50-100% jitter
+
         return Math.min(
-            CONNECTION_CONFIG.BASE_RECONNECT_DELAY * Math.pow(2, attempts) * (0.5 + Math.random()),
-            CONNECTION_CONFIG.MAX_RECONNECT_DELAY
+            baseDelay * Math.pow(2, failures) * jitter,
+            maxDelay
         );
     }
 
-    private async handleConnectionError(network: string, error: Error): Promise<void> {
-        console.error(`Connection error for ${network}:`, error);
-        
-        // Mark the current endpoint as having an error
-        const currentEndpoint = this.rpcManager.getEndpoint(network);
-        this.rpcManager.markEndpointError(network, currentEndpoint, error);
-        
-        this.reconnectAttempts[network]++;
+    private async handleEndpointFailure(network: string, error: Error): Promise<void> {
+        const state = this.connectionStates.get(network);
+        if (!state || state.isConnecting) return;
+
+        state.lastError = error;
+        state.lastAttempt = new Date();
+        state.consecutiveFailures++;
 
         // Clear any existing reconnection timeout
         if (this.reconnectTimeouts[network]) {
             clearTimeout(this.reconnectTimeouts[network]);
         }
 
-        // If we haven't exceeded max attempts, schedule reconnection
-        if (this.reconnectAttempts[network] <= CONNECTION_CONFIG.MAX_RECONNECT_ATTEMPTS) {
-            const delay = this.calculateReconnectDelay(network);
-            console.log(`Scheduling reconnection for ${network} in ${delay}ms (attempt ${this.reconnectAttempts[network]}/${CONNECTION_CONFIG.MAX_RECONNECT_ATTEMPTS})`);
+        if (this.shouldAttemptReconnect(network)) {
+            const delay = this.calculateBackoff(state.consecutiveFailures);
+            console.log(`Scheduling reconnection for ${network} in ${delay}ms (attempt ${state.consecutiveFailures})`);
             
             this.reconnectTimeouts[network] = setTimeout(async () => {
-                try {
-                    await this.reconnectNetwork(network);
-                } catch (reconnectError) {
-                    console.error(`Reconnection attempt failed for ${network}:`, reconnectError);
-                    // If reconnection fails, try the next endpoint
-                    if (reconnectError instanceof Error) {
-                        await this.handleConnectionError(network, reconnectError);
-                    }
-                }
+                if (this.isShuttingDown) return;
+                await this.reconnectNetwork(network);
             }, delay);
         } else {
-            console.error(`Max reconnection attempts reached for ${network}`);
-            // Reset attempts after a longer timeout
+            console.error(`Max reconnection attempts reached for ${network}, circuit breaker engaged`);
+            // Reset after the timeout
             setTimeout(() => {
-                this.reconnectAttempts[network] = 0;
-                // Try one more time after resetting
-                this.reconnectNetwork(network).catch(error => {
-                    console.error(`Failed to reconnect to ${network} after reset:`, error);
-                });
+                const currentState = this.connectionStates.get(network);
+                if (currentState) {
+                    currentState.consecutiveFailures = 0;
+                    this.reconnectNetwork(network).catch(console.error);
+                }
             }, CONNECTION_CONFIG.ATTEMPT_RESET_TIMEOUT);
         }
     }
 
     private async reconnectNetwork(network: string): Promise<void> {
+        const state = this.connectionStates.get(network);
+        if (!state || state.isConnecting || this.isShuttingDown) return;
+
         try {
+            state.isConnecting = true;
+            
             // Get a new endpoint, potentially different from the failed one
             const endpoint = this.rpcManager.getEndpoint(network);
             console.log(`Attempting to reconnect to ${network} using endpoint ${endpoint}`);
@@ -110,14 +146,17 @@ export class ConnectionManager {
                     break;
             }
             
-            // Reset reconnect attempts on successful connection
-            this.reconnectAttempts[network] = 0;
+            // Reset state on successful connection
+            state.consecutiveFailures = 0;
+            state.lastError = undefined;
             console.log(`Successfully reconnected to ${network} using endpoint ${endpoint}`);
         } catch (error) {
+            console.error(`Failed to reconnect to ${network}:`, error);
             if (error instanceof Error) {
-                console.error(`Failed to reconnect to ${network}:`, error);
-                throw error; // Propagate the error to be handled by handleConnectionError
+                await this.handleEndpointFailure(network, error);
             }
+        } finally {
+            state.isConnecting = false;
         }
     }
 
@@ -162,9 +201,7 @@ export class ConnectionManager {
             try {
                 this.connections.assetHub = await connectPapi(assetHubEndpoint, NETWORKS_SUPPORTED.ASSET_HUB);
             } catch (error) {
-                if (error instanceof Error) {
-                    this.rpcManager.markEndpointError('assetHub', assetHubEndpoint, error);
-                }
+                console.error('Failed to connect to primary Asset Hub endpoint:', error);
                 // Try next endpoint
                 const nextAssetHubEndpoint = this.rpcManager.getEndpoint(NETWORKS_SUPPORTED.ASSET_HUB);
                 this.connections.assetHub = await connectPapi(nextAssetHubEndpoint, NETWORKS_SUPPORTED.ASSET_HUB);
@@ -175,9 +212,7 @@ export class ConnectionManager {
             try {
                 this.connections.hydradx = await connectPolkadotjs(hydradxEndpoint);
             } catch (error) {
-                if (error instanceof Error) {
-                    this.rpcManager.markEndpointError(NETWORKS_SUPPORTED.HYDRA_DX, hydradxEndpoint, error);
-                }
+                console.error('Failed to connect to primary HydraDX endpoint:', error);
                 // Try next endpoint
                 const nextHydradxEndpoint = this.rpcManager.getEndpoint(NETWORKS_SUPPORTED.HYDRA_DX);
                 this.connections.hydradx = await connectPolkadotjs(nextHydradxEndpoint);
@@ -200,6 +235,8 @@ export class ConnectionManager {
     }
 
     public async disconnect(): Promise<void> {
+        this.isShuttingDown = true;
+
         try {
             // Clear all reconnection timeouts
             Object.values(this.reconnectTimeouts).forEach(timeout => clearTimeout(timeout));
@@ -212,10 +249,12 @@ export class ConnectionManager {
             
             this.rpcManager.cleanup();
             this.initialized = false;
-            this.initializeReconnectAttempts();
+            this.initializeConnectionStates();
         } catch (error) {
             console.error('Error during disconnect:', error);
             throw error;
+        } finally {
+            this.isShuttingDown = false;
         }
     }
 } 
