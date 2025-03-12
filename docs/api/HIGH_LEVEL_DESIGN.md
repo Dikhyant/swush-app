@@ -7,6 +7,7 @@ The application consists of two main components:
 2. Polkadot API Server (`packages/api`)
 
 ```mermaid
+graph TD
     UI  --> API[Polkadot API Server]
     API --> AssetHub[Asset Hub]
     API --> Hydration[Hydration Network]
@@ -30,19 +31,24 @@ Configuration for these chains can be found in `.papi/polkadot-api.json`.
 The API server exposes RESTful endpoints for interacting with the blockchain networks:
 
 #### Asset Management
-```typescript
-GET /api/v1/assets/balance/:address/:assetId
-- Returns asset balances for a given account
-- Query params: address, assetId
 
+```typescript
 POST /api/v1/assets/find-route
-- Finds the best route for a given asset transfer
 - Query params: fromAsset, toAsset, amountIn, dex
+- Finds the best route for a given asset transfer
 
 GET /api/v1/assets
 - Returns list of all assets across asset hub and hydradx
 ```
 
+#### Balance Management
+
+```typescript
+GET /api/v1/assets/balance/:address/:assetId
+- Query params: address, assetId
+- Returns asset balances for a given account
+
+```
 
 ### Security Features
 

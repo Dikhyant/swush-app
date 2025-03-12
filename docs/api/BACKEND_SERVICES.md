@@ -57,10 +57,9 @@ System-wide constants and configurations:
 
 ```mermaid
 graph TD
-    Client[API Client] --> Assets[Assets Service]
+    Client[API Client] --> Network[Network Service]
+    Network --> Assets[Assets Service]
+    Network --> Balances[Balances Service]
     Assets --> Cache[Cache Service]
-    Assets --> Network[Network Service]
-    Assets --> Balances[Balances Service]
-    Balances --> Network
     Network --> TXN[Transaction Service]
 ```
