@@ -24,6 +24,26 @@ pnpm dev
 The web application will be available at [http://localhost:3000](http://localhost:3000)
 The API server will be available at [http://localhost:3001](http://localhost:3001)
 
+
+### Lint check
+
+To lint the codebase, run the following command:
+
+```bash
+pnpm lint
+```
+
+This will check for code quality and style issues across the entire monorepo.
+
+### Unit tests
+
+To run the tests, use the following command:
+
+```bash
+pnpm test
+```
+
+
 ### Docker Development Environment
 
 The project includes a Docker setup for consistent development environments:

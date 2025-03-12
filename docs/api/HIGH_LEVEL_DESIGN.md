@@ -52,27 +52,4 @@ The API implements several security measures:
 - CORS protection
 - Input validation using `zod`
 
-### WebSocket Connections
-
-The server maintains WebSocket connections to the blockchain networks for:
-- Real-time updates
-- Subscription-based data
-- Event monitoring
-
-
-## Development Guidelines
-
-1. **Chain Integration**
-   - Use PAPI for all chain interactions
-   - Maintain chain-specific types in `.papi/descriptors`
-   - Keep metadata files up to date
-
-2. **Testing**
-   - Unit tests with Jest
-   - TODO: Integration tests using `@acala-network/chopsticks-testing`
-   - TODO: Mock chain responses when appropriate
-
-3. **Performance**
-   - Implement caching where appropriate
-   - TODO: Use connection pooling for chain interactions
-   - TODO: Monitor memory usage with WebSocket subscriptions
+Backend services overview can be found in the [Backend Services](./BACKEND_SERVICES.md) documentation.

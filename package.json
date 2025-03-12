@@ -12,9 +12,9 @@
     "dev:api": "pnpm --filter @swush/api dev",
     "dev:ui": "pnpm --filter @swush/web dev",
     "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
     "clean": "pnpm -r clean",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "test": "pnpm -r test"
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",
