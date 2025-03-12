@@ -9,58 +9,44 @@ export function useSwapTokens() {
   const [outputToken, setOutputToken] = useState<TokenInfo | null>(null);
   const [assets, setAssets] = useState<AssetWithId[]>([]);
 
+  // Fetch assets only once during initialization
   useEffect(() => {
     const fetchAssets = async () => {
       try {
         const fetchedAssets = await api.assets.getAll();
         setAssets(fetchedAssets);
         
-        // Set default tokens if not already set
-        if (!inputToken) {
+        // Set default tokens only if both are not set
+        if (!inputToken && !outputToken) {
+          // Find default input token (DOT)
           const defaultInput = fetchedAssets.find(asset => 
             asset.metadata.symbol.toUpperCase() === 'DOT'
           );
-          if (defaultInput) {
-            setInputToken({
-              id: defaultInput.id,
-              name: defaultInput.metadata.name,
-              symbol: defaultInput.metadata.symbol,
-              icon: defaultInput.metadata.symbol.charAt(0),
-            });
-          } else {
-            const firstAsset = fetchedAssets[0];
-            if (firstAsset) {
-              setInputToken({
-                id: firstAsset.id,
-                name: firstAsset.metadata.name,
-                symbol: firstAsset.metadata.symbol,
-                icon: firstAsset.metadata.symbol.charAt(0),
-              });
-            }
-          }
-        }
-        
-        if (!outputToken) {
+          const inputTokenToSet = defaultInput || fetchedAssets[0];
+          
+          // Find default output token (ETH)
           const defaultOutput = fetchedAssets.find(asset => 
             asset.metadata.symbol.toUpperCase() === 'ETH'
           );
-          if (defaultOutput) {
-            setOutputToken({
-              id: defaultOutput.id,
-              name: defaultOutput.metadata.name,
-              symbol: defaultOutput.metadata.symbol,
-              icon: defaultOutput.metadata.symbol.charAt(0),
+          const outputTokenToSet = defaultOutput || fetchedAssets[1];
+
+          // Set both tokens at once to avoid multiple re-renders
+          if (inputTokenToSet) {
+            setInputToken({
+              id: inputTokenToSet.id,
+              name: inputTokenToSet.metadata.name,
+              symbol: inputTokenToSet.metadata.symbol,
+              icon: inputTokenToSet.metadata.symbol.charAt(0),
             });
-          } else {
-            const secondAsset = fetchedAssets[1];
-            if (secondAsset) {
-              setOutputToken({
-                id: secondAsset.id,
-                name: secondAsset.metadata.name,
-                symbol: secondAsset.metadata.symbol,
-                icon: secondAsset.metadata.symbol.charAt(0),
-              });
-            }
+          }
+          
+          if (outputTokenToSet) {
+            setOutputToken({
+              id: outputTokenToSet.id,
+              name: outputTokenToSet.metadata.name,
+              symbol: outputTokenToSet.metadata.symbol,
+              icon: outputTokenToSet.metadata.symbol.charAt(0),
+            });
           }
         }
       } catch (error) {
@@ -70,7 +56,7 @@ export function useSwapTokens() {
     };
 
     fetchAssets();
-  }, [inputToken, outputToken]);
+  }, []); // Empty dependency array since we only want this to run once
 
   const tokens = useMemo(() => assets.map(asset => ({
     id: asset.id,
