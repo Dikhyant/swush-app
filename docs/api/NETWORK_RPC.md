@@ -1,81 +1,101 @@
-1. **RPC Configuration (`rpc-config.ts`)**:
-   - Type-safe configuration using Zod schemas
-   - Default endpoints for each network
-   - Health check settings
-   - Priority-based endpoint selection
+## RPC Connection Flow
 
-2. **RPC Endpoint Manager (`RpcEndpointManager.ts`)**:
-   - Singleton pattern for global state
-   - Health checks for endpoints
-   - Round-robin endpoint selection
-   - Error handling and recovery
-   - Event-based communication
+I'll walk you through the entire connection process, using the HydraDX network as an example from your RPC_ENDPOINTS configuration:
 
-3. **Connection Manager Integration**:
-   - Uses RPC Endpoint Manager for endpoint selection
-   - Automatic failover on connection errors
-   - Proper cleanup on disconnect
-   - Event-based reconnection
+1. **Initial Connection Attempt**
+```typescript
+// From RPC_ENDPOINTS configuration
+[NETWORKS_SUPPORTED.HYDRA_DX]: {
+  endpoints: [
+    { url: 'wss://rpc.hydradx.cloud', priority: 1, isActive: true },        // Primary
+    { url: 'wss://hydradx-rpc.dwellir.com', priority: 2, isActive: true },  // Secondary
+    { url: 'wss://hydration.dotters.network', priority: 3, isActive: true }, // Tertiary
+  ]
+}
+```
 
-Key features:
+Here's the process:
+
+1. **Initial Connection**:
+   - System starts by trying the highest priority endpoint (`wss://rpc.hydradx.cloud`)
+   - Connection attempt has 30 seconds to complete (`CONNECTION_CONFIG.CONNECTION_TIMEOUT`)
+
+2. **If Connection Fails**:
+   ```typescript
+   // The system will:
+   - Mark current endpoint as unhealthy
+   - Try next highest priority healthy endpoint
+   - Start with BASE_RECONNECT_DELAY (2 seconds)
+   - Can try up to MAX_RECONNECT_ATTEMPTS (10 times)
+   ```
+
+3. **Endpoint Switching Process**:
+   If `rpc.hydradx.cloud` fails:
+   - First try: Wait 2s, try `hydradx-rpc.dwellir.com`
+   - If that fails: Wait 4s, try `hydration.dotters.network`
+   - If all fail: Go back to highest priority, with exponential backoff
+   
+   ```typescript
+   // Backoff timing example:
+   Attempt 1: 2 seconds  (BASE_RECONNECT_DELAY)
+   Attempt 2: 4 seconds
+   Attempt 3: 8 seconds
+   Attempt 4: 16 seconds
+   Attempt 5: 32 seconds
+   Attempt 6-10: 60 seconds (MAX_RECONNECT_DELAY)
+   ```
+
+4. **Health Check Process**:
+   ```typescript
+   // Every 2 minutes (HEALTH_CHECK.INTERVAL):
+   - Check each endpoint's health
+   - Each check has 15s timeout (HEALTH_CHECK.TIMEOUT)
+   - If endpoint fails health check:
+     - Mark as unhealthy
+     - Will be rechecked after 5 minutes (HEALTH_CHECK.REACTIVATION)
+   ```
+
+5. **Recovery Process**:
+   - After 5 minutes, unhealthy endpoints get another chance
+   - If health check passes:
+     - Endpoint marked as healthy
+     - Available for selection again based on priority
+
+Here's a real-world example scenario:
+
+```typescript
+// Example Scenario:
+1. Initial connection to rpc.hydradx.cloud succeeds
+2. After some time, connection drops
+
+// First Recovery Attempt:
+- System waits 2s (BASE_RECONNECT_DELAY)
+- Tries hydradx-rpc.dwellir.com
+- If succeeds: Continues with this endpoint
+- If fails: Moves to next endpoint
+
+// If All Endpoints Fail:
+- System uses exponential backoff
+- Continues trying endpoints in priority order
+- Maximum 10 attempts before circuit breaker
+```
+
+The key points about the reconnection process:
+
 1. **Automatic Failover**:
-   - If an endpoint fails, automatically tries the next one
-   - Endpoints are prioritized by their priority setting
-   - Failed endpoints are temporarily disabled
+   - Yes, it automatically switches to different endpoints
+   - Follows priority order (1 → 2 → 3)
+   - Returns to higher priority endpoints when they recover
 
-2. **Health Monitoring**:
-   - Regular health checks every 30 seconds
-   - Automatic recovery after 5 minutes
-   - Event-based notifications for errors and recovery
+2. **Smart Retry Logic**:
+   - Uses exponential backoff (2s → 4s → 8s → ... → 60s)
+   - Maximum 10 retry attempts
+   - Resets attempt counter after 1 minute of stability
 
-3. **Simple but Effective**:
-   - Easy to maintain and understand
-   - No complex metrics or scoring
-   - Clear separation of concerns
-
-
-#### Health Check logic
+3. **Health Monitoring**:
+   - Continuous health checks every 2 minutes
+   - Failed endpoints can recover after 5 minutes
+   - Maintains list of healthy endpoints for quick switching
 
 
-1. **HEALTH_CHECK.INTERVAL** (2 minutes):
-```typescript
-INTERVAL: 2 * 60 * 1000    // Check every 2 minutes
-```
-- This is how often we actively check if each RPC endpoint is healthy
-- Every 2 minutes, the system will try to establish a WebSocket connection to each endpoint
-- Think of it like a regular "heartbeat" check to ensure endpoints are still responsive
-- Example: If an endpoint goes down at 10:00:00, we'll detect it by 10:02:00 at the latest
-
-2. **HEALTH_CHECK.TIMEOUT** (10 seconds):
-```typescript
-TIMEOUT: 10 * 1000         // 10 seconds timeout for health checks
-```
-- This is how long we wait for each individual health check attempt to complete
-- If an endpoint doesn't respond within 10 seconds during a health check, we mark it as failed
-- This prevents hanging on unresponsive endpoints
-- Example: When checking an endpoint, if it doesn't establish a connection within 10 seconds, we consider it unhealthy
-
-3. **HEALTH_CHECK.REACTIVATION** (10 minutes):
-```typescript
-REACTIVATION: 10 * 60 * 1000 // Reactivate after 10 minutes
-```
-- After an endpoint fails (either through health check or actual usage), we wait this long before trying it again
-- This prevents constantly trying to use a potentially problematic endpoint
-- Gives time for temporary issues to resolve
-- Example: If an endpoint fails at 10:00:00, we won't try to use it again until 10:10:00
-
-Here's a practical example of how they work together:
-```
-Timeline Example:
-10:00:00 - Regular health check starts (INTERVAL)
-10:00:10 - Endpoint A doesn't respond (TIMEOUT reached)
-10:00:11 - Endpoint A marked as inactive
-10:10:11 - Endpoint A becomes eligible for use again (REACTIVATION)
-10:12:00 - Next health check starts (INTERVAL)
-```
-
-The relationship between these values is important:
-- TIMEOUT (10s) < INTERVAL (2m): Ensures health checks complete before the next one starts
-- REACTIVATION (10m) > INTERVAL (2m): Gives failed endpoints enough "cool down" time
-- REACTIVATION (10m) > TIMEOUT (10s): Ensures proper recovery window after failure
-
+More implementation details at : [README.md](../../packages/api/services/network/README.md)

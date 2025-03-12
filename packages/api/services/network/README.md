@@ -195,197 +195,81 @@ The system provides detailed logging for:
    - Better state management 
 
 
-## 06/03 : Improvements on RpcEndpointManager
-Cursor ID : WebSocket Connection Error Troubleshooting
+**Cursor ID** : WebSocket Connection Error Troubleshooting
 
-Currently, the flow works like this:
+## 12/03 : Improvements on Endpoint Switching Behavior
 
-1. **Health Check System**:
-   - Every 2 minutes (`HEALTH_CHECK.INTERVAL`), all endpoints are checked
-   - Each endpoint gets 2 retries with exponential backoff before being marked as failed
-   - Failed endpoints are marked as `isActive: false`
+Endpoint switching behavior and health check system:
 
-2. **Node Selection** (in `getEndpoint`):
+1. **Endpoint Switching Behavior**
+Yes, when a health check fails, the system will switch to a different endpoint. Here's how it works in the current code:
+
 ```typescript
+// In RpcEndpointManager.ts
 public getEndpoint(network: string): string {
-    // Gets only active endpoints and sorts by priority
-    const activeEndpoints = config.endpoints
-      .filter(e => e.isActive)
-      .sort((a, b) => a.priority - b.priority);
+    // Get healthy endpoints sorted by priority
+    const healthyEndpoints = config.endpoints
+        .filter(e => {
+            const health = this.endpointHealth.get(e.url);
+            return health?.isHealthy;
+        })
+        .sort((a, b) => a.priority - b.priority);
 
-    // If no active endpoints, falls back to the first endpoint
-    if (activeEndpoints.length === 0) {
-      return config.endpoints[0].url;
+    if (healthyEndpoints.length > 0) {
+        return healthyEndpoints[0].url;  // Returns highest priority healthy endpoint
     }
 
-    // Uses round-robin between active endpoints
-    config.currentIndex = (config.currentIndex + 1) % activeEndpoints.length;
-    return activeEndpoints[config.currentIndex].url;
-}
-```
-
-3. **Error Handling** (in `markEndpointError`):
-```typescript
-public markEndpointError(network: string, url: string, error: Error): void {
-    // Marks endpoint as inactive
-    endpoint.isActive = false;
-    // Schedules reactivation after 5 minutes (HEALTH_CHECK.REACTIVATION)
-    setTimeout(() => {
-        endpoint.isActive = true;
-    }, HEALTH_CHECK.REACTIVATION);
-}
-```
-
-The current implementation has a few limitations:
-1. It waits for the full timeout before switching nodes
-2. The round-robin switching only happens on new connection attempts
-3. There's no immediate failover when a node becomes unresponsive
-
-Let's improve this by adding immediate failover. Here's the enhanced version:
-
-```typescript:packages/api/services/network/Rpc/RpcEndpointManager.ts
-// ... existing imports ...
-
-interface EndpointEvent {
-  network: string;
-  url: string;
-  error?: string;
-  nextUrl?: string; // Add this for failover information
-}
-
-export class RpcEndpointManager extends EventEmitter {
-  // ... existing code ...
-
-  public getEndpoint(network: string): string {
-    const config = this.networkConfigs[network];
-    if (!config) {
-      throw new Error(`No configuration found for network: ${network}`);
-    }
-
-    // Get active endpoints sorted by priority
-    const activeEndpoints = config.endpoints
-      .filter(e => e.isActive)
-      .sort((a, b) => a.priority - b.priority);
-
-    if (activeEndpoints.length === 0) {
-      // If no active endpoints, try to reactivate the highest priority endpoint
-      const highestPriorityEndpoint = [...config.endpoints].sort((a, b) => a.priority - b.priority)[0];
-      if (!highestPriorityEndpoint) {
-        throw new Error(`No endpoints available for network: ${network}`);
-      }
-      highestPriorityEndpoint.isActive = true;
-      return highestPriorityEndpoint.url;
-    }
-
-    // Get the current endpoint
-    const currentIndex = config.currentIndex % activeEndpoints.length;
-    return activeEndpoints[currentIndex].url;
-  }
-
-  public async markEndpointError(network: string, url: string, error: Error): Promise<string | null> {
-    const config = this.networkConfigs[network];
-    if (!config) return null;
-
-    const endpoint = config.endpoints.find(e => e.url === url);
-    if (!endpoint) return null;
-
-    // Mark current endpoint as inactive
-    endpoint.isActive = false;
-    endpoint.lastError = error.message;
-    endpoint.lastChecked = new Date();
-
-    // Try to find next best endpoint
-    const activeEndpoints = config.endpoints
-      .filter(e => e.isActive && e.url !== url)
-      .sort((a, b) => a.priority - b.priority);
-
-    let nextUrl: string | null = null;
-
-    if (activeEndpoints.length > 0) {
-      // Update the current index to point to the next best endpoint
-      const nextEndpoint = activeEndpoints[0];
-      config.currentIndex = config.endpoints.findIndex(e => e.url === nextEndpoint.url);
-      nextUrl = nextEndpoint.url;
-    } else {
-      // If no active endpoints, try to reactivate the highest priority endpoint
-      const highestPriorityEndpoint = [...config.endpoints]
-        .filter(e => e.url !== url) // Don't reactivate the one that just failed
+    // Fallback to highest priority endpoint if all are unhealthy
+    const fallbackEndpoint = [...config.endpoints]
         .sort((a, b) => a.priority - b.priority)[0];
-
-      if (highestPriorityEndpoint) {
-        highestPriorityEndpoint.isActive = true;
-        config.currentIndex = config.endpoints.findIndex(e => e.url === highestPriorityEndpoint.url);
-        nextUrl = highestPriorityEndpoint.url;
-      }
-    }
-
-    // Emit the error event with the next URL if available
-    this.emit('endpointError', {
-      network,
-      url,
-      error: error.message,
-      nextUrl
-    } as EndpointEvent);
-
-    // Schedule reactivation after configured time
-    setTimeout(() => {
-      if (endpoint.lastError === error.message) {
-        endpoint.isActive = true;
-        endpoint.lastError = undefined;
-        this.emit('endpointRecovered', {
-          network,
-          url
-        } as EndpointEvent);
-      }
-    }, HEALTH_CHECK.REACTIVATION);
-
-    return nextUrl;
-  }
-
-  // ... rest of existing code ...
 ```
-Improved node switching behavior:
 
-1. **Immediate Failover**:
-   - When a node error occurs, `markEndpointError` immediately:
-     1. Marks the current endpoint as inactive
-     2. Finds the next best available endpoint (by priority)
-     3. Returns the new endpoint URL
-     4. Emits an event with both the error and the next URL to use
+The switching process works like this:
+1. When a health check fails, that endpoint is marked as unhealthy
+2. The next time `getEndpoint()` is called (during reconnection), it will:
+   - First try to find a healthy endpoint with the highest priority
+   - If no healthy endpoints exist, fall back to the highest priority endpoint
 
-2. **Smarter Endpoint Selection**:
-   - Endpoints are always sorted by priority
-   - If all endpoints are down, it tries to reactivate the highest priority endpoint (except the one that just failed)
-   - The system maintains the current working endpoint until it fails
+2. **Constants**
+You're right - if you're running on a cloud server, the previous constants would work fine. Let's revert the constants back:
+
+```typescript:packages/api/services/constants.ts
+// Time constants in milliseconds
+export const HEALTH_CHECK = {
+    INTERVAL: 2 * 60 * 1000,    // Check every 2 minutes if RPC endpoint is healthy
+    TIMEOUT: 15000,             // 15 seconds timeout for health checks
+    REACTIVATION: 5 * 60 * 1000 // Reactivate after 5 minutes, longer recovery time for stability
+} as const;
+
+// Connection management constants
+export const CONNECTION_CONFIG = {
+    MAX_RECONNECT_ATTEMPTS: 10,    // Increased max attempts
+    BASE_RECONNECT_DELAY: 2000,    // 2 seconds base delay
+    MAX_RECONNECT_DELAY: 60000,    // Maximum delay of 1 minute
+    ATTEMPT_RESET_TIMEOUT: 60000,  // Reset attempts after 1 minute
+    CONNECTION_TIMEOUT: 30000      // 30 seconds timeout for initial connections
+} as const;
+```
+
+1. **Health Check Process**:
+   - Every 2 minutes (`HEALTH_CHECK.INTERVAL`), each endpoint is checked
+   - Each check has 15 seconds to complete (`HEALTH_CHECK.TIMEOUT`)
+   - If a check fails, the endpoint is marked as unhealthy
+
+2. **Reconnection Process**:
+   - When a connection fails, `ConnectionManager` will:
+     - Try to get a healthy endpoint first
+     - If no healthy endpoints, use the highest priority endpoint
+     - Use exponential backoff between attempts (starting at 2s, max 60s)
+     - Try up to 10 times before engaging circuit breaker
 
 3. **Recovery Process**:
-   - Failed endpoints are still reactivated after 5 minutes (HEALTH_CHECK.REACTIVATION)
-   - Health checks continue to run every 2 minutes to verify endpoint status
-   - When an endpoint recovers, it becomes available in the pool of active endpoints
+   - Failed endpoints are automatically rechecked after 5 minutes (`HEALTH_CHECK.REACTIVATION`)
+   - If the recheck succeeds, the endpoint becomes available again
+   - This prevents permanently blacklisting endpoints that might have temporary issues
 
-To use this improved version in your connection code, you should:
+The system prioritizes:
+1. Stable connections (longer health check intervals)
+2. Multiple retry attempts (10 instead of 5)
+3. Longer timeouts (15s instead of 5s)
 
-1. Handle the endpoint error
-2. Get the next URL from the error handler
-3. Immediately reconnect using the new URL
-
-Example usage:
-```typescript
-try {
-  // Your connection code
-} catch (error) {
-  const nextUrl = await rpcManager.markEndpointError(network, currentUrl, error);
-  if (nextUrl) {
-    // Immediately reconnect using nextUrl
-    await connect(nextUrl);
-  }
-}
-```
-
-This improved version provides:
-- Faster recovery from failed endpoints
-- Priority-based failover
-- Immediate switching to working nodes
-- Better handling of all-endpoints-down scenarios
-
-Let me know if you'd like me to show you how to integrate this with your connection handling code!
