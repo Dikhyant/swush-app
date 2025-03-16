@@ -66,12 +66,16 @@ NEXT_PUBLIC_API_HOST=localhost  # API host for web application
 
 ## Development Tools
 
-- TypeScript for type safety
+- TypeScript 
 - ESLint for code linting
 - Jest for testing
 - PAPI for Polkadot chain interactions
 
-## Learn More
+### Learn More
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Polkadot-API Documentation](https://papi.how/)
+
+## Acknowledgements
+
+Check out the [NOTICE.md](NOTICE.md) file for more details.
