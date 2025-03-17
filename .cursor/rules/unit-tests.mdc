@@ -1,6 +1,13 @@
 ---
+description: 
+globs: 
+alwaysApply: false
+---
+---
 description: unit test instructions
 globs: 
 alwaysApply: false
 ---
 -write simple and concise unit tests in jest at __tests__ folder
+- import { jest, describe, it, beforeEach, afterEach, expect } from '@jest/globals';
+  necessary headers for jest from  '@jest/globals'

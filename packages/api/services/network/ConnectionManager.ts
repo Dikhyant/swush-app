@@ -3,7 +3,7 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { ApiPromise } from '@polkadot/api';
 import { connectPapi, connectPolkadotjs } from './types';
 import { RpcEndpointManager } from './Rpc/RpcEndpointManager';
-import { NETWORKS_SUPPORTED, CONNECTION_CONFIG } from 'services/constants';
+import { NETWORKS_SUPPORTED, CONNECTION_CONFIG } from '@/constants';
 
 type NetworkConnections = {
     assetHub: { api: TypedApi<typeof polkadot_asset_hub>; client: PolkadotClient } | null;

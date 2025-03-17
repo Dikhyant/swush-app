@@ -1,5 +1,5 @@
-import { RPC_ENDPOINTS } from 'services/constants';
-import { HEALTH_CHECK } from 'services/constants';
+import { RPC_ENDPOINTS } from '@/constants';
+import { HEALTH_CHECK } from '@/constants';
 import { z } from 'zod';
 
 
