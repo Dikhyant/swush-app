@@ -8,8 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "clean": "rimraf dist .papi",
     "lint": "eslint services --ext .ts",
-    "test": "jest --config=jest.config.js",
-    "postinstall": "papi"
+    "test": "jest --config=jest.config.js"
   },
   "dependencies": {
     "@acala-network/chopsticks": "^1.0.1",
@@ -20,8 +19,7 @@
     "@galacticcouncil/sdk": "^5.1.0",
     "@galacticcouncil/xcm-cfg": "^6.0.1",
     "@galacticcouncil/xcm-sdk": "^7.0.1",
-    "@polkadot-api/descriptors": "file:.papi/descriptors",
-    "polkadot-api": "^1.9.4",
+    "@polkadot-api/descriptors": "file:../../.papi/descriptors",
     "@polkadot-labs/hdkd": "^0.0.10",
     "@polkadot-labs/hdkd-helpers": "^0.0.10",
     "@polkadot/api": "^15.1.1",

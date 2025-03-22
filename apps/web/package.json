@@ -31,7 +31,10 @@
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
     "tailwind-merge": "^2.5.3",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "@reactive-dot/core": "^0.38.1",
+    "@reactive-dot/react": "^0.38.1",
+    "dot-connect": "^0.18.0"
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",
