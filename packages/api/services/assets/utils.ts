@@ -183,24 +183,25 @@ export function convertToPlank(amount: string | number, decimals: number): bigin
       return BigInt(0);
     }
 
-    // Convert amount to a number and handle scientific notation
-    const numAmount = typeof amount === 'string' ?
-      Number(amount.replace(/,/g, '')) : amount;
+    // Convert to string and remove commas
+    let amountStr = typeof amount === 'string' ? 
+      amount.replace(/,/g, '') : 
+      amount.toString();
 
-    if (!Number.isFinite(numAmount)) {
-      throw new Error('Invalid number format');
+    // Handle scientific notation
+    if (amountStr.includes('e')) {
+      amountStr = Number(amountStr).toFixed(decimals);
     }
 
-    // Calculate planck amount with proper decimal handling
-    const multiplier = Math.pow(10, decimals);
-    const planckAmount = Math.round(numAmount * multiplier);
-
-    // Check for overflow
-    if (!Number.isSafeInteger(planckAmount)) {
-      throw new Error('Amount too large for safe conversion');
-    }
-
-    return BigInt(planckAmount);
+    // Split into integer and decimal parts
+    const [integerPart, decimalPart = ''] = amountStr.split('.');
+    
+    // Pad or truncate decimal part to match decimals
+    const paddedDecimal = decimalPart.padEnd(decimals, '0').slice(0, decimals);
+    
+    // Combine parts and convert to BigInt
+    const combinedStr = `${integerPart}${paddedDecimal}`;
+    return BigInt(combinedStr.replace(/^0+/, '') || '0');
   } catch (error) {
     console.error('Error converting to planck:', error);
     return BigInt(0);
