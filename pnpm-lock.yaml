@@ -11,6 +11,9 @@ importers:
       '@polkadot-api/descriptors':
         specifier: file:.papi/descriptors
         version: file:.papi/descriptors(polkadot-api@1.9.5(jiti@1.21.7)(postcss@8.5.3)(rxjs@7.8.2)(tsx@4.19.3)(yaml@2.7.0))
+      '@polkadot/api':
+        specifier: ^15.1.1
+        version: 15.7.2
       '@polkadot/util-crypto':
         specifier: ^13.4.3
         version: 13.4.3(@polkadot/util@13.4.3)
@@ -69,18 +72,12 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.1.3
         version: 1.1.8(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@reactive-dot/core':
-        specifier: ^0.38.1
-        version: 0.38.1(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))
-      '@reactive-dot/react':
-        specifier: ^0.38.1
-        version: 0.38.5(@types/react@18.3.18)(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))(react@18.3.1)
       '@talismn/connect-components':
         specifier: ^1.1.9
         version: 1.1.9(@polkadot/api@15.7.2)(@polkadot/extension-inject@0.58.5(@polkadot/api@15.7.2)(@polkadot/util@13.4.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@talismn/connect-wallets':
-        specifier: file:.yalc/@talismn/connect-wallets
-        version: file:apps/web/.yalc/@talismn/connect-wallets(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))
+        specifier: ^1.2.8
+        version: 1.2.8(@polkadot/api@15.7.2)(@polkadot/extension-inject@0.58.5(@polkadot/api@15.7.2)(@polkadot/util@13.4.3))
       '@types/lodash.debounce':
         specifier: ^4.0.9
         version: 4.0.9
@@ -90,9 +87,6 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      dot-connect:
-        specifier: ^0.18.0
-        version: 0.18.0(@reactive-dot/core@0.38.1(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2)))(@types/react@18.3.18)(react@18.3.1)
       framer-motion:
         specifier: ^11.11.17
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -181,9 +175,6 @@ importers:
       '@polkadot-labs/hdkd-helpers':
         specifier: ^0.0.10
         version: 0.0.10
-      '@polkadot/api':
-        specifier: ^15.1.1
-        version: 15.7.2
       '@polkadot/types':
         specifier: ^15.1.1
         version: 15.7.2
@@ -809,23 +800,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@lit-labs/preact-signals@1.0.3':
-    resolution: {integrity: sha512-aZDNZUgEpYPB+zfApIZpChSyKlLoqvILYt0nTm0KAXTU8FZsht6I6QZRvdKItD3EI8w0FHsqk9CpzIdd3gFXCA==}
-
-  '@lit-labs/ssr-dom-shim@1.3.0':
-    resolution: {integrity: sha512-nQIWonJ6eFAvUUrSlwyHDm/aE8PBDu5kRpL0vHMg6K8fK3Diq1xdPjTnsJSwxABhaZ+5eBi1btQB5ShUTKo4nQ==}
-
-  '@lit/react@1.0.7':
-    resolution: {integrity: sha512-cencnwwLXQKiKxjfFzSgZRngcWJzUDZi/04E0fSaF86wZgchMdvTyu+lE36DrUfvuus3bH8+xLPrhM1cTjwpzw==}
-    peerDependencies:
-      '@types/react': 17 || 18 || 19
-
-  '@lit/reactive-element@2.0.4':
-    resolution: {integrity: sha512-GFn91inaUa2oHLak8awSIigYz0cU0Payr1rcFsrkf5OJ5eSPxElyZfKh0f2p9FsTiZWXQdWGJeXZICEfXXYSXQ==}
-
-  '@lit/task@1.0.2':
-    resolution: {integrity: sha512-ofj/fahKhhS1SpbPSC57OMo2BXMxHG/y4sxH/ahWzXT5dh1kxjex7WqbL8ammb6zIlqbFCj6z2aGFYOh/qCQ+g==}
-
   '@next/env@14.2.15':
     resolution: {integrity: sha512-S1qaj25Wru2dUpcIZMjxeMVSwkt8BK4dmWHHiBuRstcIyOsMapqT4A4jSB6onvqeygkSSmOkyny9VVx8JIGamQ==}
 
@@ -1225,9 +1199,6 @@ packages:
     resolution: {integrity: sha512-GS0I6MYLD/xNAAjODZi/pbG7Ba0e/5sbvDIrT01iKH3SPGN+PZoyAsc04t2IOXA6QmPa1OBHnaU3N4K8gGmJ+w==}
     engines: {node: '>=18'}
 
-  '@preact/signals-core@1.8.0':
-    resolution: {integrity: sha512-OBvUsRZqNmjzCZXWLxkZfhcgT+Fk8DDcT/8vD6a1xhDemodyy87UJRJfASMuSD8FaAIeGgGm85ydXhm7lr4fyA==}
-
   '@radix-ui/number@1.1.0':
     resolution: {integrity: sha512-V3gRzhVNU1ldS5XhAPTom1fOIo4ccrjjJgmE+LI2h/WaFpHmx0MQApT+KZHnx8abG6Avtfcz4WoEciMnpFT3HQ==}
 
@@ -1575,19 +1546,6 @@ packages:
   '@radix-ui/rect@1.1.0':
     resolution: {integrity: sha512-A9+lCBZoaMJlVKcRBz2YByCG+Cp2t6nAnMnNba+XiWxnj6r4JUFqfsgwocMBZU9LPtdxC6wB56ySYpc7LQIoJg==}
 
-  '@reactive-dot/core@0.38.1':
-    resolution: {integrity: sha512-y9ZAeNTFlItHf3FMQEhSgjnLiYb75uEH5OBXCbeMOfV+hh1xpAlwQFYqyL7YF6IshuMAkeYwnFk7QoIH4VlmwQ==}
-    peerDependencies:
-      polkadot-api: '>= 1.9.x'
-
-  '@reactive-dot/react@0.38.5':
-    resolution: {integrity: sha512-wDvXh8wMApydLGaIj0d9oTNj/lsVQYG38EyHulvU/z9YL+DHaFMqmESGhK4ksKtSyVqeYN3vqm0WNvwnDUjYSg==}
-    peerDependencies:
-      react: 19.x
-
-  '@reactive-dot/utils@0.10.0':
-    resolution: {integrity: sha512-Er9LpLMX9e4UJoKJaefW7ePL9t8mVcshtuDqiKJE5VFiiq6xJirtIQ878rxI8fzWtB/EkNmslCVS4+wJR3nqVA==}
-
   '@rollup/rollup-android-arm-eabi@4.34.9':
     resolution: {integrity: sha512-qZdlImWXur0CFakn2BJ2znJOdqYZKiedEPEVNTBrpfPjc/YuTGcaYZcdmNFTkUj3DU0ZM/AElcM8Ybww3xVLzA==}
     cpu: [arm]
@@ -1730,16 +1688,10 @@ packages:
     resolution: {integrity: sha512-ofLs1PAO9AtDdPbdyTYj217Pe+lBfTLltdHDs3ds8no0BseoLeAGxpz1mHfi7zB4IxI3YyAiLjH6U8cw4pj4Nw==}
     deprecated: versions below 1.x are no longer maintained
 
-  '@substrate/discovery@0.2.2':
-    resolution: {integrity: sha512-vD5B1LqIaiDBWpJ7h1b89jzhU0AKjOySFAt2zbTDz+gpRdcOn0I8PoxhOrent4LXFX9O/ch8bGG/JYDtr2B2QA==}
-
   '@substrate/light-client-extension-helpers@1.0.0':
     resolution: {integrity: sha512-TdKlni1mBBZptOaeVrKnusMg/UBpWUORNDv5fdCaJklP4RJiFOzBCrzC+CyVI5kQzsXBisZ+2pXm+rIjS38kHg==}
     peerDependencies:
       smoldot: 2.x
-
-  '@substrate/smoldot-discovery@2.0.2':
-    resolution: {integrity: sha512-6KG6S1QkEfDJIgqYszSWH7n6QBGdcU9LG6sWdEUR86wqrr26Pr1z52cOUhHBRtU2+vydglIM6IVnMuzFEIUbBw==}
 
   '@substrate/ss58-registry@1.51.0':
     resolution: {integrity: sha512-TWDurLiPxndFgKjVavCniytBIw+t4ViOi7TYp9h/D0NMmkEc9klFTo+827eyEJ0lELpqO207Ey7uGxUa+BS1jQ==}
@@ -1767,11 +1719,6 @@ packages:
     peerDependencies:
       '@polkadot/api': '>=9.3.3'
       '@polkadot/extension-inject': '>=0.44.6'
-
-  '@talismn/connect-wallets@file:apps/web/.yalc/@talismn/connect-wallets':
-    resolution: {directory: apps/web/.yalc/@talismn/connect-wallets, type: directory}
-    peerDependencies:
-      polkadot-api: '>=1.0.0'
 
   '@thi.ng/api@8.11.21':
     resolution: {integrity: sha512-J6BUdUtFtwZirL3M9tkCiqBXj228z7zkxWOaDWTymwBeqY9s02vJP3mQV8l5p+YPDIRmYx/q7XVuLW1UTJRN/A==}
@@ -1933,9 +1880,6 @@ packages:
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
-
-  '@types/trusted-types@2.0.7':
-    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
   '@types/ws@8.18.0':
     resolution: {integrity: sha512-8svvI3hMyvN0kKCJMvTJP/x6Y/EoQbepff882wL+Sn5QsXb3etnamgrJq4isrBxSJj5L2AuXcI0+bgkoAXGUJw==}
@@ -2353,9 +2297,6 @@ packages:
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
 
-  cliui@6.0.0:
-    resolution: {integrity: sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==}
-
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
@@ -2491,10 +2432,6 @@ packages:
       supports-color:
         optional: true
 
-  decamelize@1.2.0:
-    resolution: {integrity: sha512-z2S+W9X73hAUUki+N+9Za2lBlun89zigOyGrsax+KUQ6wKW4ZoWpEYBkGhQjwAjjDCkWxhY0VKEhk8wzY7F5cA==}
-    engines: {node: '>=0.10.0'}
-
   decompress-response@6.0.0:
     resolution: {integrity: sha512-aW35yZM6Bb/4oJlZncMH2LCoZtJXTRxES17vE3hoRiowU2kWHaJKFkSBDnDR+cm9J+9QhXmREyIfv0pji9ejCQ==}
     engines: {node: '>=10'}
@@ -2580,9 +2517,6 @@ packages:
     resolution: {integrity: sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  dijkstrajs@1.0.3:
-    resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
-
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
@@ -2593,23 +2527,6 @@ packages:
   doctrine@3.0.0:
     resolution: {integrity: sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==}
     engines: {node: '>=6.0.0'}
-
-  dot-connect@0.18.0:
-    resolution: {integrity: sha512-ebi/HydwOe7KowrRVpRMloLf4kPg1shGDrXTgKA4RI9kSF/iEUzqp++/aXm/7jQ5ML8r8q1y+vTwHcZ+MHwH7g==}
-    peerDependencies:
-      '@reactive-dot/core': '>= 0.30.x'
-      react: '>= 18'
-    peerDependenciesMeta:
-      react:
-        optional: true
-
-  dot-identicon@0.1.1:
-    resolution: {integrity: sha512-LXdW1nmyP5ougwl0ilh/KL+JeRTLSYPOWR+wvhjAn17i+l1BeV2F4CTge2+gKbK6af05KZg0Lrvo05esucPnkg==}
-    peerDependencies:
-      react: '>= 18'
-    peerDependenciesMeta:
-      react:
-        optional: true
 
   dotenv@16.4.7:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
@@ -3439,29 +3356,6 @@ packages:
     resolution: {integrity: sha512-/imKNG4EbWNrVjoNC/1H5/9GFy+tqjGBHCaSsN+P2RnPqjsLmv6UD3Ej+Kj8nBWaRAwyk7kK5ZUc+OEatnTR3A==}
     hasBin: true
 
-  jotai-derive@0.1.2:
-    resolution: {integrity: sha512-kdXH7pyigSiDFWPgyy0zygQvKhcboCuCRnBbQP5zEv5j9swcQN+9PLvQ4YEkzRq31CQy15xFYr9lSICwgZnqhw==}
-    peerDependencies:
-      jotai: '>=2.0.0'
-
-  jotai-effect@2.0.1:
-    resolution: {integrity: sha512-jZw18vUzlerIMQCaB75Ndxr9+6BR/fCt7Ah0CO2RpR5UhtBbXurgIprAZoVSzADaWoTN/qj0pyT6IQQWWP6dpA==}
-    engines: {node: '>=12.20.0'}
-    peerDependencies:
-      jotai: '>=2.12.1'
-
-  jotai@2.12.2:
-    resolution: {integrity: sha512-oN8715y7MkjXlSrpyjlR887TOuc/NLZMs9gvgtfWH/JP47ChwO0lR2ijSwBvPMYyXRAPT+liIAhuBavluKGgtA==}
-    engines: {node: '>=12.20.0'}
-    peerDependencies:
-      '@types/react': '>=17.0.0'
-      react: '>=17.0.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      react:
-        optional: true
-
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
@@ -3552,15 +3446,6 @@ packages:
   listr2@8.2.5:
     resolution: {integrity: sha512-iyAZCeyD+c1gPyE9qpFu8af0Y+MRtmKOncdGoA2S5EY8iFq99dmmvkNnHiWo+pj0s7yH7l3KPIgee77tKpXPWQ==}
     engines: {node: '>=18.0.0'}
-
-  lit-element@4.1.1:
-    resolution: {integrity: sha512-HO9Tkkh34QkTeUmEdNYhMT8hzLid7YlMlATSi1q4q17HE5d9mrrEHJ/o8O2D0cMi182zK1F3v7x0PWFjrhXFew==}
-
-  lit-html@3.2.1:
-    resolution: {integrity: sha512-qI/3lziaPMSKsrwlxH/xMgikhQ0EGOX2ICU73Bi/YHFvz2j/yMCIrw4+puF2IpQ4+upd3EWbvnHM9+PnJn48YA==}
-
-  lit@3.2.1:
-    resolution: {integrity: sha512-1BBa1E/z0O9ye5fZprPtdqnc0BFzxIxTTOO/tQFmyC/hj1O3jL4TfmLBw0WEwjAokdLwpclkvGgDJwTIh0/22w==}
 
   load-tsconfig@0.2.5:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
@@ -4073,10 +3958,6 @@ packages:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
 
-  pngjs@5.0.0:
-    resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
-    engines: {node: '>=10.13.0'}
-
   polkadot-api@1.9.5:
     resolution: {integrity: sha512-wHe2TFqBVbiAE9CDLZA/xMbMCfOtch6++kSmDIWY7i9MmcWJwZhDHpHlfvRUsVgI/VL36QPEjBH+Kjt3KNLLhw==}
     hasBin: true
@@ -4211,11 +4092,6 @@ packages:
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
 
-  qrcode@1.5.4:
-    resolution: {integrity: sha512-1ca71Zgiu6ORjHqFBDpnSMTR2ReToX4l1Au1VFLyVeBTFavzQnv5JxMFr3ukHVKpSrSA2MCk0lNJSykjUfz7Zg==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-
   qs@6.13.0:
     resolution: {integrity: sha512-+38qI9SOr8tfZ4QmJNplMUxqjbe7LKvvZgWdExBOmd+egZTtjLB67Gu0HRX3u/XOq7UU2Nx6nsjvS16Z9uwfpg==}
     engines: {node: '>=0.6'}
@@ -4320,9 +4196,6 @@ packages:
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
-
-  require-main-filename@2.0.0:
-    resolution: {integrity: sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==}
 
   resolve-cwd@3.0.0:
     resolution: {integrity: sha512-OrZaX2Mb+rJCpH/6CpSqt9xFVpN++x01XnN2ie9g6P5/3xelLAkXWVADpdz1IHD/KFfEXyE6V0U01OQ3UO2rEg==}
@@ -5015,9 +4888,6 @@ packages:
   whatwg-url@7.1.0:
     resolution: {integrity: sha512-WUu7Rg1DroM7oQvGWfOiAK21n74Gg+T4elXEQYkOhtyLeWiJFoOGLXPKI/9gzIie9CtwVLm8wtw6YJdKyxSjeg==}
 
-  which-module@2.0.1:
-    resolution: {integrity: sha512-iBdZ57RDvnOR9AGBhML2vFZf7h8vmBjhoaZqODJBFWHVtKkDmKuHai3cx5PgVMrX5YDNp27AofYbAwctSS+vhQ==}
-
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
@@ -5029,10 +4899,6 @@ packages:
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
-
-  wrap-ansi@6.2.0:
-    resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
-    engines: {node: '>=8'}
 
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
@@ -5100,9 +4966,6 @@ packages:
       utf-8-validate:
         optional: true
 
-  y18n@4.0.3:
-    resolution: {integrity: sha512-JKhqTOwSrqNA1NY5lSztJ1GrBiUodLMmIZuLiDaMRJ+itFd+ABVE8XBjOvIWL+rSqNDC74LCSFmlb/U4UZ4hJQ==}
-
   y18n@5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
@@ -5118,17 +4981,9 @@ packages:
     engines: {node: '>= 14'}
     hasBin: true
 
-  yargs-parser@18.1.3:
-    resolution: {integrity: sha512-o50j0JeToy/4K6OZcaQmW6lyXXKhq7csREXcDwk2omFPJEwUNOVtJKvmDr9EI1fAJZUyZcRF7kxGBWmRXudrCQ==}
-    engines: {node: '>=6'}
-
   yargs-parser@21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
-
-  yargs@15.4.1:
-    resolution: {integrity: sha512-aePbxDmcYW++PaqBsJ+HYUFwCdv4LVvdnhBy78E57PIor8/OVvhMrADFFEDh8DHDFRv/O9i3lPhsENjO7QX0+A==}
-    engines: {node: '>=8'}
 
   yargs@17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
@@ -5940,25 +5795,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@lit-labs/preact-signals@1.0.3':
-    dependencies:
-      '@preact/signals-core': 1.8.0
-      lit: 3.2.1
-
-  '@lit-labs/ssr-dom-shim@1.3.0': {}
-
-  '@lit/react@1.0.7(@types/react@18.3.18)':
-    dependencies:
-      '@types/react': 18.3.18
-
-  '@lit/reactive-element@2.0.4':
-    dependencies:
-      '@lit-labs/ssr-dom-shim': 1.3.0
-
-  '@lit/task@1.0.2':
-    dependencies:
-      '@lit/reactive-element': 2.0.4
-
   '@next/env@14.2.15': {}
 
   '@next/swc-darwin-arm64@14.2.15':
@@ -6615,8 +6451,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@preact/signals-core@1.8.0': {}
-
   '@radix-ui/number@1.1.0': {}
 
   '@radix-ui/primitive@1.1.1': {}
@@ -6952,25 +6786,6 @@ snapshots:
 
   '@radix-ui/rect@1.1.0': {}
 
-  '@reactive-dot/core@0.38.1(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))':
-    dependencies:
-      '@reactive-dot/utils': 0.10.0
-      '@substrate/smoldot-discovery': 2.0.2
-      polkadot-api: 1.9.5(jiti@1.21.7)(postcss@8.5.3)(rxjs@7.8.2)(tsx@4.19.3)(yaml@2.7.0)
-
-  '@reactive-dot/react@0.38.5(@types/react@18.3.18)(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))(react@18.3.1)':
-    dependencies:
-      '@reactive-dot/core': 0.38.1(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))
-      jotai: 2.12.2(@types/react@18.3.18)(react@18.3.1)
-      jotai-derive: 0.1.2(jotai@2.12.2(@types/react@18.3.18)(react@18.3.1))
-      jotai-effect: 2.0.1(jotai@2.12.2(@types/react@18.3.18)(react@18.3.1))
-      react: 18.3.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - polkadot-api
-
-  '@reactive-dot/utils@0.10.0': {}
-
   '@rollup/rollup-android-arm-eabi@4.34.9':
     optional: true
 
@@ -7086,8 +6901,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@substrate/discovery@0.2.2': {}
-
   '@substrate/light-client-extension-helpers@1.0.0(smoldot@2.0.26)':
     dependencies:
       '@polkadot-api/json-rpc-provider': 0.0.1
@@ -7098,10 +6911,6 @@ snapshots:
       '@substrate/connect-known-chains': 1.9.2
       rxjs: 7.8.2
       smoldot: 2.0.26
-
-  '@substrate/smoldot-discovery@2.0.2':
-    dependencies:
-      '@substrate/discovery': 0.2.2
 
   '@substrate/ss58-registry@1.51.0': {}
 
@@ -7131,10 +6940,6 @@ snapshots:
     dependencies:
       '@polkadot/api': 15.7.2
       '@polkadot/extension-inject': 0.58.5(@polkadot/api@15.7.2)(@polkadot/util@13.4.3)
-
-  '@talismn/connect-wallets@file:apps/web/.yalc/@talismn/connect-wallets(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))':
-    dependencies:
-      polkadot-api: 1.9.5(jiti@1.21.7)(postcss@8.5.3)(rxjs@7.8.2)(tsx@4.19.3)(yaml@2.7.0)
 
   '@thi.ng/api@8.11.21': {}
 
@@ -7333,8 +7138,6 @@ snapshots:
       '@types/send': 0.17.4
 
   '@types/stack-utils@2.0.3': {}
-
-  '@types/trusted-types@2.0.7': {}
 
   '@types/ws@8.18.0':
     dependencies:
@@ -7829,12 +7632,6 @@ snapshots:
 
   client-only@0.0.1: {}
 
-  cliui@6.0.0:
-    dependencies:
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      wrap-ansi: 6.2.0
-
   cliui@8.0.1:
     dependencies:
       string-width: 4.2.3
@@ -7942,8 +7739,6 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
-  decamelize@1.2.0: {}
-
   decompress-response@6.0.0:
     dependencies:
       mimic-response: 3.1.0
@@ -8001,8 +7796,6 @@ snapshots:
 
   diff-sequences@29.6.3: {}
 
-  dijkstrajs@1.0.3: {}
-
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
@@ -8012,31 +7805,6 @@ snapshots:
   doctrine@3.0.0:
     dependencies:
       esutils: 2.0.3
-
-  dot-connect@0.18.0(@reactive-dot/core@0.38.1(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2)))(@types/react@18.3.18)(react@18.3.1):
-    dependencies:
-      '@lit-labs/preact-signals': 1.0.3
-      '@lit/react': 1.0.7(@types/react@18.3.18)
-      '@lit/task': 1.0.2
-      '@reactive-dot/core': 0.38.1(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))
-      dot-identicon: 0.1.1(@types/react@18.3.18)(react@18.3.1)
-      lit: 3.2.1
-      qrcode: 1.5.4
-    optionalDependencies:
-      react: 18.3.1
-    transitivePeerDependencies:
-      - '@types/react'
-
-  dot-identicon@0.1.1(@types/react@18.3.18)(react@18.3.1):
-    dependencies:
-      '@lit-labs/preact-signals': 1.0.3
-      '@lit/react': 1.0.7(@types/react@18.3.18)
-      '@noble/hashes': 1.7.1
-      lit: 3.2.1
-    optionalDependencies:
-      react: 18.3.1
-    transitivePeerDependencies:
-      - '@types/react'
 
   dotenv@16.4.7: {}
 
@@ -9125,19 +8893,6 @@ snapshots:
 
   jiti@1.21.7: {}
 
-  jotai-derive@0.1.2(jotai@2.12.2(@types/react@18.3.18)(react@18.3.1)):
-    dependencies:
-      jotai: 2.12.2(@types/react@18.3.18)(react@18.3.1)
-
-  jotai-effect@2.0.1(jotai@2.12.2(@types/react@18.3.18)(react@18.3.1)):
-    dependencies:
-      jotai: 2.12.2(@types/react@18.3.18)(react@18.3.1)
-
-  jotai@2.12.2(@types/react@18.3.18)(react@18.3.1):
-    optionalDependencies:
-      '@types/react': 18.3.18
-      react: 18.3.1
-
   joycon@3.1.1: {}
 
   js-tokens@4.0.0: {}
@@ -9223,22 +8978,6 @@ snapshots:
       log-update: 6.1.0
       rfdc: 1.4.1
       wrap-ansi: 9.0.0
-
-  lit-element@4.1.1:
-    dependencies:
-      '@lit-labs/ssr-dom-shim': 1.3.0
-      '@lit/reactive-element': 2.0.4
-      lit-html: 3.2.1
-
-  lit-html@3.2.1:
-    dependencies:
-      '@types/trusted-types': 2.0.7
-
-  lit@3.2.1:
-    dependencies:
-      '@lit/reactive-element': 2.0.4
-      lit-element: 4.1.1
-      lit-html: 3.2.1
 
   load-tsconfig@0.2.5: {}
 
@@ -9790,8 +9529,6 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
-  pngjs@5.0.0: {}
-
   polkadot-api@1.9.5(jiti@1.21.7)(postcss@8.5.3)(rxjs@7.8.2)(tsx@4.19.3)(yaml@2.7.0):
     dependencies:
       '@polkadot-api/cli': 0.11.2(jiti@1.21.7)(postcss@8.5.3)(tsx@4.19.3)(yaml@2.7.0)
@@ -9942,12 +9679,6 @@ snapshots:
 
   pure-rand@6.1.0: {}
 
-  qrcode@1.5.4:
-    dependencies:
-      dijkstrajs: 1.0.3
-      pngjs: 5.0.0
-      yargs: 15.4.1
-
   qs@6.13.0:
     dependencies:
       side-channel: 1.1.0
@@ -10054,8 +9785,6 @@ snapshots:
   reflect-metadata@0.2.2: {}
 
   require-directory@2.1.1: {}
-
-  require-main-filename@2.0.0: {}
 
   resolve-cwd@3.0.0:
     dependencies:
@@ -10193,7 +9922,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  set-blocking@2.0.0: {}
+  set-blocking@2.0.0:
+    optional: true
 
   setprototypeof@1.2.0: {}
 
@@ -10765,8 +10495,6 @@ snapshots:
       tr46: 1.0.1
       webidl-conversions: 4.0.2
 
-  which-module@2.0.1: {}
-
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
@@ -10777,12 +10505,6 @@ snapshots:
     optional: true
 
   word-wrap@1.2.5: {}
-
-  wrap-ansi@6.2.0:
-    dependencies:
-      ansi-styles: 4.3.0
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
 
   wrap-ansi@7.0.0:
     dependencies:
@@ -10855,8 +10577,6 @@ snapshots:
 
   ws@8.18.1: {}
 
-  y18n@4.0.3: {}
-
   y18n@5.0.8: {}
 
   yallist@3.1.1: {}
@@ -10865,26 +10585,7 @@ snapshots:
 
   yaml@2.7.0: {}
 
-  yargs-parser@18.1.3:
-    dependencies:
-      camelcase: 5.3.1
-      decamelize: 1.2.0
-
   yargs-parser@21.1.1: {}
-
-  yargs@15.4.1:
-    dependencies:
-      cliui: 6.0.0
-      decamelize: 1.2.0
-      find-up: 4.1.0
-      get-caller-file: 2.0.5
-      require-directory: 2.1.1
-      require-main-filename: 2.0.0
-      set-blocking: 2.0.0
-      string-width: 4.2.3
-      which-module: 2.0.1
-      y18n: 4.0.3
-      yargs-parser: 18.1.3
 
   yargs@17.7.2:
     dependencies:
