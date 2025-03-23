@@ -41,10 +41,19 @@ export class FrontendTransactionService {
             // Process args (including special handling for remark)
             let processedArgs = request.args;
             if (section === 'System' && method === 'remark') {
-                processedArgs = [Binary.fromText(request.args[0])];
+                // Only convert to Binary if not already a Binary instance
+                if (processedArgs[0] instanceof Binary) {
+                    console.log('Argument is already Binary, using as is');
+                } else {
+                    console.log('Converting remark text to Binary:', request.args[0]);
+                    processedArgs = [Binary.fromText(request.args[0])];
+                    console.log('Binary conversion successful');
+                }
             }
 
+            console.log(`Calling ${section}.${method} with args:`, processedArgs);
             const transaction = await txCall(...processedArgs);
+            console.log('Transaction call successful');
 
             return {
                 connection,
@@ -90,38 +99,47 @@ export class FrontendTransactionService {
         options?: TxOptions
     ): Promise<void> {
         return new Promise((resolve, reject) => {
-            transaction.signSubmitAndWatch(signer, options).subscribe({
-                next: (event: any) => {
-                    const status: TransactionStatus = {
-                        type: event.type,
-                        blockHash: event.blockHash,
-                        txHash: event.txHash,
-                        blockNumber: event.block?.number,
-                        success: event.ok
-                    };
+        
+            try {
+                const subscription = transaction.signSubmitAndWatch(signer, options).subscribe({
+                    next: (event: any) => {
+                        console.log('Transaction event received:', event);
+                        
+                        const status: TransactionStatus = {
+                            type: event.type,
+                            blockHash: event.blockHash,
+                            txHash: event.txHash,
+                            blockNumber: event.block?.number,
+                            success: event.ok
+                        };
 
-                    callbacks?.onStatusChange?.(status);
-                    
-                    if (event.type === 'finalized') {
-                        if (event.ok) {
-                            callbacks?.onSuccess?.({
-                                ...status,
-                                events: event.events
-                            });
-                            resolve();
-                        } else {
-                            const error = this.parseDispatchError(event.dispatchError);
-                            callbacks?.onError?.(error);
-                            reject(error);
+                        callbacks?.onStatusChange?.(status);
+                        
+                        if (event.type === 'finalized') {
+                            if (event.ok) {
+                                callbacks?.onSuccess?.({
+                                    ...status,
+                                    events: event.events
+                                });
+                                resolve();
+                            } else {
+                                const error = this.parseDispatchError(event.dispatchError);
+                                callbacks?.onError?.(error);
+                                reject(error);
+                            }
                         }
+                    },
+                    error: (error: Error) => {
+                        console.error('Transaction subscription error:', error);
+                        callbacks?.onError?.(error);
+                        reject(error);
                     }
-                },
-                error: (error: Error) => {
-                    console.error('Transaction error:', error);
-                    callbacks?.onError?.(error);
-                    reject(error);
-                }
-            });
+                });
+            } catch (error) {
+                console.error('Error creating transaction subscription:', error);
+                callbacks?.onError?.(error as Error);
+                reject(error);
+            }
         });
     }
 

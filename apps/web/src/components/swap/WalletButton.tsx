@@ -18,6 +18,9 @@ import { toast } from 'react-hot-toast';
 import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { WalletButtonProps } from './types';
 import { PolkadotSigner } from 'polkadot-api';
+import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
+import { FrontendTransactionService } from '@/services/FrontendTransactionService';
+import { Binary } from 'polkadot-api';
 
 // Network configuration for address formatting
 const NETWORK_CONFIG = {
@@ -31,6 +34,172 @@ const NETWORK_CONFIG = {
     prefix: 2, // Kusama SS58 prefix
     assetHubPrefix: 2 // Asset Hub Kusama uses the same prefix
   }
+};
+
+// New component for submitting a system.remark transaction
+export const SubmitRemarkButton = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [txStatus, setTxStatus] = useState<string | null>(null);
+  const [estimatedFee, setEstimatedFee] = useState<string | null>(null);
+
+  const submitRemark = async () => {
+    try {
+      setIsSubmitting(true);
+      setTxStatus('Preparing...');
+      
+      // Get the wallet source and address from localStorage
+      const walletSource = localStorage.getItem('walletSource');
+      const walletAddress = localStorage.getItem('assetHubAddress') || localStorage.getItem('walletAddress');
+      const walletNetwork = localStorage.getItem('walletNetwork') || 'Polkadot';
+      const activeConnection = localStorage.getItem('activeConnection');
+      
+      if (!walletSource || !walletAddress) {
+        throw new Error('Wallet not connected');
+      }
+      
+      // Get the wallet by source
+      const wallet = getWalletBySource(walletSource);
+      
+      if (!wallet) {
+        throw new Error('Wallet not found');
+      }
+      
+      // Enable the wallet if not already enabled
+      if (!wallet.extension) {
+        await wallet.enable('Swush');
+      }
+      
+      // Get the signer from the wallet
+      const signer = wallet.signer as PolkadotSigner;
+
+      if (!signer) {
+        throw new Error('Signer not available');
+      }
+
+      // Create a remark with current timestamp
+      const remarkText = `Hello from Swush! Timestamp: ${Date.now()}`;
+      
+      // Use the stored active connection if available, otherwise map from network name
+      const networkId = 'asset_hub';
+      
+      setTxStatus('Preparing transaction...');
+      
+      // Get the connection
+      const connectionManager = FrontendConnectionManager.getInstance();
+      const connection = await connectionManager.getConnection(networkId);
+      
+      // Validate connection is active
+      if (!connection || !connection.api) {
+        throw new Error('RPC connection is not active. Please reconnect your wallet.');
+      }
+
+      const api = connection.api;
+      
+      // Directly use the API to create a transaction
+      console.log('Creating system.remark transaction...');
+      const binaryRemark = Binary.fromText(remarkText);
+      
+      // Create transaction using the typed API
+      const transaction = await api.tx.System.remark({ remark: binaryRemark });
+      console.log('Transaction created successfully');
+      
+      // // Set transaction options as per Papi docs
+      // const txOptions = {
+      //   at: 'finalized', // target finalized block
+      //   mortality: { mortal: true, period: 64 },
+      //   tip: BigInt(0)
+      // };
+      
+      // Use signSubmitAndWatch instead of signAndSubmit
+      const subscription = transaction.signSubmitAndWatch(signer).subscribe({
+        next: (event) => {
+          console.log('Transaction event:', event);
+          
+          switch (event.type) {
+            case 'signed':
+              setTxHash(event.txHash);
+              setTxStatus(`Transaction signed! Hash: ${event.txHash}`);
+              break;
+              
+            case 'broadcasted':
+              setTxStatus(`Transaction broadcasted! Waiting for confirmation...`);
+              break;
+              
+            case 'txBestBlocksState':
+              if (event.found) {
+                if (event.ok) {
+                  setTxStatus(`Transaction included in block ${event.block.number}`);
+                } else {
+                  const error = event.dispatchError;
+                  setTxStatus(`Transaction failed: ${JSON.stringify(error)}`);
+                  toast.error('Transaction failed in block');
+                }
+              }
+              break;
+          }
+        },
+        error: (error) => {
+          console.error('Transaction error:', error);
+          if (error.message?.includes('1010')) {
+            setTxStatus('Transaction failed: Invalid transaction');
+            toast.error('Invalid transaction');
+          } else {
+            setTxStatus(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            toast.error(`Transaction error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          }
+          setIsSubmitting(false);
+        },
+        complete: () => {
+          console.log('Transaction finalized');
+          toast.success('Transaction completed successfully!');
+          setIsSubmitting(false);
+        }
+      });
+      
+      // Store subscription for cleanup
+      return () => subscription.unsubscribe();
+      
+    } catch (error) {
+      console.error('Error submitting transaction:', error);
+      setTxStatus(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Error submitting transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        onClick={submitRemark}
+        variant="outline"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? 'Submitting...' : 'Submit Remark'}
+      </Button>
+{/*       
+      {estimatedFee && (
+        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900 rounded text-xs">
+          <p className="font-semibold">Estimated Fee:</p>
+          <p>{estimatedFee}</p>
+        </div>
+      )} */}
+      
+      {txStatus && (
+        <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+          <p className="font-semibold">Status:</p>
+          <p>{txStatus}</p>
+        </div>
+      )}
+      
+      {txHash && (
+        <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-hidden">
+          <p className="font-semibold">Transaction Hash:</p>
+          <p className="break-all">{txHash}</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // New component for signing messages
@@ -133,6 +302,7 @@ export const WalletButton = ({
   className = '' 
 }: WalletButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   // Determine network based on address and source
   const determineNetwork = (address: string, source: string) => {
@@ -170,7 +340,43 @@ export const WalletButton = ({
     }
   };
 
-  const handleAccountSelected = (account: WalletAccount) => {
+  // Initialize the RPC connection
+  const initializeRpcConnection = async (networkName: string) => {
+    try {
+      setIsInitializing(true);
+      toast.loading('Initializing network connection...', { id: 'connection-toast' });
+      
+      // Map the network name to the connection id expected by the service
+      const networkMapping: Record<string, string> = {
+        'Polkadot': 'asset_hub',
+        'Kusama': 'asset_hub_kusama'
+      };
+      
+      const networkId = networkMapping[networkName] || 'asset_hub';
+      
+      // Get the connection manager instance
+      const connectionManager = FrontendConnectionManager.getInstance();
+      
+      // Initialize connection
+      const connection = await connectionManager.getConnection(networkId);
+      
+      console.log(`RPC connection initialized for ${networkName} (${networkId})`);
+      toast.success('Network connection established', { id: 'connection-toast' });
+      
+      // Store the connection info in localStorage for reuse
+      localStorage.setItem('activeConnection', networkId);
+      
+      return connection;
+    } catch (error) {
+      console.error('Error initializing RPC connection:', error);
+      toast.error(`Failed to connect to network: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'connection-toast' });
+      throw error;
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  const handleAccountSelected = async (account: WalletAccount) => {
     console.log('Selected account:', account);
     
     if (!account || !account.address) {
@@ -195,37 +401,56 @@ export const WalletButton = ({
     localStorage.setItem('walletNetwork', network.name);
     localStorage.setItem('assetHubAddress', assetHubAddress);
 
-    // Update state
-    setIsConnected(true);
-    setWalletAddress(assetHubAddress); // Use the Asset Hub formatted address
-    setIsOpen(false);
-    //add success toast
-    toast.success('Wallet connected successfully!', {
-      icon: '✅',
-      style: {
-        borderLeft: '4px solid #4caf50',
-      },
-    });
-
-    // If you need to use the PAPI signer, you can access it through account.wallet
-    if (account.wallet && account.signer) {
-      console.log('Wallet and signer available for PAPI integration');
+    try {
+      // Initialize RPC connection after wallet is connected
+      await initializeRpcConnection(network.name);
       
-      // Here you could integrate with PAPI using the account.wallet and account.signer
-      // For example, you might want to create a PolkadotSigner instance
-      // This would depend on your specific requirements
+      // Update state
+      setIsConnected(true);
+      setWalletAddress(assetHubAddress); // Use the Asset Hub formatted address
+      setIsOpen(false);
+      
+      //add success toast
+      toast.success('Wallet connected successfully!', {
+        icon: '✅',
+        style: {
+          borderLeft: '4px solid #4caf50',
+        },
+      });
+    } catch (error) {
+      console.error('Error during wallet connection:', error);
+      toast.error(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
-  const handleDisconnect = () => {
-    localStorage.removeItem('walletName');
-    localStorage.removeItem('walletAddress');
-    localStorage.removeItem('walletSource');
-    localStorage.removeItem('walletNetwork');
-    localStorage.removeItem('assetHubAddress');
-    
-    setIsConnected(false);
-    setWalletAddress('');
+  const handleDisconnect = async () => {
+    try {
+      // Disconnect RPC connection when wallet is disconnected
+      const connectionManager = FrontendConnectionManager.getInstance();
+      const networkName = localStorage.getItem('walletNetwork') || 'Polkadot';
+      const networkMapping: Record<string, string> = {
+        'Polkadot': 'asset_hub',
+        'Kusama': 'asset_hub_kusama'
+      };
+      const networkId = networkMapping[networkName] || 'asset_hub';
+      
+      await connectionManager.disconnect(networkId);
+      
+      // Clear local storage
+      localStorage.removeItem('walletName');
+      localStorage.removeItem('walletAddress');
+      localStorage.removeItem('walletSource');
+      localStorage.removeItem('walletNetwork');
+      localStorage.removeItem('assetHubAddress');
+      
+      setIsConnected(false);
+      setWalletAddress('');
+      
+      toast.success('Wallet disconnected');
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      toast.error(`Disconnect error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   return (
@@ -235,6 +460,7 @@ export const WalletButton = ({
           onClick={handleDisconnect}
           variant={variant}
           className={className}
+          disabled={isInitializing}
         >
           Disconnect
         </Button>
@@ -243,8 +469,9 @@ export const WalletButton = ({
           onClick={() => setIsOpen(true)}
           variant={variant}
           className={className}
+          disabled={isInitializing}
         >
-          Connect Wallet
+          {isInitializing ? 'Connecting...' : 'Connect Wallet'}
         </Button>
       )}
 

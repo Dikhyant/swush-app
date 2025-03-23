@@ -42,6 +42,7 @@ export class FrontendConnectionManager {
 
         // Create new connection
         const endpoint = this.getPreferredEndpoint(network);
+        console.log('Connecting to endpoint:', endpoint);
         const connection = await this.connect(endpoint);
         this.connections.set(network, connection);
         return connection;
