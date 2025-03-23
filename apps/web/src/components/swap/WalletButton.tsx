@@ -21,7 +21,12 @@ import { PolkadotSigner } from 'polkadot-api';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 import { FrontendTransactionService } from '@/services/FrontendTransactionService';
 import { Binary } from 'polkadot-api';
-
+import type { Signer } from '@polkadot/api/types'
+import {
+  getPolkadotSignerFromPjs,
+  SignPayload,
+  SignRaw
+} from "polkadot-api/pjs-signer"
 // Network configuration for address formatting
 const NETWORK_CONFIG = {
   POLKADOT: {
@@ -71,9 +76,14 @@ export const SubmitRemarkButton = () => {
       }
       
       // Get the signer from the wallet
-      const signer = wallet.signer as PolkadotSigner;
+      const signer = wallet.signer as Signer;
 
-      if (!signer) {
+      const signPayload = signer.signPayload as SignPayload;
+      const signRaw = signer.signRaw as SignRaw;
+
+      const signerPapi = getPolkadotSignerFromPjs(walletAddress, signPayload, signRaw);
+
+      if (!signerPapi) {
         throw new Error('Signer not available');
       }
 
@@ -112,7 +122,7 @@ export const SubmitRemarkButton = () => {
       // };
       
       // Use signSubmitAndWatch instead of signAndSubmit
-      const subscription = transaction.signSubmitAndWatch(signer).subscribe({
+      const subscription = transaction.signSubmitAndWatch(signerPapi).subscribe({
         next: (event) => {
           console.log('Transaction event:', event);
           
@@ -223,6 +233,7 @@ export const SignMessageButton = () => {
       // Get the wallet by source
       const wallet = getWalletBySource(walletSource);
       
+
       if (!wallet) {
         throw new Error('Wallet not found');
       }
@@ -231,27 +242,16 @@ export const SignMessageButton = () => {
       if (!wallet.extension) {
         await wallet.enable('Swush');
       }
-      
-      // Get the signer from the wallet
-      const signer = wallet.signer as PolkadotSigner;
-      
-      if (!signer) {
-        throw new Error('Signer not available');
-      }
-      
+
+      const signer = wallet.signer;
+
+      // //filter account from wallet.selectAccountSigner
+      // const account = await wallet?.selectAccountSigner(walletAddress);
+      // console.log('Account:', account);
+      // const signer = account?.signer as PolkadotSigner;
+            
       // The message to sign
       const message = 'Hello from Swush!';
-      
-      // Sign the message using the appropriate method
-      // The stringToHex utility function converts the message to hex format if needed
-      const stringToHex = (str: string): string => {
-        return Array.from(str)
-          .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
-          .join('');
-      };
-      
-      // Convert message to hex format (0x prefix will be added if needed by the API)
-      const messageHex = `0x${stringToHex(message)}`;
 
       // Use the signer directly to sign the payload
       const signature = await signer.signBytes(new TextEncoder().encode(message));
