@@ -1,0 +1,1 @@
+yalc add @talismn/connect-wallets && pnpm i

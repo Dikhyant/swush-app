@@ -1,7 +1,5 @@
-/* import { Binary, TypedApi } from 'polkadot-api';
-import { polkadot_asset_hub } from '@polkadot-api/descriptors';
-import { FrontendConnectionManager, PapiConnection } from '../../../../apps/web/src/services/FrontendConnectionManager';
-import { NETWORKS_SUPPORTED } from '../constants';
+import { Binary, TypedApi } from 'polkadot-api';
+import { FrontendConnectionManager, PapiConnection } from './FrontendConnectionManager';
 import { TransactionRequest, TransactionStatus, TransactionCallbacks, TxOptions } from './types';
 
 // Generic signer interface that matches what PAPI expects
@@ -147,4 +145,4 @@ export class FrontendTransactionService {
             return new Error('Failed to parse dispatch error');
         }
     }
-} */
+}

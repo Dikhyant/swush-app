@@ -79,8 +79,8 @@ importers:
         specifier: ^1.1.9
         version: 1.1.9(@polkadot/api@15.7.2)(@polkadot/extension-inject@0.58.5(@polkadot/api@15.7.2)(@polkadot/util@13.4.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@talismn/connect-wallets':
-        specifier: ^1.2.8
-        version: 1.2.8(@polkadot/api@15.7.2)(@polkadot/extension-inject@0.58.5(@polkadot/api@15.7.2)(@polkadot/util@13.4.3))
+        specifier: file:.yalc/@talismn/connect-wallets
+        version: file:apps/web/.yalc/@talismn/connect-wallets(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))
       '@types/lodash.debounce':
         specifier: ^4.0.9
         version: 4.0.9
@@ -1767,6 +1767,11 @@ packages:
     peerDependencies:
       '@polkadot/api': '>=9.3.3'
       '@polkadot/extension-inject': '>=0.44.6'
+
+  '@talismn/connect-wallets@file:apps/web/.yalc/@talismn/connect-wallets':
+    resolution: {directory: apps/web/.yalc/@talismn/connect-wallets, type: directory}
+    peerDependencies:
+      polkadot-api: '>=1.0.0'
 
   '@thi.ng/api@8.11.21':
     resolution: {integrity: sha512-J6BUdUtFtwZirL3M9tkCiqBXj228z7zkxWOaDWTymwBeqY9s02vJP3mQV8l5p+YPDIRmYx/q7XVuLW1UTJRN/A==}
@@ -7126,6 +7131,10 @@ snapshots:
     dependencies:
       '@polkadot/api': 15.7.2
       '@polkadot/extension-inject': 0.58.5(@polkadot/api@15.7.2)(@polkadot/util@13.4.3)
+
+  '@talismn/connect-wallets@file:apps/web/.yalc/@talismn/connect-wallets(polkadot-api@1.9.5(postcss@8.5.3)(rxjs@7.8.2))':
+    dependencies:
+      polkadot-api: 1.9.5(jiti@1.21.7)(postcss@8.5.3)(rxjs@7.8.2)(tsx@4.19.3)(yaml@2.7.0)
 
   '@thi.ng/api@8.11.21': {}
 

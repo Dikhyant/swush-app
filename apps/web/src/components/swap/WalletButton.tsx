@@ -17,6 +17,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { WalletButtonProps } from './types';
+import { PolkadotSigner } from 'polkadot-api';
 
 // Network configuration for address formatting
 const NETWORK_CONFIG = {
@@ -63,7 +64,7 @@ export const SignMessageButton = () => {
       }
       
       // Get the signer from the wallet
-      const signer = wallet.signer;
+      const signer = wallet.signer as PolkadotSigner;
       
       if (!signer) {
         throw new Error('Signer not available');
@@ -72,21 +73,28 @@ export const SignMessageButton = () => {
       // The message to sign
       const message = 'Hello from Swush!';
       
-      // Sign the message
-      const signRaw = signer.signRaw;
+      // Sign the message using the appropriate method
+      // The stringToHex utility function converts the message to hex format if needed
+      const stringToHex = (str: string): string => {
+        return Array.from(str)
+          .map(c => c.charCodeAt(0).toString(16).padStart(2, '0'))
+          .join('');
+      };
       
-      if (!signRaw) {
-        throw new Error('signRaw not available on signer');
-      }
-      
-      const { signature } = await signRaw({
-        address: walletAddress,
-        data: message,
-        type: 'bytes'
-      });
+      // Convert message to hex format (0x prefix will be added if needed by the API)
+      const messageHex = `0x${stringToHex(message)}`;
+
+      // Use the signer directly to sign the payload
+      const signature = await signer.signBytes(new TextEncoder().encode(message));
       
       console.log('Message signed successfully:', signature);
-      setSignedMessage(signature);
+      // The signature could be in various formats depending on the implementation
+      // We'll use the most common format or extract from the response object
+      const signatureValue = typeof signature === 'string' 
+        ? signature 
+        : (signature as any).signature || JSON.stringify(signature);
+      
+      setSignedMessage(signatureValue);
       toast.success('Message signed successfully!');
       
     } catch (error) {

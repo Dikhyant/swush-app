@@ -69,7 +69,7 @@ export class TransactionService {
 
                     callbacks?.onStatusChange?.(status);
                 },
-                error: (error) => {
+                error: (error: Error) => {
                     // Handle InvalidTxError specifically
                     if (error instanceof InvalidTxError) {
                         const errorMessage = `Invalid transaction: ${this.formatValidityError(error.error)}`;

@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "packages": {
+    "@talismn/connect-wallets": {
+      "signature": "00a11bf3a099b170fbe03ef183d371f5",
+      "file": true,
+      "replaced": "^1.2.8"
+    }
+  }
+}
