@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { WalletButton, SignMessageButton, SubmitRemarkButton } from '@/components/swap/WalletButton';
+import { Toaster } from 'react-hot-toast';
 
 export default function SignTestPage() {
   const [isConnected, setIsConnected] = useState(false);
@@ -9,6 +10,35 @@ export default function SignTestPage() {
 
   return (
     <div className="container mx-auto py-10 px-4">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          // Custom styling
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+          // Custom success styles
+          success: {
+            style: {
+              background: 'green',
+            },
+          },
+          // Custom error styles
+          error: {
+            style: {
+              background: 'red',
+            },
+          },
+          // Custom loading styles
+          loading: {
+            style: {
+              background: '#333',
+            },
+          },
+        }}
+      />
+      
       <h1 className="text-3xl font-bold mb-6">Wallet Interaction Test</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

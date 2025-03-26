@@ -114,66 +114,71 @@ export const SubmitRemarkButton = () => {
       const transaction = await api.tx.System.remark({ remark: binaryRemark });
       console.log('Transaction created successfully');
       
-      // // Set transaction options as per Papi docs
-      // const txOptions = {
-      //   at: 'finalized', // target finalized block
-      //   mortality: { mortal: true, period: 64 },
-      //   tip: BigInt(0)
-      // };
-      
       // Use signSubmitAndWatch instead of signAndSubmit
-      const subscription = transaction.signSubmitAndWatch(signerPapi).subscribe({
-        next: (event) => {
-          console.log('Transaction event:', event);
-          
-          switch (event.type) {
-            case 'signed':
-              setTxHash(event.txHash);
-              setTxStatus(`Transaction signed! Hash: ${event.txHash}`);
-              break;
-              
-            case 'broadcasted':
-              setTxStatus(`Transaction broadcasted! Waiting for confirmation...`);
-              break;
-              
-            case 'txBestBlocksState':
-              if (event.found) {
-                if (event.ok) {
-                  setTxStatus(`Transaction included in block ${event.block.number}`);
-                } else {
-                  const error = event.dispatchError;
-                  setTxStatus(`Transaction failed: ${JSON.stringify(error)}`);
-                  toast.error('Transaction failed in block');
+      await FrontendTransactionService.signSubmitAndWatch(
+        transaction,
+        signerPapi,
+        {
+          onStatusChange: (status) => {
+            console.log('Transaction status:', status);
+            
+            // Show loading toast for initial states
+            switch (status.type) {
+              case 'signed':
+                if (status.txHash) {
+                  setTxHash(status.txHash);
+                  setTxStatus(`Transaction signed! Hash: ${status.txHash}`);
+                  toast.loading('Transaction signed, waiting for broadcast...', { id: 'tx-status' });
                 }
-              }
-              break;
+                break;
+                
+              case 'broadcasted':
+                setTxStatus(`Transaction broadcasted! Waiting for confirmation...`);
+                toast.loading('Transaction broadcasted, waiting for confirmation...', { id: 'tx-status' });
+                break;
+                
+              case 'txBestBlocksState':
+                if (status.blockNumber) {
+                  setTxStatus(`Transaction included in block ${status.blockNumber}`);
+                  toast.loading(`Transaction included in block ${status.blockNumber}, waiting for finalization...`, { id: 'tx-status' });
+                  
+                  if (!status.success) {
+                    toast.error('Transaction failed in block', { id: 'tx-status' });
+                    setTxStatus(`Transaction failed: ${status.error || 'Unknown error'}`);
+                  }
+                }
+                break;
+                
+              case 'finalized':
+                if (status.success) {
+                  const blockNum = status.blockNumber ? ` in block ${status.blockNumber}` : '';
+                  setTxStatus(`Transaction finalized${blockNum}`);
+                  toast.success('Transaction completed successfully! 🎉', { 
+                    id: 'tx-status',
+                    duration: 5000,
+                    icon: '✅'
+                  });
+                }
+                break;
+            }
+          },
+          onSuccess: (status) => {
+            console.log('Transaction successful:', status);
+            setIsSubmitting(false);
+          },
+          onError: (error) => {
+            console.error('Transaction error:', error);
+            setTxStatus(`Failed: ${error.message}`);
+            toast.error(`Transaction failed: ${error.message}`, { id: 'tx-status' });
+            setIsSubmitting(false);
           }
-        },
-        error: (error) => {
-          console.error('Transaction error:', error);
-          if (error.message?.includes('1010')) {
-            setTxStatus('Transaction failed: Invalid transaction');
-            toast.error('Invalid transaction');
-          } else {
-            setTxStatus(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-            toast.error(`Transaction error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          }
-          setIsSubmitting(false);
-        },
-        complete: () => {
-          console.log('Transaction finalized');
-          toast.success('Transaction completed successfully!');
-          setIsSubmitting(false);
         }
-      });
-      
-      // Store subscription for cleanup
-      return () => subscription.unsubscribe();
+      );
       
     } catch (error) {
       console.error('Error submitting transaction:', error);
       setTxStatus(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      toast.error(`Error submitting transaction: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Error submitting transaction: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'tx-status' });
       setIsSubmitting(false);
     }
   };
@@ -184,28 +189,29 @@ export const SubmitRemarkButton = () => {
         onClick={submitRemark}
         variant="outline"
         disabled={isSubmitting}
+        className="relative"
       >
-        {isSubmitting ? 'Submitting...' : 'Submit Remark'}
+        {isSubmitting ? (
+          <span className="flex items-center gap-2">
+            <span className="animate-spin">⚡</span>
+            Submitting...
+          </span>
+        ) : (
+          'Submit Remark'
+        )}
       </Button>
-{/*       
-      {estimatedFee && (
-        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900 rounded text-xs">
-          <p className="font-semibold">Estimated Fee:</p>
-          <p>{estimatedFee}</p>
-        </div>
-      )} */}
       
       {txStatus && (
         <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
           <p className="font-semibold">Status:</p>
-          <p>{txStatus}</p>
+          <p className="text-sm">{txStatus}</p>
         </div>
       )}
       
       {txHash && (
         <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-hidden">
           <p className="font-semibold">Transaction Hash:</p>
-          <p className="break-all">{txHash}</p>
+          <p className="break-all font-mono text-xs">{txHash}</p>
         </div>
       )}
     </div>
