@@ -21,6 +21,7 @@ import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
 import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
 import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
 import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
+import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
 import { LoadState } from '@/components/swap/ui/LoadState'
 
 export default function SwapPage() {
@@ -61,6 +62,70 @@ export default function SwapPage() {
     inputToken: inputToken?.symbol || 'TOKEN',
     outputToken: outputToken?.symbol || 'TOKEN'
   })
+  
+  // Asset conversion swap hook
+  const {
+    executeSwap: executeAssetConversionSwap,
+  } = useAssetConversionSwap({
+    inputToken,
+    outputToken,
+    walletAddress,
+    slippageTolerance,
+    inputAmount,
+    outputAmount,
+    routeState,
+    onSuccess: () => {
+      // Reset states after successful swap
+      setInputAmount('0');
+      resetBalances();
+      closeSwapProgress();
+    },
+    onError: (error) => {
+      console.error('Swap execution error:', error);
+      toast.error(`Swap failed: ${error.message}`);
+      setIsSwapping(false);
+      closeSwapProgress();
+    }
+  });
+
+  // Updated handleSwap function that uses executeAssetConversionSwap
+  const handleSwapExecution = useCallback(async (isUserConnected: boolean) => {
+    if (!isUserConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!inputToken || !outputToken) {
+      toast.error('Please select tokens for swap');
+      return;
+    }
+
+    if (!inputAmount || parseFloat(inputAmount) <= 0) {
+      toast.error('Please enter a valid amount to swap');
+      return;
+    }
+
+    if (insufficientBalance) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
+    try {
+      // Show the swap progress modal
+      handleSwap(isUserConnected);
+      
+      // Execute the actual swap
+      await executeAssetConversionSwap();
+    } catch (error) {
+      console.error('Error during swap execution:', error);
+      toast.error(`Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsSwapping(false);
+      closeSwapProgress();
+    }
+  }, [
+    inputToken, outputToken, inputAmount, insufficientBalance, 
+    handleSwap, executeAssetConversionSwap, setIsSwapping, closeSwapProgress
+  ]);
 
   // Effect to reset states when tokens change
   useEffect(() => {
@@ -190,7 +255,7 @@ export default function SwapPage() {
             isConnected={isConnected}
             setIsConnected={setIsConnected}
             setWalletAddress={setWalletAddress}
-            onSwap={() => handleSwap(isConnected)}
+            onSwap={() => handleSwapExecution(isConnected)}
             isSwapping={isSwapping}
             insufficientBalance={insufficientBalance}
             disabled={!inputAmount || parseFloat(inputAmount) <= 0 || insufficientBalance}
