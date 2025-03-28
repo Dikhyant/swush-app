@@ -113,11 +113,7 @@ export default function SwapPage() {
     },
     onError: (error) => {
       console.error('Swap execution error:', error);
-      toast.error(`Swap failed: ${error.message}`, {
-        style: {
-          borderLeft: '4px solid #ef4444',
-        },
-      });
+      // Error toast is now handled in useAssetConversionSwap directly
       setIsSwapping(false);
       closeSwapProgress();
     }
@@ -153,7 +149,10 @@ export default function SwapPage() {
       await executeAssetConversionSwap();
     } catch (error) {
       console.error('Error during swap execution:', error);
-      toast.error(`Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Only show toast if not already shown with same ID
+      if (!document.getElementById('swap-error')) {
+        toast.error(`Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'swap-error' });
+      }
       setIsSwapping(false);
       closeSwapProgress();
     }

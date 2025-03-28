@@ -286,7 +286,6 @@ export function useAssetConversionSwap({
             case 'txBestBlocksState':
               if (status.blockNumber) {
                 setSwapStatus(`Transaction included in block ${status.blockNumber}`);
-                toast.loading(`Transaction included in block ${status.blockNumber}, waiting for finalization...`, { id: 'swap-status' });
                 
                 if (!status.success) {
                   // Store the dispatch error for detailed logging
@@ -296,17 +295,24 @@ export function useAssetConversionSwap({
                     
                     // Format the error for user display
                     const errorMessage = formatDispatchError(status.error);
-                    toast.error(`Transaction failed: ${errorMessage}`, { id: 'swap-status' });
+                    toast.dismiss('swap-status');
+                    toast.error(`Transaction failed: ${errorMessage}`, { id: 'swap-error' });
                     setSwapStatus(`Transaction failed: ${errorMessage}`);
                   } else {
-                    toast.error('Transaction failed in block', { id: 'swap-status' });
+                    toast.dismiss('swap-status');
+                    toast.error('Transaction failed in block', { id: 'swap-error' });
                     setSwapStatus(`Transaction failed: Unknown error`);
                   }
+                } else {
+                  toast.loading(`Transaction included in block ${status.blockNumber}, waiting for finalization...`, { id: 'swap-status' });
                 }
               }
               break;
               
             case 'finalized':
+              toast.dismiss('swap-status');
+              toast.dismiss('swap-error');
+              
               if (status.success) {
                 const blockNum = status.blockNumber ? ` in block ${status.blockNumber}` : '';
                 setSwapStatus(`Swap complete${blockNum}!`);
@@ -316,16 +322,14 @@ export function useAssetConversionSwap({
                   icon: '✅'
                 });
                 
-                // Log transaction events for debugging purposes
                 if (status.events && status.events.length > 0) {
                   console.log('Transaction events:', status.events);
                 }
               } else if (status.error) {
-                // Handle finalized but failed transaction
                 console.error('Transaction finalized but failed with error:', status.error);
                 setDispatchError(status.error);
                 const errorMessage = formatDispatchError(status.error);
-                toast.error(`Swap failed: ${errorMessage}`, { id: 'swap-status' });
+                toast.error(`Swap failed: ${errorMessage}`, { id: 'swap-error' });
                 setSwapStatus(`Failed: ${errorMessage}`);
               }
               break;
@@ -339,13 +343,14 @@ export function useAssetConversionSwap({
         onError: (error: Error) => {
           console.error('Swap transaction error:', error);
           
-          // Check if this is a dispatch error from the blockchain
+          toast.dismiss('swap-status');
+          
           if (error.message && error.message.includes('dispatch error')) {
             console.error('Dispatch error details:', dispatchError);
           }
           
           setSwapStatus(`Failed: ${error.message}`);
-          toast.error(`Swap failed: ${error.message}`, { id: 'swap-status' });
+          toast.error(`Swap failed: ${error.message}`, { id: 'swap-error' });
           setIsSwapping(false);
           if (onError) onError(error);
         }
@@ -361,8 +366,11 @@ export function useAssetConversionSwap({
     } catch (error) {
       console.error('Error executing swap:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      toast.dismiss('swap-status');
+      
       setSwapStatus(`Failed: ${errorMessage}`);
-      toast.error(`Error executing swap: ${errorMessage}`, { id: 'swap-status' });
+      toast.error(`Error executing swap: ${errorMessage}`, { id: 'swap-error' });
       setIsSwapping(false);
       if (onError) onError(error instanceof Error ? error : new Error(errorMessage));
     }
