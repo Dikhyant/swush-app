@@ -15,7 +15,9 @@ export class FrontendTransactionService {
         try {
             return await transaction.getEstimatedFees(address, options);
         } catch (error) {
-            throw TransactionErrorService.handleTransactionError(error);
+            // Avoid excessive logging
+            const enhancedError = TransactionErrorService.handleTransactionError(error);
+            throw enhancedError;
         }
     }
 
@@ -27,7 +29,9 @@ export class FrontendTransactionService {
         try {
             return await transaction.sign(signer, options);
         } catch (error) {
-            throw TransactionErrorService.handleTransactionError(error);
+            // Avoid excessive logging
+            const enhancedError = TransactionErrorService.handleTransactionError(error);
+            throw enhancedError;
         }
     }
 
@@ -81,6 +85,7 @@ export class FrontendTransactionService {
                                         if (!errorHandled) {
                                             errorHandled = true;
                                             const error = TransactionErrorService.createErrorFromDispatchInfo(errorInfo);
+                                            (error as any)._handled = true;
                                             callbacks?.onError?.(error);
                                         }
                                     }
@@ -110,6 +115,7 @@ export class FrontendTransactionService {
                                     if (!errorHandled) {
                                         errorHandled = true;
                                         const error = TransactionErrorService.createErrorFromDispatchInfo(errorInfo);
+                                        (error as any)._handled = true;
                                         callbacks?.onError?.(error);
                                         reject(error);
                                     }
@@ -127,6 +133,7 @@ export class FrontendTransactionService {
                         if (!errorHandled) {
                             errorHandled = true;
                             const enhancedError = TransactionErrorService.handleTransactionError(error);
+                            (enhancedError as any)._handled = true;
                             callbacks?.onError?.(enhancedError);
                             reject(enhancedError);
                         }
@@ -142,6 +149,7 @@ export class FrontendTransactionService {
                 if (!errorHandled) {
                     errorHandled = true;
                     const enhancedError = TransactionErrorService.handleTransactionError(error);
+                    (enhancedError as any)._handled = true;
                     callbacks?.onError?.(enhancedError);
                     reject(enhancedError);
                 }

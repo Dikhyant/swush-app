@@ -44,36 +44,6 @@ export function useAssetConversionSwap({
   const [swapHash, setSwapHash] = useState<string | null>(null);
   const [swapStatus, setSwapStatus] = useState<string | null>(null);
   const [dispatchError, setDispatchError] = useState<DispatchErrorInfo | null>(null);
-  const [errorHandled, setErrorHandled] = useState(false);
-
-  // Reset error handling state when starting a new swap
-  const resetErrorState = useCallback(() => {
-    setErrorHandled(false);
-    setDispatchError(null);
-  }, []);
-
-  // Centralized error handling function
-  const handleSwapError = useCallback((error: Error | EnhancedError) => {
-    if (errorHandled) return;
-    setErrorHandled(true);
-
-    // Handle enhanced errors with dispatch info
-    const enhancedError = error as EnhancedError;
-    if (enhancedError.dispatchInfo) {
-      setDispatchError(enhancedError.dispatchInfo);
-    }
-
-    // Update UI state
-    toast.dismiss('swap-status');
-    setSwapStatus(`Failed: ${error.message}`);
-    toast.error(`Swap failed: ${error.message}`, { 
-      id: 'swap-error',
-      duration: 5000 
-    });
-    
-    setIsSwapping(false);
-    if (onError) onError(error);
-  }, [errorHandled, onError]);
 
   // Get assets with XCM location information
   const getAssetsWithXcmLocations = useCallback(async (): Promise<Map<string, AssetWithId>> => {
@@ -140,9 +110,9 @@ export function useAssetConversionSwap({
     }
 
     try {
-      resetErrorState();
       setIsSwapping(true);
       setSwapStatus('Preparing swap...');
+      setDispatchError(null);
       
       // Get wallet source from localStorage
       const walletSource = localStorage.getItem('walletSource');
@@ -258,11 +228,19 @@ export function useAssetConversionSwap({
       
       setSwapStatus('Signing transaction...');
       
+      // Flag to prevent duplicate error handling
+      let errorHandled = false;
+      
       // Define transaction callbacks
       const callbacks: TransactionCallbacks = {
         onStatusChange: (status: TransactionStatus) => {
+          console.log('Swap transaction status:', status);
+
           // Handle error state first if present
           if (status.error && !status.success) {
+            console.error('Transaction failed with error:', status.error);
+            toast.dismiss('swap-status');
+            toast.error(`Transaction failed: ${status.error}`, { id: 'swap-error' });
             setSwapStatus(`Failed: ${status.error}`);
             return;
           }
@@ -309,10 +287,51 @@ export function useAssetConversionSwap({
           }
         },
         onSuccess: (status: TransactionStatus) => {
+          console.log('Swap transaction successful', status);
           setIsSwapping(false);
           if (onSuccess) onSuccess();
         },
-        onError: handleSwapError
+        onError: (error: Error) => {
+          // Prevent duplicate error handling
+          if (errorHandled) return;
+          errorHandled = true;
+          
+          console.error('Swap transaction error:', error);
+          toast.dismiss('swap-status');
+          
+          // Store dispatch error info if available using type assertion
+          const enhancedError = error as EnhancedError;
+          if (enhancedError.dispatchInfo) {
+            setDispatchError(enhancedError.dispatchInfo);
+            
+            // Log the full error details for debugging
+            console.log('Dispatch error details:', {
+              type: enhancedError.dispatchInfo.type,
+              message: enhancedError.dispatchInfo.message,
+              moduleError: enhancedError.dispatchInfo.moduleError,
+              moduleName: enhancedError.dispatchInfo.moduleName,
+              details: enhancedError.dispatchInfo.details
+            });
+
+            // Use the enhanced error message for user feedback
+            const errorMessage = enhancedError.dispatchInfo.message;
+            setSwapStatus(`Failed: ${errorMessage}`);
+            toast.error(`Swap failed: ${errorMessage}`, { 
+              id: 'swap-error',
+              duration: 5000 
+            });
+          } else {
+            // Fallback to basic error message
+            setSwapStatus(`Failed: ${error.message}`);
+            toast.error(`Swap failed: ${error.message}`, { 
+              id: 'swap-error',
+              duration: 5000 
+            });
+          }
+          
+          setIsSwapping(false);
+          if (onError) onError(error);
+        }
       };
       
       // Execute the transaction
@@ -323,14 +342,35 @@ export function useAssetConversionSwap({
       );
       
     } catch (error) {
+      console.error('Error executing swap:', error);
+      
+      // Use the TransactionErrorService to handle the error consistently
       const enhancedError = TransactionErrorService.handleTransactionError(error);
-      handleSwapError(enhancedError);
+      
+      // Already handled by onError callback above
+      if ((enhancedError as any)._handled) return;
+      (enhancedError as any)._handled = true;
+      
+      // Update UI state
+      toast.dismiss('swap-status');
+      setSwapStatus(`Failed: ${enhancedError.message}`);
+      toast.error(`Error executing swap: ${enhancedError.message}`, { id: 'swap-error' });
+      setIsSwapping(false);
+      
+      // Store dispatch error info if available
+      const typedError = enhancedError as EnhancedError;
+      if (typedError.dispatchInfo) {
+        setDispatchError(typedError.dispatchInfo);
+        console.log('Dispatch error details:', typedError.dispatchInfo);
+      }
+      
+      if (onError) onError(enhancedError);
     }
   }, [
     inputToken, outputToken, walletAddress, inputAmount, outputAmount,
     slippageTolerance, routeState, getAssetsWithXcmLocations, 
     calculateMinimumOutput, toAssetPlanckFormat, parseXcmLocation,
-    onSuccess, handleSwapError, resetErrorState
+    onSuccess, onError
   ]);
 
   return {
