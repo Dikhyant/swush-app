@@ -11,7 +11,7 @@ import { FrontendConnectionManager } from '@/services/FrontendConnectionManager'
 import type { TransactionCallbacks, TransactionStatus } from '@/services/types';
 import { safeParse } from '@/components/swap/utils';
 import type { XcmV4Location } from '@swush/api';
-import { TransactionErrorService, DispatchErrorInfo, EnhancedError } from '@/services/TransactionErrorService';
+import { TransactionErrorService, SwushError } from '@/services/TransactionErrorService';
 
 interface UseAssetConversionSwapProps {
   inputToken: TokenInfo | null;
@@ -26,7 +26,7 @@ interface UseAssetConversionSwapProps {
     data: RouteQuote | null;
   };
   onSuccess?: () => void;
-  onError?: (error: Error) => void;
+  onError?: (error: SwushError) => void;
 }
 
 export function useAssetConversionSwap({
@@ -43,7 +43,7 @@ export function useAssetConversionSwap({
   const [isSwapping, setIsSwapping] = useState(false);
   const [swapHash, setSwapHash] = useState<string | null>(null);
   const [swapStatus, setSwapStatus] = useState<string | null>(null);
-  const [dispatchError, setDispatchError] = useState<DispatchErrorInfo | null>(null);
+  const [swapError, setSwapError] = useState<SwushError | null>(null);
 
   // Get assets with XCM location information
   const getAssetsWithXcmLocations = useCallback(async (): Promise<Map<string, AssetWithId>> => {
@@ -102,17 +102,34 @@ export function useAssetConversionSwap({
     }
   }, []);
   
+  const handleError = useCallback((error: Error) => {
+    const swushError = TransactionErrorService.handleTransactionError(error);
+    setSwapError(swushError);
+    setSwapStatus(`Failed: ${swushError.message}`);
+    toast.dismiss('swap-status');
+    toast.error(`Swap failed: ${swushError.message}`, { 
+      id: 'swap-error',
+      duration: 5000 
+    });
+    setIsSwapping(false);
+    if (onError) onError(swushError);
+  }, [onError]);
+
   // Execute the swap
   const executeSwap = useCallback(async () => {
     if (!inputToken || !outputToken || !walletAddress || !inputAmount || parseFloat(inputAmount) <= 0) {
-      toast.error('Invalid swap parameters');
+      const error = TransactionErrorService.parseDispatchError({
+        type: 'ValidationError',
+        message: 'Invalid swap parameters'
+      });
+      handleError(error);
       return;
     }
 
     try {
       setIsSwapping(true);
       setSwapStatus('Preparing swap...');
-      setDispatchError(null);
+      setSwapError(null);
       
       // Get wallet source from localStorage
       const walletSource = localStorage.getItem('walletSource');
@@ -231,8 +248,6 @@ export function useAssetConversionSwap({
       // Define transaction callbacks
       const callbacks: TransactionCallbacks = {
         onStatusChange: (status: TransactionStatus) => {
-          console.log('Swap transaction status:', status);
-          
           switch (status.type) {
             case 'signed':
               if (status.txHash) {
@@ -256,7 +271,8 @@ export function useAssetConversionSwap({
               
             case 'finalized':
               toast.dismiss('swap-status');
-              
+              console.log('Swap transaction status:', status);
+
               if (status.success) {
                 const blockNum = status.blockNumber ? ` in block ${status.blockNumber}` : '';
                 setSwapStatus(`Swap complete${blockNum}!`);
@@ -269,41 +285,16 @@ export function useAssetConversionSwap({
               break;
           }
 
-          // Handle any error state at the end
+          // Handle any error state
           if (status.error) {
-            toast.dismiss('swap-status');
-            setSwapStatus(`Failed: ${status.error}`);
-            toast.error(`Transaction failed: ${status.error}`, { id: 'swap-error' });
+            handleError(new Error(status.error));
           }
         },
         onSuccess: (status: TransactionStatus) => {
           setIsSwapping(false);
           if (onSuccess) onSuccess();
         },
-        onError: (error: Error) => {
-          console.error('Swap transaction error:', error);
-          toast.dismiss('swap-status');
-          
-          const enhancedError = error as EnhancedError;
-          if (enhancedError.dispatchInfo) {
-            setDispatchError(enhancedError.dispatchInfo);
-            setSwapStatus(`Failed: ${enhancedError.dispatchInfo.message}`);
-            toast.error(`Swap failed: ${enhancedError.dispatchInfo.message}`, { 
-              id: 'swap-error',
-              duration: 5000 
-            });
-            console.log('Dispatch error details:', enhancedError.dispatchInfo);
-          } else {
-            setSwapStatus(`Failed: ${error.message}`);
-            toast.error(`Swap failed: ${error.message}`, { 
-              id: 'swap-error',
-              duration: 5000 
-            });
-          }
-          
-          setIsSwapping(false);
-          if (onError) onError(error);
-        }
+        onError: handleError
       };
       
       // Execute the transaction
@@ -314,28 +305,20 @@ export function useAssetConversionSwap({
       );
       
     } catch (error) {
-      // Handle initial setup errors (before transaction execution)
-      const enhancedError = TransactionErrorService.handleTransactionError(error);
-      
-      toast.dismiss('swap-status');
-      setSwapStatus(`Failed: ${enhancedError.message}`);
-      toast.error(`Setup failed: ${enhancedError.message}`, { id: 'swap-error' });
-      setIsSwapping(false);
-      
-      if (onError) onError(enhancedError);
+      handleError(error as Error);
     }
   }, [
     inputToken, outputToken, walletAddress, inputAmount, outputAmount,
     slippageTolerance, routeState, getAssetsWithXcmLocations, 
     calculateMinimumOutput, toAssetPlanckFormat, parseXcmLocation,
-    onSuccess, onError
+    onSuccess, handleError
   ]);
 
   return {
     isSwapping,
     swapHash,
     swapStatus,
-    dispatchError,
+    swapError,
     executeSwap
   };
 } 

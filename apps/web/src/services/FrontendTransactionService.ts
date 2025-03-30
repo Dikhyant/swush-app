@@ -1,6 +1,6 @@
 import { PolkadotSigner } from 'polkadot-api';
 import { TransactionStatus, TransactionCallbacks, TxOptions } from './types';
-import { TransactionErrorService, EnhancedError } from './TransactionErrorService';
+import { TransactionErrorService } from './TransactionErrorService';
 
 // Use PolkadotSigner type directly instead of our custom interface
 type Signer = PolkadotSigner;
@@ -15,7 +15,6 @@ export class FrontendTransactionService {
         try {
             return await transaction.getEstimatedFees(address, options);
         } catch (error) {
-            // Avoid excessive logging
             const enhancedError = TransactionErrorService.handleTransactionError(error);
             throw enhancedError;
         }
@@ -29,7 +28,6 @@ export class FrontendTransactionService {
         try {
             return await transaction.sign(signer, options);
         } catch (error) {
-            // Avoid excessive logging
             const enhancedError = TransactionErrorService.handleTransactionError(error);
             throw enhancedError;
         }
@@ -69,7 +67,8 @@ export class FrontendTransactionService {
                                     };
 
                                     if (!event.ok && event.dispatchError) {
-                                        status.error = TransactionErrorService.parseDispatchError(event.dispatchError).message;
+                                        const error = TransactionErrorService.parseDispatchError(event.dispatchError);
+                                        status.error = error.message;
                                     }
 
                                     callbacks?.onStatusChange?.(status);
@@ -86,9 +85,8 @@ export class FrontendTransactionService {
                                 };
 
                                 if (!event.ok && event.dispatchError) {
-                                    const errorInfo = TransactionErrorService.parseDispatchError(event.dispatchError);
-                                    finalStatus.error = errorInfo.message;
-                                    const error = TransactionErrorService.createErrorFromDispatchInfo(errorInfo);
+                                    const error = TransactionErrorService.parseDispatchError(event.dispatchError);
+                                    finalStatus.error = error.message;
                                     callbacks?.onError?.(error);
                                     reject(error);
                                 } else {
