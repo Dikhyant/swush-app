@@ -42,13 +42,9 @@ export class FrontendTransactionService {
         options?: TxOptions
     ): Promise<void> {
         return new Promise((resolve, reject) => {
-            // Track if error has been handled to prevent duplicates
-            let errorHandled = false;
-            
             try {
                 const subscription = transaction.signSubmitAndWatch(signer, options).subscribe({
                     next: (event: any) => {
-                        // Base status object that will be enhanced based on event type
                         const baseStatus: TransactionStatus = {
                             type: event.type,
                             txHash: event.txHash,
@@ -56,12 +52,6 @@ export class FrontendTransactionService {
 
                         switch (event.type) {
                             case 'signed':
-                                callbacks?.onStatusChange?.({
-                                    ...baseStatus,
-                                    success: true,
-                                });
-                                break;
-
                             case 'broadcasted':
                                 callbacks?.onStatusChange?.({
                                     ...baseStatus,
@@ -79,15 +69,7 @@ export class FrontendTransactionService {
                                     };
 
                                     if (!event.ok && event.dispatchError) {
-                                        const errorInfo = TransactionErrorService.parseDispatchError(event.dispatchError);
-                                        status.error = errorInfo.message;
-                                        
-                                        if (!errorHandled) {
-                                            errorHandled = true;
-                                            const error = TransactionErrorService.createErrorFromDispatchInfo(errorInfo);
-                                            (error as any)._handled = true;
-                                            callbacks?.onError?.(error);
-                                        }
+                                        status.error = TransactionErrorService.parseDispatchError(event.dispatchError).message;
                                     }
 
                                     callbacks?.onStatusChange?.(status);
@@ -103,23 +85,18 @@ export class FrontendTransactionService {
                                     events: event.events
                                 };
 
-                                callbacks?.onStatusChange?.(finalStatus);
-
-                                if (event.ok) {
-                                    callbacks?.onSuccess?.(finalStatus);
-                                    resolve();
-                                } else {
+                                if (!event.ok && event.dispatchError) {
                                     const errorInfo = TransactionErrorService.parseDispatchError(event.dispatchError);
                                     finalStatus.error = errorInfo.message;
-                                    
-                                    if (!errorHandled) {
-                                        errorHandled = true;
-                                        const error = TransactionErrorService.createErrorFromDispatchInfo(errorInfo);
-                                        (error as any)._handled = true;
-                                        callbacks?.onError?.(error);
-                                        reject(error);
-                                    }
+                                    const error = TransactionErrorService.createErrorFromDispatchInfo(errorInfo);
+                                    callbacks?.onError?.(error);
+                                    reject(error);
+                                } else {
+                                    callbacks?.onSuccess?.(finalStatus);
+                                    resolve();
                                 }
+
+                                callbacks?.onStatusChange?.(finalStatus);
                                 break;
 
                             default:
@@ -130,29 +107,20 @@ export class FrontendTransactionService {
                         }
                     },
                     error: (error: Error) => {
-                        if (!errorHandled) {
-                            errorHandled = true;
-                            const enhancedError = TransactionErrorService.handleTransactionError(error);
-                            (enhancedError as any)._handled = true;
-                            callbacks?.onError?.(enhancedError);
-                            reject(enhancedError);
-                        }
+                        const enhancedError = TransactionErrorService.handleTransactionError(error);
+                        callbacks?.onError?.(enhancedError);
+                        reject(enhancedError);
                     },
                     complete: () => {
                         console.log('Transaction subscription completed');
                     }
                 });
 
-                // Return the subscription for cleanup if needed
                 return subscription;
             } catch (error) {
-                if (!errorHandled) {
-                    errorHandled = true;
-                    const enhancedError = TransactionErrorService.handleTransactionError(error);
-                    (enhancedError as any)._handled = true;
-                    callbacks?.onError?.(enhancedError);
-                    reject(enhancedError);
-                }
+                const enhancedError = TransactionErrorService.handleTransactionError(error);
+                callbacks?.onError?.(enhancedError);
+                reject(enhancedError);
             }
         });
     }

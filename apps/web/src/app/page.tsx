@@ -112,8 +112,6 @@ export default function SwapPage() {
       }, 1500);
     },
     onError: (error) => {
-      console.error('Swap execution error:', error);
-      // Error toast is now handled in useAssetConversionSwap directly
       
       // Reset all swap-related states
       setInputAmount('0');
