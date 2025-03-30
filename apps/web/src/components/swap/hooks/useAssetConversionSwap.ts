@@ -285,10 +285,10 @@ export function useAssetConversionSwap({
               break;
           }
 
-          // Handle any error state
-          if (status.error) {
-            handleError(new Error(status.error));
-          }
+          // // Handle any error state
+          // if (status.error) {
+          //   handleError(new Error(status.error));
+          // }
         },
         onSuccess: (status: TransactionStatus) => {
           setIsSwapping(false);
@@ -305,6 +305,7 @@ export function useAssetConversionSwap({
       );
       
     } catch (error) {
+      console.error('Error:', error);
       handleError(error as Error);
     }
   }, [
