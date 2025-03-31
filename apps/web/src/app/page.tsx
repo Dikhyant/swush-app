@@ -23,6 +23,7 @@ import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
 import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
 import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
 import { LoadState } from '@/components/swap/ui/LoadState'
+import { BALANCE_REFRESH_TIMEOUT } from '@/lib/const'
 
 export default function SwapPage() {
   // Wallet state
@@ -108,7 +109,7 @@ export default function SwapPage() {
       // Add a delay before fetching new balances to allow the blockchain to update
       setTimeout(() => {
         resetBalances();
-      }, 1500); // 1.5 second delay
+      }, BALANCE_REFRESH_TIMEOUT); 
 
       // Slight delay before closing the progress modal to show success state
       setTimeout(() => {
