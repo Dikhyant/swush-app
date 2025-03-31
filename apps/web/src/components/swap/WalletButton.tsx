@@ -487,6 +487,7 @@ export const WalletButton = ({
         onAccountSelected={handleAccountSelected}
         showAccountsList={true}
         walletList={[
+          new PolkadotjsWallet(),
           new TalismanWallet(),
           new NovaWallet(),
           new SubWallet(),
@@ -494,7 +495,6 @@ export const WalletButton = ({
           new PolkaGate(),
           new FearlessWallet(),
           new EnkryptWallet(),
-          new PolkadotjsWallet(),
           new AlephZeroWallet(),
         ]}
       />
