@@ -29,7 +29,7 @@ export const HEALTH_CHECK = {
 
 // Connection management constants
 export const CONNECTION_CONFIG = {
-  MAX_RECONNECT_ATTEMPTS: 10,    // Increased max attempts
+  MAX_RECONNECT_ATTEMPTS: 5,    // Increased max attempts
   BASE_RECONNECT_DELAY: 2000,    // 2 seconds base delay
   MAX_RECONNECT_DELAY: 60000,    // Maximum delay of 1 minute
   ATTEMPT_RESET_TIMEOUT: 60000,  // Reset attempts after 1 minute
@@ -39,14 +39,16 @@ export const CONNECTION_CONFIG = {
 export const RPC_ENDPOINTS =  {
   [NETWORKS_SUPPORTED.ASSET_HUB]: {
       endpoints: [
+        //local
+        { url: 'ws://localhost:3421', priority: 1, isActive: true },
         // Primary endpoints (major providers)
-        { url: 'wss://polkadot-asset-hub-rpc.polkadot.io', priority: 3, isActive: true }, // Parity (Official)
+/*         { url: 'wss://polkadot-asset-hub-rpc.polkadot.io', priority: 3, isActive: true }, // Parity (Official)
         
         // Secondary endpoints (reliable providers)
         { url: 'wss://asset-hub-polkadot.dotters.network', priority: 2, isActive: true }, // IBP2
         { url: 'wss://sys.ibp.network/asset-hub-polkadot', priority: 1, isActive: true }, // IBP1
         { url: 'wss://rpc-asset-hub-polkadot.luckyfriday.io', priority: 4, isActive: true }, // LuckyFriday
-  
+   */
         // Tertiary endpoints (additional providers)
    //      { url: 'wss://asset-hub-polkadot-rpc.dwellir.com', priority: 5, isActive: true }, // Dwellir (Main)
       //   { url: 'wss://statemint-rpc-tn.dwellir.com', priority: 6, isActive: true },       // Dwellir Tunisia
