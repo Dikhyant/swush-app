@@ -677,6 +677,10 @@ async function constructHydraDxXcmMessage(
   beneficiaryAccountId: Uint8Array<ArrayBufferLike>
 ) {
   try {
+
+    //print all the fees  
+    console.log('Debug: Fees:', fees);
+
     const dotAssetId = {
       parents: 1,
       interior: XcmV3Junctions.Here()
