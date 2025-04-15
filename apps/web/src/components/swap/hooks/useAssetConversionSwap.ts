@@ -682,6 +682,19 @@ async function constructHydraDxXcmMessage(
       interior: XcmV3Junctions.Here()
     };
 
+    const inputAssetLocation = {
+      parents: 1,
+      interior: XcmV3Junctions.Here()
+    };
+    const outputAssetLocation = {
+      parents: 1,
+      interior: XcmV3Junctions.X3([
+        XcmV3Junction.Parachain(1000),
+        XcmV3Junction.PalletInstance(50),
+        XcmV3Junction.GeneralIndex(BigInt(1984))
+      ])
+    };
+
     // Calculate total fees
     const totalFees = fees.initialExecution +
       fees.initialDelivery +
