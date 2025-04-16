@@ -25,9 +25,9 @@ app.use(limiter);
 (async () => {
   try {
     await initializeSDK();
-    console.log('SDK initialized successfully');
+    console.log('✅ SDK initialized successfully 🚀');
   } catch (error) {
-    console.error('Failed to initialize SDK:', error);
+    console.error('❌ Failed to initialize SDK:', error); 
     process.exit(1);
   }
 })();
