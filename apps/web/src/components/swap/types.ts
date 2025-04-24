@@ -71,4 +71,31 @@ export interface SwapFieldProps {
   onPercentageSelect?: (value: number) => void;
   isLoading?: boolean;
   error?: string | null;
-} 
+}
+
+export interface XcmSwapPreviewData {
+  inputAmount: string;
+  inputToken: string;
+  outputAmount: string;
+  outputToken: string;
+  sourceChain: string;
+  destinationChain: string;
+  priceImpact: string;
+  slippageTolerance: string;
+  networkFee: string;
+  simulationSuccess: boolean;
+  simulationWarning?: string;
+}
+
+export interface XcmSwapFailureData {
+  inputAmount: string;
+  inputToken: string;
+  sourceChain: string;
+  destinationChain: string;
+  suggestedSlippage: string;
+  estimatedOutput: string;
+  outputToken: string;
+  refundFee: string;
+}
+
+export type XcmSwapStatus = 'idle' | 'previewing' | 'swapping' | 'failed' | 'succeeded' | 'refunding'; 
