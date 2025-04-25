@@ -49,6 +49,8 @@ export default function SwapPage() {
   const [openOutputDialog, setOpenOutputDialog] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
+  // Add a separate state for the confirmation UI
+  const [isConfirmingSwap, setIsConfirmingSwap] = useState(false);
 
   // Custom hooks
   const { inputToken, setInputToken, outputToken, setOutputToken, tokens } = useSwapTokens()
@@ -85,6 +87,7 @@ export default function SwapPage() {
   const handleSimulationComplete = useCallback(async (result: SimulationResult) => {
     setSimulationResult(result);
     setShowConfirmation(true);
+    setIsConfirmingSwap(false); // Reset confirmation UI state
     
     // Return a promise that resolves when user confirms or cancels
     return new Promise<boolean>((resolve) => {
@@ -93,6 +96,7 @@ export default function SwapPage() {
   }, []);
   
   const handleConfirmSwap = useCallback(() => {
+    setIsConfirmingSwap(true); // Set confirming state before closing sheet
     setShowConfirmation(false);
     if (window.swapConfirmResolve) {
       window.swapConfirmResolve(true);
@@ -102,6 +106,7 @@ export default function SwapPage() {
   
   const handleCancelSwap = useCallback(() => {
     setShowConfirmation(false);
+    setIsConfirmingSwap(false); // Reset confirmation UI state on cancel
     if (window.swapConfirmResolve) {
       window.swapConfirmResolve(false);
       window.swapConfirmResolve = undefined;
@@ -153,12 +158,16 @@ export default function SwapPage() {
       setTimeout(() => {
         closeSwapProgress();
       }, 1500);
+      
+      // Reset confirmation UI state
+      setIsConfirmingSwap(false);
     },
     onError: (error) => {
       // Reset all swap-related states
       setInputAmount('0');
       resetRoute();
       setIsSwapping(false);
+      setIsConfirmingSwap(false); // Reset confirmation UI state on error
       closeSwapProgress();
     },
     onSimulationComplete: handleSimulationComplete
@@ -199,6 +208,7 @@ export default function SwapPage() {
         toast.error(`Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'swap-error' });
       }
       setIsSwapping(false);
+      setIsConfirmingSwap(false); // Reset confirmation UI state on error
       closeSwapProgress();
     }
   }, [
@@ -393,7 +403,7 @@ export default function SwapPage() {
         outputToken={outputToken.symbol}
         slippageTolerance={slippageTolerance}
         simulationResult={simulationResult}
-        isConfirming={isSwapping}
+        isConfirming={isConfirmingSwap}
       />
     </>
   )

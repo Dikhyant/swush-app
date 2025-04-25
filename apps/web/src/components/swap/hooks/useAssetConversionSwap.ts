@@ -375,6 +375,8 @@ export function useAssetConversionSwap({
             setSwapStatus(null);
             return;
           }
+          // If we're proceeding, make sure we're still in swapping state
+          setIsSwapping(true);
         }
       } catch (e: unknown) {
         console.error('Dry run failed:', e);

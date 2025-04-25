@@ -37,6 +37,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
+  // Reset visibility states when the sheet opens/closes
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
@@ -50,12 +51,17 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
 
   if (!isVisible) return null;
 
+  // Determine if the button should be disabled
+  const isButtonDisabled = 
+    isConfirming || 
+    Boolean(simulationResult && (!simulationResult.success || simulationResult.willSucceed === false));
+
   return (
     <div 
       className={`fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0'}`}
       onClick={(e) => {
-        // Close on backdrop click
-        if (e.target === e.currentTarget) onClose();
+        // Close on backdrop click, but not while confirming
+        if (e.target === e.currentTarget && !isConfirming) onClose();
       }}
     >
       <div 
@@ -67,6 +73,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
           <button 
             onClick={onClose}
             className="p-1 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            disabled={isConfirming}
           >
             <X size={18} />
           </button>
@@ -144,10 +151,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
             variant="default"
             className="flex-1 bg-blue-600 hover:bg-blue-700"
             onClick={onConfirm}
-            disabled={
-              isConfirming || 
-              Boolean(simulationResult && (!simulationResult.success || simulationResult.willSucceed === false))
-            }
+            disabled={isButtonDisabled}
           >
             {isConfirming ? 'Confirming...' : 'Confirm Swap'}
           </Button>
