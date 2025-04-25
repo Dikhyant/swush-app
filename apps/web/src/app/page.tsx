@@ -16,7 +16,9 @@ import {
   SubmitButtonAction,
   WalletButton,
   calculateMinimumReceived,
+  SwapConfirmSheet
 } from '@/components/swap'
+import { SimulationResult } from '@/components/swap/ui/SwapConfirmSheet'
 import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
 import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
 import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
@@ -24,6 +26,13 @@ import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
 import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
 import { LoadState } from '@/components/swap/ui/LoadState'
 import { BALANCE_REFRESH_TIMEOUT } from '@/lib/const'
+
+// Define the global window type with our custom property
+declare global {
+  interface Window {
+    swapConfirmResolve?: (value: boolean) => void;
+  }
+}
 
 export default function SwapPage() {
   // Wallet state
@@ -38,6 +47,8 @@ export default function SwapPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [openInputDialog, setOpenInputDialog] = useState(false)
   const [openOutputDialog, setOpenOutputDialog] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<SimulationResult | null>(null);
 
   // Custom hooks
   const { inputToken, setInputToken, outputToken, setOutputToken, tokens } = useSwapTokens()
@@ -70,7 +81,34 @@ export default function SwapPage() {
     outputToken: outputToken?.symbol || 'TOKEN'
   })
 
-  // Asset conversion swap hook
+  // Handle simulation results and confirmation
+  const handleSimulationComplete = useCallback(async (result: SimulationResult) => {
+    setSimulationResult(result);
+    setShowConfirmation(true);
+    
+    // Return a promise that resolves when user confirms or cancels
+    return new Promise<boolean>((resolve) => {
+      window.swapConfirmResolve = resolve;
+    });
+  }, []);
+  
+  const handleConfirmSwap = useCallback(() => {
+    setShowConfirmation(false);
+    if (window.swapConfirmResolve) {
+      window.swapConfirmResolve(true);
+      window.swapConfirmResolve = undefined;
+    }
+  }, []);
+  
+  const handleCancelSwap = useCallback(() => {
+    setShowConfirmation(false);
+    if (window.swapConfirmResolve) {
+      window.swapConfirmResolve(false);
+      window.swapConfirmResolve = undefined;
+    }
+  }, []);
+
+  // Asset conversion swap hook with simulation callback
   const {
     executeSwap: executeAssetConversionSwap,
   } = useAssetConversionSwap({
@@ -122,7 +160,8 @@ export default function SwapPage() {
       resetRoute();
       setIsSwapping(false);
       closeSwapProgress();
-    }
+    },
+    onSimulationComplete: handleSimulationComplete
   });
 
   // Updated handleSwap function that uses executeAssetConversionSwap
@@ -342,6 +381,20 @@ export default function SwapPage() {
           setIsSwapping={setIsSwapping}
         />
       )} */}
+
+      {/* Swap Confirmation Bottom Sheet */}
+      <SwapConfirmSheet
+        isOpen={showConfirmation}
+        onClose={handleCancelSwap}
+        onConfirm={handleConfirmSwap}
+        inputAmount={inputAmount}
+        inputToken={inputToken.symbol}
+        outputAmount={outputAmount}
+        outputToken={outputToken.symbol}
+        slippageTolerance={slippageTolerance}
+        simulationResult={simulationResult}
+        isConfirming={isSwapping}
+      />
     </>
   )
 }

@@ -16,11 +16,14 @@ import { TypedApi } from 'polkadot-api';
 import {
   polkadot_asset_hub,
   hydration,
+  PolkadotRuntimeOriginCaller
 } from '@polkadot-api/descriptors';
 import {
   ss58Encode
 } from "@polkadot-labs/hdkd-helpers"
 import { constructHydraDxXcmMessage, fetchHydraXCMLocation } from './utils/xcmUtils';
+import { SimulationResult } from '../ui/SwapConfirmSheet';
+
 interface UseAssetConversionSwapProps {
   inputToken: TokenInfo | null;
   outputToken: TokenInfo | null;
@@ -35,6 +38,7 @@ interface UseAssetConversionSwapProps {
   };
   onSuccess?: () => void;
   onError?: (error: SwushError) => void;
+  onSimulationComplete?: (result: SimulationResult) => Promise<boolean>;
 }
 
 export function useAssetConversionSwap({
@@ -46,7 +50,8 @@ export function useAssetConversionSwap({
   outputAmount,
   routeState,
   onSuccess,
-  onError
+  onError,
+  onSimulationComplete
 }: UseAssetConversionSwapProps) {
   const [isSwapping, setIsSwapping] = useState(false);
   const [swapHash, setSwapHash] = useState<string | null>(null);
@@ -341,6 +346,45 @@ export function useAssetConversionSwap({
         }
       }
 
+      // Perform dry run before actual execution
+      setSwapStatus('Simulating transaction...');
+      try {
+        const dryRun = await assetHubApi.apis.DryRunApi.dry_run_call(
+          PolkadotRuntimeOriginCaller.system({
+            type: "Signed",
+            value: walletAddress
+          }),
+          transaction.decodedCall,
+          {}
+        );
+
+        // Extract relevant information from dry run result
+        // The actual structure may vary, so we're being careful with optional chaining
+        const simulationResult: SimulationResult = {
+          success: dryRun.success,
+          estimatedFee: '0.000001', // Estimated fee - hardcoded for now
+          willSucceed: dryRun.success, // Assume success if dry run worked
+          error: dryRun.success ? undefined : 'Transaction simulation failed'
+        };
+
+        // If the simulation result handler is present, call it and wait for user confirmation
+        if (onSimulationComplete) {
+          const shouldProceed = await onSimulationComplete(simulationResult);
+          if (!shouldProceed) {
+            setIsSwapping(false);
+            setSwapStatus(null);
+            return;
+          }
+        }
+      } catch (e: unknown) {
+        console.error('Dry run failed:', e);
+        // Still proceed, but with a warning
+        toast.error('Transaction simulation failed. Proceed with caution.', {
+          id: 'swap-simulation-warning',
+          duration: 5000
+        });
+      }
+
       setSwapStatus('Signing transaction...');
 
       // Define transaction callbacks
@@ -405,7 +449,7 @@ export function useAssetConversionSwap({
     inputToken, outputToken, walletAddress, inputAmount, outputAmount,
     slippageTolerance, routeState, getAssetsWithXcmLocations,
     calculateMinimumOutput, toAssetPlanckFormat, parseXcmLocation,
-    onSuccess, handleError
+    onSuccess, handleError, onSimulationComplete
   ]);
 
   return {

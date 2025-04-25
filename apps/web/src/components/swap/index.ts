@@ -10,6 +10,7 @@ export { SwapHeader } from './ui/SwapHeader'
 export { SwapField } from './ui/SwapField'
 export { SwapDetails } from './ui/SwapDetails'
 export { SubmitButtonAction } from './ui/SwapAction'
+export { SwapConfirmSheet } from './ui/SwapConfirmSheet'
 
 // Types
 export * from './types'
