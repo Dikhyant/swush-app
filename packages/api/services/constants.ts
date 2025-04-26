@@ -62,16 +62,14 @@ export const RPC_ENDPOINTS = {
   },
   [NETWORKS_SUPPORTED.HYDRA_DX]: {
     endpoints: [
+      //TODO: analyze proper endpoints
+      
       // Primary endpoints (major providers)
       { url: 'wss://rpc.hydradx.cloud', priority: 1, isActive: true },          // Galactic Council (Official)
       //       { url: 'wss://hydradx-rpc.dwellir.com', priority: 2, isActive: true },    // Dwellir
 
-      // Secondary endpoints (reliable providers)
-      //   { url: 'wss://hydradx.paras.ibp.network', priority: 2, isActive: true },  // IBP1
-      //       { url: 'wss://hydration.dotters.network', priority: 3, isActive: true },   // IBP2
-
       // Tertiary endpoint
-      //     { url: 'wss://rpc.helikon.io/hydradx', priority: 4, isActive: true }      // Helikon
+      //     { url: 'wss://rpc.helikon.io/hydradx', priority: 3, isActive: true }      // Helikon
     ],
     currentIndex: 0,
     healthCheck: {
