@@ -304,7 +304,8 @@ export const WalletButton = ({
   setIsConnected, 
   setWalletAddress, 
   variant = 'default',
-  className = '' 
+  className = '',
+  onWalletModalClose
 }: WalletButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -483,7 +484,12 @@ export const WalletButton = ({
         dappName="Swush"
         open={isOpen}
         onWalletConnectOpen={() => setIsOpen(true)}
-        onWalletConnectClose={() => setIsOpen(false)}
+        onWalletConnectClose={() => {
+          setIsOpen(false);
+          if (onWalletModalClose) {
+            onWalletModalClose();
+          }
+        }}
         onAccountSelected={handleAccountSelected}
         showAccountsList={true}
         walletList={[

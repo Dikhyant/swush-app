@@ -34,6 +34,13 @@ export const SubmitButtonAction = ({
             setIsConnected={setIsConnected}
             setWalletAddress={setWalletAddress}
             className="w-full h-14 text-lg font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200 shadow-lg hover:shadow-blue-500/25"
+            onWalletModalClose={() => {
+              // Reset swapping state if wallet modal is closed without connecting
+              if (isSwapping) {
+                // This is passed as a prop to the SwapAction component, we can't directly set it
+                // But if we access the parent component, it should have already reset this state
+              }
+            }}
           />
         ) : (
           <Button

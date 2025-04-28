@@ -381,6 +381,26 @@ export function useAssetConversionSwap({
       } catch (e: unknown) {
         console.error('Dry run failed:', e);
         // Still proceed, but with a warning
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error during simulation';
+        
+        // Create a failed simulation result
+        const simulationResult: SimulationResult = {
+          success: false,
+          estimatedFee: '0.000001',
+          willSucceed: false,
+          error: errorMessage
+        };
+
+        // Still allow proceeding but with warning
+        if (onSimulationComplete) {
+          const shouldProceed = await onSimulationComplete(simulationResult);
+          if (!shouldProceed) {
+            setIsSwapping(false);
+            setSwapStatus(null);
+            return;
+          }
+          setIsSwapping(true);
+        }
         toast.error('Transaction simulation failed. Proceed with caution.', {
           id: 'swap-simulation-warning',
           duration: 5000

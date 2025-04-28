@@ -55,6 +55,7 @@ export interface WalletButtonProps {
   setWalletAddress: (value: string) => void;
   variant?: 'default' | 'outline' | 'ghost';
   className?: string;
+  onWalletModalClose?: () => void;
 }
 
 export interface SwapFieldProps {

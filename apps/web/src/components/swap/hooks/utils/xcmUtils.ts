@@ -319,10 +319,10 @@ export async function constructHydraDxXcmMessage(
     minOutputAmountPlanck: bigint,
     beneficiaryAccountId: Uint8Array<ArrayBufferLike>
 ) {
-    console.log('Constructing XCM: Debug Fees:', fees);
-    console.log('Constructing XCM: Asset Hub Input Location:', safeStringify(assetHubInputLocation, true));
-    console.log('Constructing XCM: HydraDX Input Location:', safeStringify(hydraDxInputLocation, true));
-    console.log('Constructing XCM: HydraDX Output Location:', safeStringify(hydraDxOutputLocation, true));
+    // console.log('Constructing XCM: Debug Fees:', fees);
+    // console.log('Constructing XCM: Asset Hub Input Location:', safeStringify(assetHubInputLocation, true));
+    // console.log('Constructing XCM: HydraDX Input Location:', safeStringify(hydraDxInputLocation, true));
+    // console.log('Constructing XCM: HydraDX Output Location:', safeStringify(hydraDxOutputLocation, true));
 
     // Define Asset Hub relative location for DOT (used for fee payments on Asset Hub)
     const dotAssetHubLocation: XcmV4Location = {
@@ -362,7 +362,7 @@ export async function constructHydraDxXcmMessage(
         });
     }
 
-    console.log('Debug: Assets to Withdraw:', safeStringify(assetsToWithdraw, true));
+   // console.log('Debug: Assets to Withdraw:', safeStringify(assetsToWithdraw, true));
 
     // Assets to deposit on HydraDX (will be filtered from withdrawn assets)
     const assetsToDepositOnHydra = XcmV4AssetAssetFilter.Definite(assetsToWithdraw.map(a => ({ ...a }))); // Use a copy
@@ -634,7 +634,7 @@ export function fetchHydraXCMLocation(asset: AssetWithId): XcmV4Location | null 
         }
 
         const location = asset.hydradx.location;
-        console.log(`Raw HydraDX location for ${asset.id}:`, safeStringify(location, true));
+    //    console.log(`Raw HydraDX location for ${asset.id}:`, safeStringify(location, true));
 
         // Construct the XcmV4Location using the helper functions
         // Ensure the structure matches XcmV4Location
@@ -643,7 +643,7 @@ export function fetchHydraXCMLocation(asset: AssetWithId): XcmV4Location | null 
             interior: convertJunctions(location.interior) // Use the robust converter
         };
 
-        console.log(`Constructed HydraDX XCM Location for ${asset.id}:`, safeStringify(xcmLocation, true));
+    //    console.log(`Constructed HydraDX XCM Location for ${asset.id}:`, safeStringify(xcmLocation, true));
         return xcmLocation;
 
     } catch (error) {

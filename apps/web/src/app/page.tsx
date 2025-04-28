@@ -89,9 +89,20 @@ export default function SwapPage() {
     setShowConfirmation(true);
     setIsConfirmingSwap(false); // Reset confirmation UI state
     
+    // If simulation failed, we should prepare for user to potentially cancel
+    if (!result.success) {
+      console.warn('Simulation failed:', result.error);
+    }
+    
     // Return a promise that resolves when user confirms or cancels
     return new Promise<boolean>((resolve) => {
-      window.swapConfirmResolve = resolve;
+      window.swapConfirmResolve = (value) => {
+        // If the user cancels, make sure we reset the swapping state
+        if (!value) {
+          setIsSwapping(false);
+        }
+        resolve(value);
+      };
     });
   }, []);
   
@@ -107,6 +118,7 @@ export default function SwapPage() {
   const handleCancelSwap = useCallback(() => {
     setShowConfirmation(false);
     setIsConfirmingSwap(false); // Reset confirmation UI state on cancel
+    setIsSwapping(false); // Reset the main swap button state when canceling
     if (window.swapConfirmResolve) {
       window.swapConfirmResolve(false);
       window.swapConfirmResolve = undefined;
@@ -244,13 +256,22 @@ export default function SwapPage() {
     setIsConnected(false);
     setWalletAddress('');
     resetBalances();
+    setIsSwapping(false); // Reset swap button state when disconnecting wallet
+    setIsConfirmingSwap(false); // Reset confirmation state
+    if (showConfirmation) {
+      setShowConfirmation(false); // Close confirmation sheet if open
+      if (window.swapConfirmResolve) {
+        window.swapConfirmResolve(false);
+        window.swapConfirmResolve = undefined;
+      }
+    }
     toast.success('Wallet disconnected', {
       icon: '👋',
       style: {
         borderLeft: '4px solid #64748b',
       },
     });
-  }, [resetBalances]);
+  }, [resetBalances, showConfirmation]);
 
   const percentageOptions = useMemo(() => [
     { label: '25%', value: 0.25 },
@@ -282,6 +303,12 @@ export default function SwapPage() {
             setWalletAddress={setWalletAddress}
             variant="outline"
             className="flex items-center gap-2 bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-slate-300 transition-all duration-200"
+            onWalletModalClose={() => {
+              // Reset swapping state if wallet modal is closed without connecting
+              if (isSwapping) {
+                setIsSwapping(false);
+              }
+            }}
           />
         ) : (
           <WalletMenu
