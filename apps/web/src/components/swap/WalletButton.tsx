@@ -26,6 +26,7 @@ import {
   SignPayload,
   SignRaw
 } from "polkadot-api/pjs-signer"
+import { UserService } from '@/services/userService';
 // Network configuration for address formatting
 const NETWORK_CONFIG = {
   POLKADOT: {
@@ -410,12 +411,14 @@ export const WalletButton = ({
       // Initialize RPC connection after wallet is connected
       await initializeRpcConnection(network.name);
       
+      // Create or update user in Supabase
+      await UserService.createOrUpdateUser(assetHubAddress);
+      
       // Update state
       setIsConnected(true);
-      setWalletAddress(assetHubAddress); // Use the Asset Hub formatted address
+      setWalletAddress(assetHubAddress);
       setIsOpen(false);
       
-      //add success toast
       toast.success('Wallet connected successfully!', {
         icon: '✅',
         style: {

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Toaster, toast } from 'react-hot-toast'
 import type { TokenInfo } from '@/components/swap/types'
+import type { SwapHistory } from '@/services/swapHistoryService'
 import {
   ArrowSymbolDown,
   WalletMenu,
@@ -26,6 +27,9 @@ import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
 import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
 import { LoadState } from '@/components/swap/ui/LoadState'
 import { BALANCE_REFRESH_TIMEOUT } from '@/lib/const'
+import { SwapHistoryItem } from '@/components/ui/SwapHistoryItem'
+import { SwapHistoryService } from '@/services/swapHistoryService'
+import { Spinner } from '@/components/ui/spinner'
 
 // Define the global window type with our custom property
 declare global {
@@ -280,6 +284,31 @@ export default function SwapPage() {
     { label: 'MAX', value: 1 },
   ], []);
 
+  // Add this inside your component, before the return statement
+  const [swapHistory, setSwapHistory] = useState<SwapHistory[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    const fetchSwapHistory = async () => {
+      if (!walletAddress) return;
+      
+      setIsLoadingHistory(true);
+      try {
+        const history = await SwapHistoryService.getSwapHistoryByWalletAddress(walletAddress);
+        setSwapHistory(history);
+      } catch (error) {
+        console.error('Failed to fetch swap history:', error);
+        toast.error('Failed to load swap history');
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    if (showHistory && walletAddress) {
+      fetchSwapHistory();
+    }
+  }, [showHistory, walletAddress]);
+
   if (!inputToken || !outputToken) {
     return <LoadState />
   }
@@ -386,7 +415,17 @@ export default function SwapPage() {
             <DialogTitle className="text-2xl font-bold text-white">Swap History</DialogTitle>
           </DialogHeader>
           <div className="mt-4 space-y-4 max-h-96 overflow-y-auto">
-            <p className="text-slate-400">No swap history yet.</p>
+            {isLoadingHistory ? (
+              <div className="flex justify-center">
+                <Spinner className="w-6 h-6" />
+              </div>
+            ) : swapHistory.length > 0 ? (
+              swapHistory.map((swap) => (
+                <SwapHistoryItem key={swap.id} swap={swap} />
+              ))
+            ) : (
+              <p className="text-slate-400 text-center">No swap history yet.</p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

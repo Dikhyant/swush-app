@@ -24,6 +24,8 @@ import {
 import { constructHydraDxXcmMessage, fetchHydraXCMLocation } from './utils/xcmUtils';
 import { SimulationResult } from '../ui/SwapConfirmSheet';
 import { monitorXcmFlow } from './utils/xcmMonitor';
+import { UserService } from '@/services/userService';
+import { SwapHistoryService } from '@/services/swapHistoryService';
 
 interface UseAssetConversionSwapProps {
   inputToken: TokenInfo | null;
@@ -410,9 +412,25 @@ export function useAssetConversionSwap({
 
       setSwapStatus('Signing transaction...');
 
-      // Define transaction callbacks
+      // Get user from Supabase or create if they don't exist
+      const userExists = await UserService.getUserByWalletAddress(walletAddress);
+      if (!userExists) {
+        await UserService.createOrUpdateUser(walletAddress);
+      }
+
+      // Record swap attempt in history
+      const swapRecord = await SwapHistoryService.recordSwap(
+        walletAddress,
+        inputToken.symbol,
+        outputToken.symbol,
+        parseFloat(inputAmount),
+        routeState.data?.dex || 'asset_hub',
+        'success' // Initial status as success, will be updated if it fails
+      );
+
+      // Define transaction callbacks with swap history updates
       const callbacks: TransactionCallbacks = {
-        onStatusChange: (status: TransactionStatus) => {
+        onStatusChange: async (status: TransactionStatus) => {
           switch (status.type) {
             case 'signed':
               if (status.txHash) {
@@ -440,6 +458,12 @@ export function useAssetConversionSwap({
               if (status.success) {
                 const blockNum = status.blockNumber ? ` in block ${status.blockNumber}` : '';
                 
+                // Update swap history status
+                await SwapHistoryService.updateSwapStatus(swapRecord.id, 'success');
+
+                // Award XP for successful swap
+                await UserService.updateUserXP(walletAddress, 10); // Award 10 XP for successful swap
+
                 // For regular swaps, show completion immediately
                 if (!routeState.data?.dex || routeState.data.dex !== 'hydra_dx') {
                   toast.dismiss('swap-status');
@@ -454,11 +478,14 @@ export function useAssetConversionSwap({
                   setSwapStatus('Transaction finalized, monitoring XCM transfer...');
                   toast.loading('Transaction finalized, monitoring XCM transfer...', { id: 'swap-status' });
                 }
+              } else {
+                // Update swap history status to failed
+                await SwapHistoryService.updateSwapStatus(swapRecord.id, 'failed');
               }
               break;
           }
         },
-        onSuccess: (status: TransactionStatus) => {
+        onSuccess: async (status: TransactionStatus) => {
           // For regular swaps, complete immediately
           if (!routeState.data?.dex || routeState.data.dex !== 'hydra_dx') {
             setIsSwapping(false);
@@ -466,7 +493,11 @@ export function useAssetConversionSwap({
           }
           // For XCM swaps, we'll call onSuccess after XCM monitoring completes
         },
-        onError: handleError
+        onError: async (error) => {
+          // Update swap history status to failed
+          await SwapHistoryService.updateSwapStatus(swapRecord.id, 'failed');
+          handleError(error);
+        }
       };
 
       // Execute the transaction
@@ -509,6 +540,8 @@ export function useAssetConversionSwap({
             error.message : 
             'Failed to monitor XCM transaction';
           
+          // Update swap history status to failed
+          await SwapHistoryService.updateSwapStatus(swapRecord.id, 'failed');
           handleError(new Error(`XCM monitoring failed: ${errorMessage}`));
         }
       }
