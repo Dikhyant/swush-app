@@ -58,7 +58,13 @@ export default function SwapPage() {
 
   // Custom hooks
   const { inputToken, setInputToken, outputToken, setOutputToken, tokens } = useSwapTokens()
-  const { inputBalance, outputBalance, isBalanceLoading, resetBalances } = useTokenBalances({
+  const { 
+    inputBalance, 
+    outputBalance, 
+    isBalanceLoading, 
+    resetBalances, 
+    refreshBalances 
+  } = useTokenBalances({
     isConnected,
     walletAddress,
     inputToken,
@@ -129,9 +135,17 @@ export default function SwapPage() {
     }
   }, []);
 
+  // Handle balance updates after swap
+  const handleBalanceUpdateNeeded = useCallback((txHash?: string) => {
+    console.log(`Handling balance update request for tx: ${txHash || 'unknown'}`);
+    // Use the enhanced polling-based refresh rather than the simple timeout
+    refreshBalances(true, txHash);
+  }, [refreshBalances]);
+
   // Asset conversion swap hook with simulation callback
   const {
     executeSwap: executeAssetConversionSwap,
+    isFinalized
   } = useAssetConversionSwap({
     inputToken,
     outputToken,
@@ -165,11 +179,7 @@ export default function SwapPage() {
       // Reset all swap-related states
       setInputAmount('0');
       resetRoute(); // This will reset the output amount and route state
-      // Add a delay before fetching new balances to allow the blockchain to update
-      setTimeout(() => {
-        resetBalances();
-      }, 2500); 
-
+      
       // Slight delay before closing the progress modal to show success state
       setTimeout(() => {
         closeSwapProgress();
@@ -186,7 +196,8 @@ export default function SwapPage() {
       setIsConfirmingSwap(false); // Reset confirmation UI state on error
       closeSwapProgress();
     },
-    onSimulationComplete: handleSimulationComplete
+    onSimulationComplete: handleSimulationComplete,
+    onBalanceUpdateNeeded: handleBalanceUpdateNeeded
   });
 
   // Updated handleSwap function that uses executeAssetConversionSwap

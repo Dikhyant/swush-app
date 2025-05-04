@@ -26,6 +26,7 @@ import { SimulationResult } from '../ui/SwapConfirmSheet';
 import { monitorXcmFlow } from './utils/xcmMonitor';
 import { UserService } from '@/services/userService';
 import { SwapHistoryService } from '@/services/swapHistoryService';
+import { BalanceService } from '@/services/balances/BalanceService';
 
 interface UseAssetConversionSwapProps {
   inputToken: TokenInfo | null;
@@ -42,6 +43,7 @@ interface UseAssetConversionSwapProps {
   onSuccess?: () => void;
   onError?: (error: SwushError) => void;
   onSimulationComplete?: (result: SimulationResult) => Promise<boolean>;
+  onBalanceUpdateNeeded?: (txHash?: string) => void;
 }
 
 export function useAssetConversionSwap({
@@ -54,12 +56,14 @@ export function useAssetConversionSwap({
   routeState,
   onSuccess,
   onError,
-  onSimulationComplete
+  onSimulationComplete,
+  onBalanceUpdateNeeded
 }: UseAssetConversionSwapProps) {
   const [isSwapping, setIsSwapping] = useState(false);
   const [swapHash, setSwapHash] = useState<string | null>(null);
   const [swapStatus, setSwapStatus] = useState<string | null>(null);
   const [swapError, setSwapError] = useState<SwushError | null>(null);
+  const [isFinalized, setIsFinalized] = useState<boolean>(false);
 
   // Get assets with XCM location information
   const getAssetsWithXcmLocations = useCallback(async (): Promise<Map<string, AssetWithId>> => {
@@ -118,6 +122,21 @@ export function useAssetConversionSwap({
     }
   }, []);
 
+  // Clear balance cache after swap
+  const clearBalanceCache = useCallback((txHash?: string) => {
+    try {
+      const balanceService = BalanceService.getInstance();
+      balanceService.clearCache(txHash);
+      
+      // Notify parent component to refresh balances with polling
+      if (onBalanceUpdateNeeded) {
+        onBalanceUpdateNeeded(txHash);
+      }
+    } catch (error) {
+      console.error('Failed to clear balance cache:', error);
+    }
+  }, [onBalanceUpdateNeeded]);
+
   const handleError = useCallback((error: Error) => {
     const swushError = TransactionErrorService.handleTransactionError(error);
     setSwapError(swushError);
@@ -146,6 +165,7 @@ export function useAssetConversionSwap({
       setIsSwapping(true);
       setSwapStatus('Preparing swap...');
       setSwapError(null);
+      setIsFinalized(false);
 
       // Get wallet source from localStorage
       const walletSource = localStorage.getItem('walletSource');
@@ -270,11 +290,10 @@ export function useAssetConversionSwap({
           if (!hydraDxConnection || !hydraDxConnection.api) {
             throw new Error('HydraDX RPC connection is not active.');
           }
-          const hydraDxApi = hydraDxConnection.api as TypedApi<typeof hydration>;
-
+          
           // Get the public key as Binary
           const alicePublicKey = polkadotSigner.publicKey;
-          const address = ss58Encode(alicePublicKey);
+
           // Calculate all fees
           setSwapStatus('Calculating XCM fees...');
           const inputAssetHubLocation =  parseXcmLocation(inputAsset.rawXcmLocation);
@@ -437,6 +456,9 @@ export function useAssetConversionSwap({
                 setSwapHash(status.txHash);
                 setSwapStatus('Transaction signed, waiting for broadcast...');
                 toast.loading('Transaction signed, waiting for broadcast...', { id: 'swap-status' });
+                
+                // Clear balance cache when we have a transaction hash
+                clearBalanceCache(status.txHash);
               }
               break;
 
@@ -454,6 +476,7 @@ export function useAssetConversionSwap({
 
             case 'finalized':
               console.log('Swap transaction status:', status);
+              setIsFinalized(true);
 
               if (status.success) {
                 const blockNum = status.blockNumber ? ` in block ${status.blockNumber}` : '';
@@ -473,6 +496,10 @@ export function useAssetConversionSwap({
                     duration: 5000,
                     icon: '✅'
                   });
+                  
+                  // Trigger another balance update here to ensure we get the latest values
+                  // This is specifically for regular (non-XCM) swaps
+                  clearBalanceCache(swapHash || undefined);
                 } else {
                   // For XCM swaps, update status but keep loading state
                   setSwapStatus('Transaction finalized, monitoring XCM transfer...');
@@ -529,6 +556,9 @@ export function useAssetConversionSwap({
             icon: '✅'
           });
           
+          // Trigger a final balance cache clear and refresh after XCM completes
+          clearBalanceCache(swapHash || undefined);
+          
           // Now we can call onSuccess and complete the swap
           setIsSwapping(false);
           if (onSuccess) onSuccess();
@@ -554,7 +584,7 @@ export function useAssetConversionSwap({
     inputToken, outputToken, walletAddress, inputAmount, outputAmount,
     slippageTolerance, routeState, getAssetsWithXcmLocations,
     calculateMinimumOutput, toAssetPlanckFormat, parseXcmLocation,
-    onSuccess, handleError, onSimulationComplete
+    onSuccess, handleError, onSimulationComplete, clearBalanceCache, swapHash
   ]);
 
   return {
@@ -562,6 +592,7 @@ export function useAssetConversionSwap({
     swapHash,
     swapStatus,
     swapError,
+    isFinalized,
     executeSwap
   };
 }
