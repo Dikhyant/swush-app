@@ -100,47 +100,55 @@ export const api = {
     }
   },
 
+  // Balance methods now import from the local BalanceService
+  // They're kept here for API compatibility
   balances: {
     get: async (address: string, assetId: string): Promise<Balance> => {
-      const response = await fetch(`${API_BASE_URL}/balances/${address}/${assetId}`);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch balance');
-      }
-
-      const result: ApiResponse<Balance> = await response.json();
+      // Importing here to avoid circular dependencies
+      const { BalanceService } = await import('../services/balances/BalanceService');
+      const balanceService = BalanceService.getInstance();
       
-      if (result.status === 'error' || !result.data) {
-        throw new Error(result.message || 'Failed to fetch balance');
+      try {
+        return await balanceService.getBalance({ address, assetId });
+      } catch (error) {
+        console.error('Error fetching balance:', error);
+        throw error;
       }
-
-      return result.data;
     },
 
     batch: async (params: {
       requests: Array<{ address: string; assetId: string; }>;
     }): Promise<BatchBalanceResponse[]> => {
-      const response = await fetch(`${API_BASE_URL}/balances/batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(params),
-      });
+      // Importing here to avoid circular dependencies
+      const { BalanceService } = await import('../services/balances/BalanceService');
+      const balanceService = BalanceService.getInstance();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to fetch balances');
+      try {
+        const results = await balanceService.getBalances(params.requests);
+        
+        // Convert to the expected format
+        return params.requests.map(req => {
+          const key = `${req.address}-${req.assetId}`;
+          const balanceData = results[key];
+          
+          if (!balanceData) {
+            return {
+              status: 'error',
+              request: req,
+              error: 'Failed to fetch balance'
+            };
+          }
+          
+          return {
+            status: 'success',
+            request: req,
+            data: balanceData
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching balances:', error);
+        throw error;
       }
-
-      const result: ApiResponse<BatchBalanceResponse[]> = await response.json();
-      
-      if (result.status === 'error' || !result.data) {
-        throw new Error(result.message || 'Failed to fetch balances');
-      }
-
-      return result.data;
     }
   }
 }; 

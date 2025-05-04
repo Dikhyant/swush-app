@@ -3,12 +3,11 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { getWsProvider } from 'polkadot-api/ws-provider/web';
 import { withPolkadotSdkCompat } from 'polkadot-api/polkadot-sdk-compat';
 import { RPC_ENDPOINTS } from './constants';
-import { SupportedChains } from '@swush/api/network/types';
 
 type Client = ReturnType<typeof createClient>;
 
 export type PapiConnection = {
-    api: TypedApi<SupportedChains>;
+    api: TypedApi<typeof polkadot_asset_hub>;
     client: Client;
 };
 
@@ -93,11 +92,11 @@ export class FrontendConnectionManager {
                 this.connections.delete(network);
             }
         } else {
-            // // Disconnect all
-            // for (const [network, connection] of this.connections) {
-            //     await connection.client.destroy();
-            //     this.connections.delete(network);
-            // }
+            // Disconnect all
+            this.connections.forEach(async (connection, network) => {
+                await connection.client.destroy();
+                this.connections.delete(network);
+            });
         }
     }
 } 
