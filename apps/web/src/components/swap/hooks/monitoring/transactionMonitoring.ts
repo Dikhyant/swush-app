@@ -2,7 +2,7 @@ import { toast } from 'react-hot-toast';
 import { TransactionStatus, TransactionCallbacks } from '@/services/types';
 import { UserService } from '@/services/userService';
 import { SwapHistoryService } from '@/services/swapHistoryService';
-import { monitorXcmFlow } from '../utils/xcmMonitor';
+import { monitorXcmFlow } from '@/services/xcm/xcmMonitor';
 import { AssetHubApi } from '../types';
 
 interface MonitoringCallbacksConfig {

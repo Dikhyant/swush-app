@@ -1,6 +1,6 @@
 import { AssetHubApi, AssetsMap } from '../types';
 import { parseXcmLocation } from '../utils/assetUtils';
-import { constructHydraDxXcmMessage, fetchHydraXCMLocation, calculateHydraDxXcmFees } from '../utils/xcmUtils';
+import { constructHydraDxXcmMessage, fetchHydraXCMLocation } from '@/services/xcm/xcmUtils';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 
 export const buildAssetHubTransaction = async (
