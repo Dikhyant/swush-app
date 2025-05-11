@@ -58,7 +58,7 @@ export function useSwapTokens() {
     };
 
     fetchAssets();
-  }, []); // Empty dependency array since we only want this to run once
+  }, [inputToken, outputToken]); // Add inputToken and outputToken to the dependency array
 
   const tokens = useMemo(() => assets.map(asset => ({
     id: asset.id,

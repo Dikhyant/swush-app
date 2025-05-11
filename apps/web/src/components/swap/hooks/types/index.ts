@@ -63,4 +63,4 @@ export interface TransactionResult {
   status?: TransactionStatus;
 }
 
-export interface AssetsMap extends Map<string, AssetWithId> {} 
+export type AssetsMap = Map<string, AssetWithId>; 
