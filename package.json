@@ -12,7 +12,7 @@
     "dev:api": "pnpm --filter @swush/api dev",
     "dev:ui": "pnpm --filter @swush/web dev",
     "dev:with-chopsticks": "cd apps/web && pnpm run dev:all",
-    "dev:full": "pnpm run dev:api & pnpm run dev:with-chopsticks",
+    "dev:all": "pnpm run dev:api & pnpm run dev:with-chopsticks",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "clean": "pnpm -r clean",
