@@ -9,7 +9,7 @@ endpoint:
 mock-signature-host: true
 block: ${env.HYDRADX_BLOCK_NUMBER}
 db: ./hydradx.db.sqlite
-runtime-log-level: 5
+runtime-log-level: 3
 port: 3422
 # wasm-override: hydradx_runtime.compact.compressed.wasm
 
