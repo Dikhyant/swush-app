@@ -16,20 +16,13 @@ pnpm i
 
 2. Start the development servers:
 ```bash
-# Start both web and API services
-pnpm dev
+# Start, web and API services and chopsticks
+pnpm dev:all
 
 ```
 
-The web application will be available at [http://localhost:3000](http://localhost:3000)
-The API server will be available at [http://localhost:3001](http://localhost:3001)
+Go to [http://localhost:3000](http://localhost:3000) to access the UI.
 
-#### 2. Start Chopsticks:
-
-```bash
-# Start Chopsticks
-pnpm start-chopsticks
-```
 
 ### Docker Development Environment
 
@@ -42,7 +35,6 @@ docker-compose up --build
 # Stop services
 docker compose down
 ```
-After running the docker compose up command, the web application will be available at [http://localhost:3000](http://localhost:3000)
 
 Chopsticks needs to be run separately, after running the docker compose up command, run the following command from the root directory to start Chopsticks:
 
@@ -53,6 +45,7 @@ pnpm i
 # Start Chopsticks
 pnpm start-chopsticks
 ```
+Go to [http://localhost:3000](http://localhost:3000) to access the UI.
 
 ### Lint check
 
@@ -74,7 +67,7 @@ pnpm test
 
 ### Configuration and Environment Variables
 
-See [docs/config.md](docs/config.md) for more details.
+See [docs/config.md](./docs/config.md) for more details.
 
 ## Acknowledgements
 
