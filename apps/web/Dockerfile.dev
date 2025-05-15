@@ -17,7 +17,6 @@ WORKDIR /app/apps/web
 
 # Copy package files and chopsticks config
 COPY apps/web/package.json ./
-COPY apps/web/chopsticks ./chopsticks/
 
 # Install dependencies
 RUN pnpm install
