@@ -28,4 +28,4 @@ ENV NEXT_PUBLIC_API_HOST=localhost
 EXPOSE 3000
 
 # Run both chopsticks and Next.js dev server
-CMD ["pnpm", "dev:all"] 
+CMD ["pnpm", "dev"] 

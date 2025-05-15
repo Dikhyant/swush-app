@@ -30,4 +30,4 @@ services:
       - NEXT_PUBLIC_API_HOST=${NEXT_PUBLIC_API_HOST:-localhost}
     depends_on:
       - api
-    command: pnpm dev:all 
+    command: pnpm dev 

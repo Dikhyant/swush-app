@@ -17,7 +17,7 @@
     "test": "pnpm -r test",
     "clean": "pnpm -r clean",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "papi": "papi",
+    "start-chopsticks": "npx @acala-network/chopsticks@latest xcm -p packages/chopsticks/config/polkadot_asset_hub.yml -p packages/chopsticks/config/hydration.yml",
     "postinstall": "papi"
 
   },
@@ -39,6 +39,8 @@
     "@polkadot-labs/hdkd-helpers": "^0.0.10",
     "@polkadot/api": "^15.9.2",
     "@polkadot/util-crypto": "^13.4.3",
-    "@supabase/supabase-js": "^2.49.4"
+    "@supabase/supabase-js": "^2.49.4",
+    "@acala-network/chopsticks": "^1.0.5",
+    "ws": "^8.18.0"
   }
 }
