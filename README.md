@@ -9,7 +9,7 @@
 
 ### Local Development
 
-1. Install dependencies:
+#### 1. Install dependencies:
 ```bash
 pnpm i
 ```
@@ -24,6 +24,35 @@ pnpm dev
 The web application will be available at [http://localhost:3000](http://localhost:3000)
 The API server will be available at [http://localhost:3001](http://localhost:3001)
 
+#### 2. Start Chopsticks:
+
+```bash
+# Start Chopsticks
+pnpm start-chopsticks
+```
+
+### Docker Development Environment
+
+The project includes a Docker setup for consistent development environments:
+
+```bash
+# Start all services
+docker-compose up --build
+
+# Stop services
+docker compose down
+```
+After running the docker compose up command, the web application will be available at [http://localhost:3000](http://localhost:3000)
+
+Chopsticks needs to be run separately, after running the docker compose up command, run the following command from the root directory to start Chopsticks:
+
+```bash
+# Install all dependencies if not already installed
+pnpm i
+
+# Start Chopsticks
+pnpm start-chopsticks
+```
 
 ### Lint check
 
@@ -43,38 +72,9 @@ To run the tests, use the following command:
 pnpm test
 ```
 
+### Configuration and Environment Variables
 
-### Docker Development Environment
-
-The project includes a Docker setup for consistent development environments:
-
-```bash
-# Start all services
-docker-compose up --build
-
-# Stop services
-docker compose down
-```
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-NEXT_PUBLIC_API_HOST=localhost  # API host for web application
-```
-
-## Development Tools
-
-- TypeScript 
-- ESLint for code linting
-- Jest for testing
-- PAPI for Polkadot chain interactions
-
-### Learn More
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Polkadot-API Documentation](https://papi.how/)
+See [docs/config.md](docs/config.md) for more details.
 
 ## Acknowledgements
 
