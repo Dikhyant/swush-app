@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "dev:all": "npm run start-chopsticks & npm run dev"
+    "lint": "next lint"
   },
   "dependencies": {
     "@radix-ui/react-collapsible": "^1.1.1",
