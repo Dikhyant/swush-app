@@ -155,7 +155,7 @@ export async function calculateHydraDxXcmFees(
             value: address
         }),
         tx.decodedCall,
-        {}
+        4
     );
 
     if (!dryRun.success) {

@@ -187,7 +187,7 @@ export function useAssetConversionSwap({
             value: walletAddress
           }),
           transaction.decodedCall,
-          {}
+          4
         );
 
         // Use our fee utility instead of calculating here
