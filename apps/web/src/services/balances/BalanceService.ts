@@ -132,33 +132,22 @@ export class BalanceService {
     public async getBalances(requests: BalanceRequest[]): Promise<{[key: string]: BalanceResponse}> {
         const results: {[key: string]: BalanceResponse} = {};
         
-        // Process requests in parallel with retries
+        // Process requests in parallel
         const promises = requests.map(async (request) => {
             const key = `${request.address}-${request.assetId}`;
-            let retries = 2;
             
-            while (retries >= 0) {
-                try {
-                    const balance = await this.getBalance(request);
-                    results[key] = balance;
-                    return;
-                } catch (error) {
-                    if (retries === 0) {
-                        console.error(`Failed to fetch balance after retries for ${request.address} / ${request.assetId}:`, error);
-                        // Add failed result with zero balance
-                        results[key] = {
-                            balance: 0,
-                            status: 'Liquid',
-                            reason: 'Sufficient',
-                            extra: error instanceof Error ? { error: error.message } : null
-                        };
-                    } else {
-                        console.warn(`Retrying balance fetch for ${request.address} / ${request.assetId}`);
-                        retries--;
-                        // Short delay before retry
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                }
+            try {
+                const balance = await this.getBalance(request);
+                results[key] = balance;
+            } catch (error) {
+                console.error(`Failed to fetch balance for ${request.address} / ${request.assetId}:`, error);
+                // Add failed result with zero balance
+                results[key] = {
+                    balance: 0,
+                    status: 'Liquid',
+                    reason: 'Sufficient',
+                    extra: error instanceof Error ? { error: error.message } : null
+                };
             }
         });
         

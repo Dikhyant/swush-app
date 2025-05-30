@@ -26,15 +26,45 @@ export const SwapDetails = ({
   route
 }: SwapDetailsProps) => {
   // Format fees for display if available
-  const formattedFees = feeBreakdown ? {
-    transaction: formatAmount(feeBreakdown.transactionFee, inputToken.decimals,NUMBER_FORMAT_OPTIONS).decimal,
-    xcm: formatAmount(feeBreakdown.xcmFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal,
-    trading: formatAmount(feeBreakdown.tradingFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal,
-    total: formatAmount(feeBreakdown.totalFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal
-  } : null;
+  const formattedFees = feeBreakdown ? (() => {
+    // Check if it's the standard FeeBreakdown interface
+    if (feeBreakdown && typeof feeBreakdown === 'object' && 'transactionFee' in feeBreakdown && 'xcmFee' in feeBreakdown && 'tradingFee' in feeBreakdown && 'totalFee' in feeBreakdown) {
+      const standardFees = feeBreakdown as {
+        transactionFee?: bigint;
+        xcmFee?: bigint;
+        tradingFee?: bigint;
+        totalFee?: bigint;
+      };
+      return {
+        transaction: standardFees.transactionFee !== undefined ? formatAmount(standardFees.transactionFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0',
+        xcm: standardFees.xcmFee !== undefined ? formatAmount(standardFees.xcmFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0',
+        trading: standardFees.tradingFee !== undefined ? formatAmount(standardFees.tradingFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0',
+        total: standardFees.totalFee !== undefined ? formatAmount(standardFees.totalFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0'
+      };
+    }
+    // Handle custom fee breakdown from enhanced simulation
+    else if (feeBreakdown && typeof feeBreakdown === 'object' && 'total' in feeBreakdown) {
+      const customFees = feeBreakdown as { total?: string };
+      return {
+        transaction: '0',
+        xcm: '0',
+        trading: '0',
+        total: customFees.total || '0'
+      };
+    }
+    // Fallback for unknown structure
+    else {
+      return {
+        transaction: '0',
+        xcm: '0',
+        trading: '0',
+        total: '0'
+      };
+    }
+  })() : null;
 
-  // Format max transaction fee always using DOT decimals
-  const formattedMaxFee = formatAmount(BigInt(maxTransactionFee), DOT_DECIMALS, NUMBER_FORMAT_OPTIONS).decimal;
+  // Format max transaction fee always using DOT decimals - ensure it's never undefined
+  const formattedMaxFee = formatAmount(BigInt(maxTransactionFee || '0'), DOT_DECIMALS, NUMBER_FORMAT_OPTIONS).decimal;
 
   return (
     <motion.div

@@ -8,6 +8,23 @@ import {
   buildHydraDxTransaction 
 } from './transactionBuilders';
 import { AssetsMap } from '../types';
+// Import modular fee calculation function
+import { calculateEstimatedFees } from '../utils/feeUtils';
+
+/**
+ * Enhanced Transaction Builders with Modular Fee Calculation
+ * 
+ * Architecture:
+ * - PRIMARY: Uses proven hardcoded fees from feeUtils.ts for fast, reliable calculation
+ * - OPTIONAL: Dry run infrastructure available for future precision enhancements
+ * - Dry run is NOT in active flow unless explicitly enabled via performDryRun: true
+ * - Follows modular design principles per TypeScript guidelines
+ * 
+ * Fee Calculation Strategy:
+ * - Asset Hub: Base transaction fee only
+ * - HydraDX: Base fee + comprehensive XCM fees (proven from production)
+ * - Future Enhancement: Add dry run precision via useDryRunForFees flag
+ */
 
 // Enhanced result types
 export interface EnhancedTransactionResult {
@@ -23,6 +40,8 @@ export interface TransactionBuildOptions {
   performDryRun?: boolean;
   dryRunOptions?: DryRunOptions;
   fallbackOnDryRunFailure?: boolean;
+  // Future enhancement flag for precision fee calculation via dry run
+  useDryRunForFees?: boolean; // Currently defaults to false - not in active flow
 }
 
 /**
@@ -54,12 +73,16 @@ export const buildEnhancedAssetHubTransaction = async (
       routePath
     );
 
+    // PRIMARY: Use modular fee calculation from feeUtils for reliable and fast calculation
+    const feeData = calculateEstimatedFees('asset_hub');
+    const totalEstimatedFees = BigInt(feeData.estimatedFee);
+    
     let dryRunResult: ChainExecutionResult | undefined;
-    let estimatedSuccess = true; // Default to true for Asset Hub transactions
-    let totalEstimatedFees = BigInt(0);
+    let estimatedSuccess = true; // Asset Hub transactions are generally reliable
 
-    // Perform dry run if requested
-    if (options.performDryRun !== false) {
+    // OPTIONAL: Perform dry run for validation only (not for fee calculation)
+    // This is not in the active flow unless explicitly enabled
+    if (options.performDryRun === true) {
       try {
         const dryRunService = XcmDryRunService.getInstance();
         dryRunResult = await dryRunService.dryRunAssetHubTransaction(
@@ -73,31 +96,33 @@ export const buildEnhancedAssetHubTransaction = async (
           }
         );
 
+        // Use dry run result for success validation, but not for fees
         estimatedSuccess = dryRunResult.success;
-        totalEstimatedFees = dryRunResult.fees || BigInt(0);
 
         if (options.dryRunOptions?.verbose) {
-          console.log('🔍 Asset Hub transaction dry run completed:', {
+          console.log('🔍 Asset Hub transaction dry run validation:', {
             success: estimatedSuccess,
-            fees: totalEstimatedFees.toString(),
+            hardcodedFees: totalEstimatedFees.toString(),
+            dryRunFees: dryRunResult.fees?.toString() || 'N/A',
             hasCompatibilityWarning: dryRunResult.error?.includes('DryRunApi') || false
           });
         }
 
-        // If we have a compatibility warning but success is true, log it
+        // Log compatibility warnings
         if (dryRunResult.success && dryRunResult.error?.includes('DryRunApi')) {
           console.warn('⚠️ Using fallback validation due to DryRunApi compatibility:', dryRunResult.error);
         }
 
       } catch (error) {
-        console.warn('Asset Hub dry run failed:', error);
+        console.warn('Asset Hub dry run validation failed:', error);
         
         if (!options.fallbackOnDryRunFailure) {
-          throw new Error(`Dry run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(`Dry run validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
         
-        // Fallback: proceed without dry run data
-        console.log('Falling back to transaction without dry run validation');
+        // Fallback: proceed with modular fees and assume success
+        console.log('Falling back to modular fees without dry run validation');
+        estimatedSuccess = true;
       }
     }
 
@@ -106,7 +131,7 @@ export const buildEnhancedAssetHubTransaction = async (
       dryRunResult,
       dexType: 'asset_hub',
       estimatedSuccess,
-      totalEstimatedFees,
+      totalEstimatedFees, // Always use modular fee calculation
       simulationDuration: Date.now() - startTime
     };
 
@@ -145,24 +170,28 @@ export const buildEnhancedHydraDxTransaction = async (
       walletAddress
     );
 
-    let dryRunResult: XcmDryRunResult | undefined;
-    let estimatedSuccess = true; // Default to true
-    let totalEstimatedFees = BigInt(0);
+    // PRIMARY: Use modular fee calculation from feeUtils for reliable and fast calculation
+    const feeData = calculateEstimatedFees('hydra_dx');
+    const totalEstimatedFees = BigInt(feeData.estimatedFee);
 
-    // Perform comprehensive XCM dry run if requested
-    if (options.performDryRun !== false) {
+    let dryRunResult: XcmDryRunResult | undefined;
+    let estimatedSuccess = true; // HydraDX transactions are generally reliable with proven parameters
+
+    // OPTIONAL: Perform comprehensive XCM dry run for validation only (not for fee calculation)
+    // This is not in the active flow unless explicitly enabled
+    if (options.performDryRun === true) {
       try {
         // Get HydraDX connection for comprehensive testing
         const hydraDxConnection = await FrontendConnectionManager.getInstance().getConnection('hydra_dx');
         
         if (!hydraDxConnection || !hydraDxConnection.api) {
-          throw new Error('HydraDX connection not available for dry run');
+          throw new Error('HydraDX connection not available for dry run validation');
         }
 
         const hydraDxApi = hydraDxConnection.api as TypedApi<typeof hydration>;
         const dryRunService = XcmDryRunService.getInstance();
 
-        // Perform comprehensive XCM dry run
+        // Perform comprehensive XCM dry run for validation
         dryRunResult = await dryRunService.dryRunHydraDxXcmTransaction(
           assetHubApi,
           hydraDxApi,
@@ -178,23 +207,24 @@ export const buildEnhancedHydraDxTransaction = async (
           }
         );
 
+        // Use dry run result for success validation, but not for fees
         estimatedSuccess = dryRunResult.overallSuccess;
-        totalEstimatedFees = dryRunResult.totalEstimatedFees;
 
         if (options.dryRunOptions?.verbose) {
-          console.log('🚀 HydraDX XCM transaction dry run completed:', {
+          console.log('🚀 HydraDX XCM transaction dry run validation:', {
             overallSuccess: estimatedSuccess,
             assetHubSuccess: dryRunResult.assetHubExecution.success,
             hydraDxSuccess: dryRunResult.hydraDxExecution?.success,
             returnPathSuccess: dryRunResult.returnExecution?.success,
-            totalFees: totalEstimatedFees.toString(),
+            hardcodedFees: totalEstimatedFees.toString(),
+            dryRunFees: dryRunResult.totalEstimatedFees.toString(),
             duration: dryRunResult.estimatedDuration
           });
         }
 
         // Log detailed results for debugging
         if (!estimatedSuccess) {
-          console.warn('HydraDX XCM dry run detected potential issues:', {
+          console.warn('HydraDX XCM dry run detected potential validation issues:', {
             assetHubError: dryRunResult.assetHubExecution.error,
             hydraDxError: dryRunResult.hydraDxExecution?.error,
             returnError: dryRunResult.returnExecution?.error,
@@ -203,14 +233,15 @@ export const buildEnhancedHydraDxTransaction = async (
         }
 
       } catch (error) {
-        console.warn('HydraDX XCM dry run failed:', error);
+        console.warn('HydraDX XCM dry run validation failed:', error);
         
         if (!options.fallbackOnDryRunFailure) {
-          throw new Error(`XCM dry run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(`XCM dry run validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
         
-        // Fallback: proceed without comprehensive dry run data
-        console.log('Falling back to HydraDX transaction without comprehensive validation');
+        // Fallback: proceed with modular fees and assume success
+        console.log('Falling back to modular fees without comprehensive XCM validation');
+        estimatedSuccess = true;
       }
     }
 
@@ -219,7 +250,7 @@ export const buildEnhancedHydraDxTransaction = async (
       dryRunResult,
       dexType: 'hydra_dx',
       estimatedSuccess,
-      totalEstimatedFees,
+      totalEstimatedFees, // Always use modular fee calculation
       simulationDuration: Date.now() - startTime
     };
 
@@ -300,11 +331,11 @@ export const validateTransactionQuickly = async (
  */
 export interface SimulationSummary {
   willSucceed: boolean;
-  estimatedFees: string; // Formatted string
+  estimatedFees: bigint; // Keep as raw bigint - formatting happens in useAssetConversionSwap
   breakdown: {
-    assetHub?: { success: boolean; fees?: string; error?: string };
-    hydraDx?: { success: boolean; fees?: string; error?: string };
-    returnPath?: { success: boolean; fees?: string; error?: string };
+    assetHub?: { success: boolean; fees?: bigint; error?: string };
+    hydraDx?: { success: boolean; fees?: bigint; error?: string };
+    returnPath?: { success: boolean; fees?: bigint; error?: string };
   };
   totalDuration?: number;
   recommendations?: string[];
@@ -312,20 +343,16 @@ export interface SimulationSummary {
 
 /**
  * Creates a user-friendly simulation summary from dry run results
+ * Note: Fee estimates use proven hardcoded values from feeUtils.ts modular calculation
+ * Raw bigint values are returned - formatting happens in useAssetConversionSwap
  */
 export const createSimulationSummary = (
   result: EnhancedTransactionResult,
   inputTokenDecimals: number = 10
 ): SimulationSummary => {
-  const formatFees = (fees: bigint | undefined): string => {
-    if (!fees) return '0';
-    // Simple formatting - you might want to use your existing formatAmount utility
-    return (Number(fees) / Math.pow(10, inputTokenDecimals)).toFixed(6);
-  };
-
   const summary: SimulationSummary = {
     willSucceed: result.estimatedSuccess,
-    estimatedFees: formatFees(result.totalEstimatedFees),
+    estimatedFees: result.totalEstimatedFees, // Raw bigint - no redundant formatting
     breakdown: {},
     totalDuration: result.simulationDuration,
     recommendations: []
@@ -336,7 +363,7 @@ export const createSimulationSummary = (
     const ahResult = result.dryRunResult as ChainExecutionResult;
     summary.breakdown.assetHub = {
       success: ahResult.success,
-      fees: formatFees(ahResult.fees),
+      fees: ahResult.fees, // Raw bigint
       error: ahResult.error
     };
   }
@@ -347,14 +374,14 @@ export const createSimulationSummary = (
     
     summary.breakdown.assetHub = {
       success: xcmResult.assetHubExecution.success,
-      fees: formatFees(xcmResult.assetHubExecution.fees),
+      fees: xcmResult.assetHubExecution.fees, // Raw bigint
       error: xcmResult.assetHubExecution.error
     };
 
     if (xcmResult.hydraDxExecution) {
       summary.breakdown.hydraDx = {
         success: xcmResult.hydraDxExecution.success,
-        fees: formatFees(xcmResult.hydraDxExecution.fees),
+        fees: xcmResult.hydraDxExecution.fees, // Raw bigint
         error: xcmResult.hydraDxExecution.error
       };
     }
@@ -362,7 +389,7 @@ export const createSimulationSummary = (
     if (xcmResult.returnExecution) {
       summary.breakdown.returnPath = {
         success: xcmResult.returnExecution.success,
-        fees: formatFees(xcmResult.returnExecution.fees),
+        fees: xcmResult.returnExecution.fees, // Raw bigint
         error: xcmResult.returnExecution.error
       };
     }
