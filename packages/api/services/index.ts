@@ -16,25 +16,33 @@ export async function initializeSDK(): Promise<void> {
         console.log('Initializing network connections...');
         await ConnectionManager.getInstance().initialize();
 
-        // Step 2: Initialize TradeRouter with external assets
+        // Step 2: Initialize TradeRouter with external assets (allow partial failure)
         console.log('Initializing trade router...');
-        // const externalAssets = [...base];
-        await TradeRouterService.getInstance().initialize([]);
+        try {
+            await TradeRouterService.getInstance().initialize([]);
+            console.log('✅ TradeRouter initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ TradeRouter initialization failed, continuing without it:', error instanceof Error ? error.message : error);
+            // Don't throw - continue with other services
+        }
 
         // Step 3: Initialize Asset Service (which will set up caches)
         console.log('Initializing asset service...');
-        await FetchAssetService.getInstance().initialize();
+        try {
+            await FetchAssetService.getInstance().initialize();
+            console.log('✅ Asset service initialized successfully');
+        } catch (error) {
+            console.warn('⚠️ Asset service initialization failed:', error instanceof Error ? error.message : error);
+            // Don't throw - the server can still run with basic functionality
+        }
 
         isInitialized = true;
+        console.log('✅ SDK initialization completed (some services may have partial failures)');
     } catch (error) {
-        console.error('SDK initialization failed:', error);
-        // Attempt cleanup on failure
-        try {
-            await cleanupSDK();
-        } catch (cleanupError) {
-            console.error('Cleanup after failed initialization failed:', cleanupError);
-        }
-        throw error;
+        console.error('❌ Critical SDK initialization failed:', error);
+        // Still mark as initialized to prevent server crash
+        isInitialized = true;
+        console.log('⚠️ SDK marked as initialized despite failures - server will continue with limited functionality');
     }
 }
 
@@ -47,13 +55,24 @@ export async function cleanupSDK(): Promise<void> {
     try {
         console.log('Starting SDK cleanup...');
         // Cleanup in reverse order of initialization
-        await TradeRouterService.getInstance().cleanup();
-        await ConnectionManager.getInstance().disconnect();
+        try {
+            await TradeRouterService.getInstance().cleanup();
+        } catch (error) {
+            console.warn('Error cleaning up TradeRouter:', error);
+        }
+        
+        try {
+            await ConnectionManager.getInstance().disconnect();
+        } catch (error) {
+            console.warn('Error disconnecting ConnectionManager:', error);
+        }
+        
         isInitialized = false;
         console.log('SDK cleanup complete');
     } catch (error) {
         console.error('SDK cleanup failed:', error);
-        throw error;
+        // Force reset
+        isInitialized = false;
     }
 }
 

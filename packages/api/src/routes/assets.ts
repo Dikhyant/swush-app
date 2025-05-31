@@ -7,6 +7,7 @@ import { CacheService } from '../../services/cache/CacheService';
 import { ConnectionManager } from '../../services/network/ConnectionManager';
 import { CACHE_KEYS } from '../../services/constants';
 import { TokenGraph } from '../../services/assets/router/TokenGraph';
+import { NETWORKS_SUPPORTED } from '../../services/constants';
 
 const router = express.Router();
 
@@ -60,16 +61,36 @@ router.post('/find-route', async (req: Request, res: Response) => {
         // Validate request body
         const { fromAsset, toAsset, amountIn, dex } = req.body;
 
+        // Check if ConnectionManager is initialized
+        const connectionManager = ConnectionManager.getInstance();
+        if (!connectionManager.isInitialized()) {
+            return res.status(503).json({
+                status: 'error',
+                message: 'Service initializing, please retry in a moment'
+            });
+        }
+
         // Get cached token graph
         const tokenGraph = CacheService.getInstance().get<TokenGraph>(CACHE_KEYS.TOKEN_GRAPH);
         if (!tokenGraph) {
-            throw new Error('Token graph not initialized');
+            return res.status(503).json({
+                status: 'error',
+                message: 'Token graph not initialized, please retry in a moment'
+            });
         }
 
-        // Get API instance
-        const api = ConnectionManager.getInstance().getAssetHubApi();
+        // Get API instance with retry logic (wait up to 10 seconds for connection)
+        const api = await connectionManager.getAssetHubApiWithRetry(10000);
         if (!api) {
-            throw new Error('Asset Hub API not initialized');
+            // Get connection status for debugging
+            const status = connectionManager.getConnectionStatus();
+            console.error('Asset Hub API not available. Connection status:', status);
+            
+            return res.status(503).json({
+                status: 'error',
+                message: 'Asset Hub connection temporarily unavailable',
+                details: status[NETWORKS_SUPPORTED.ASSET_HUB]
+            });
         }
 
         // Create router instance with cached graph
@@ -100,16 +121,49 @@ router.post('/find-route', async (req: Request, res: Response) => {
         if (error instanceof z.ZodError) {
             return res.status(400).json({
                 status: 'error',
-                message: 'Invalid request body',
+                message: 'Invalid request parameters',
                 errors: error.errors
+            });
+        }
+
+        // Handle connection-related errors specifically
+        const errorMessage = error instanceof Error ? error.message : 'Failed to find route';
+        if (errorMessage.includes('not initialized') || errorMessage.includes('not available') || errorMessage.includes('timeout')) {
+            return res.status(503).json({
+                status: 'error',
+                message: 'Service temporarily unavailable, please retry'
             });
         }
 
         res.status(500).json({
             status: 'error',
-            message: error instanceof Error ? error.message : 'Failed to find route'
+            message: errorMessage
         });
     }
 });
 
-export const assetsRouter = router; 
+// GET /api/v1/assets/connection-status
+router.get('/connection-status', async (req: Request, res: Response) => {
+    try {
+        const connectionManager = ConnectionManager.getInstance();
+        const status = connectionManager.getConnectionStatus();
+        const isInitialized = connectionManager.isInitialized();
+
+        res.json({
+            status: 'success',
+            data: {
+                isInitialized,
+                connections: status,
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (error: unknown) {
+        console.error('Error fetching connection status:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to fetch connection status'
+        });
+    }
+});
+
+export const assetsRouter: express.Router = router; 

@@ -1,7 +1,7 @@
 # Network and RPC Architecture
 
 ## Overview
-The network module provides a robust and fault-tolerant system for managing connections to multiple blockchain networks (Asset Hub, HydraDX) using both Polkadot-JS API and PAPI (Polkadot API). The architecture is designed to handle various failure scenarios, network interruptions, and system events while maintaining connection stability.
+The network module provides a robust and simplified system for managing connections to multiple blockchain networks (Asset Hub, HydraDX) using both Polkadot-JS API and PAPI (Polkadot API). The architecture is designed with simplicity and reliability in mind, focusing on clear separation of concerns and straightforward error handling.
 
 ## Architecture Components
 
@@ -10,98 +10,98 @@ The central orchestrator for all network connections, implementing:
 - Singleton pattern for global connection management
 - Connection state tracking for multiple networks
 - Automatic reconnection with exponential backoff
-- Error handling and recovery strategies
+- Health monitoring and validation
+- Graceful error handling and recovery
 
 ```typescript
 // Usage example
 const manager = ConnectionManager.getInstance();
 await manager.initialize(); // Sets up connections to all networks
-const api = manager.getHydradxApi(); // Get HydraDX connection
+const api = manager.getAssetHubApiWithRetry(10000); // Get Asset Hub API with 10s timeout
 ```
 
-### 2. RPC Connection (`Rpc/RpcConnection.ts`)
-Handles individual RPC connections with:
-- Support for both Polkadot-JS and PAPI implementations
-- Connection lifecycle management
-- Timeout handling
-- Event-based connection monitoring
-
-### 3. RPC Endpoint Manager (`Rpc/RpcEndpointManager.ts`)
-Manages multiple RPC endpoints per network:
-- Health checking of endpoints
-- Round-robin endpoint rotation
-- Priority-based endpoint selection
+### 2. Endpoint Provider (`EndpointProvider.ts`)
+Simple endpoint management:
+- Multiple RPC endpoints per network
+- Round-robin endpoint selection
+- Session-based endpoint blacklisting
 - Automatic failover to healthy endpoints
 
+### 3. Connection Factory (`ConnectionFactory.ts`)
+Handles individual connection creation:
+- Static factory methods for different API types
+- Unified timeout and error handling
+- Connection validation
+- Clean disconnection logic
+
 ### 4. Type System (`types.ts`)
-Provides type safety and runtime validation:
+Provides type safety:
 - Network type definitions
 - Chain descriptor mappings
 - Type guards for connection types
-- Generic connection creators
 
 ## Connection Flow
 
 1. **Initialization**
    ```
    ConnectionManager
-   ├─> Initialize endpoints
-   ├─> Setup health checks
-   └─> Establish initial connections
+   ├─> Get endpoints from EndpointProvider
+   ├─> Create connections via ConnectionFactory
+   └─> Validate and mark as ready
    ```
 
 2. **Health Monitoring**
    ```
-   RpcEndpointManager
-   ├─> Regular health checks
-   ├─> Endpoint status updates
-   └─> Automatic failover
+   ConnectionManager (every 60s)
+   ├─> Validate each connection
+   ├─> Mark unhealthy connections for reconnection
+   └─> Track response times and errors
    ```
 
 3. **Error Recovery**
    ```
    Connection Error
-   ├─> Attempt reconnection
-   ├─> Exponential backoff
-   └─> Switch endpoints if needed
+   ├─> Mark endpoint as failed
+   ├─> Try next available endpoint
+   ├─> Exponential backoff (1s, 2s, 4s, 8s, 16s, 30s max)
+   └─> Reset after successful connection
    ```
 
 ## Fault Tolerance Features
 
 ### 1. Connection Recovery
 - Automatic reconnection attempts
-- Configurable retry limits
-- Exponential backoff with jitter
+- Exponential backoff (max 30 seconds)
+- Endpoint rotation on failures
 - Connection state preservation
 
 ### 2. Endpoint Management
 - Multiple endpoints per network
-- Priority-based endpoint selection
-- Health-based endpoint rotation
-- Automatic failover to healthy endpoints
+- Round-robin selection
+- Session-based blacklisting (no permanent blacklisting)
+- Clear endpoint status reporting
 
 ### 3. Error Handling
 - Graceful error recovery
 - Detailed error logging
 - Connection state tracking
-- Resource cleanup on failures
+- Proper resource cleanup
 
 ## Configuration
 
 ### Network Configuration
 ```typescript
-// Example configuration in constants.ts
-export const RPC_ENDPOINTS = {
-  ASSET_HUB: {
-    endpoints: [
-      { url: 'wss://primary-endpoint', priority: 1 },
-      { url: 'wss://backup-endpoint', priority: 2 }
-    ],
-    healthCheck: {
-      interval: 60000,  // 1 minute
-      timeout: 5000     // 5 seconds
-    }
-  }
+// In EndpointProvider.ts
+endpoints = {
+  [NETWORKS_SUPPORTED.ASSET_HUB]: [
+    'wss://polkadot-asset-hub-rpc.polkadot.io',
+    'wss://asset-hub-polkadot.dotters.network',
+    'wss://sys.ibp.network/asset-hub-polkadot'
+  ],
+  [NETWORKS_SUPPORTED.HYDRA_DX]: [
+    'wss://rpc.hydradx.cloud',
+    'wss://hydradx-rpc.dwellir.com'
+  ]
 };
 ```
 
@@ -109,29 +109,47 @@ export const RPC_ENDPOINTS = {
 ```typescript
 export const CONNECTION_CONFIG = {
   MAX_RECONNECT_ATTEMPTS: 5,
-  BASE_RECONNECT_DELAY: 1000,   // 1 second
+  BASE_RECONNECT_DELAY: 2000,   // 2 seconds
   MAX_RECONNECT_DELAY: 30000,   // 30 seconds
-  ATTEMPT_RESET_TIMEOUT: 30000, // 30 seconds
-  CONNECTION_TIMEOUT: 15000     // 15 seconds
+  ATTEMPT_RESET_TIMEOUT: 120000, // 2 minutes
+  CONNECTION_TIMEOUT: 30000     // 30 seconds
 };
+```
+
+## API Usage Patterns
+
+### 1. Immediate Connection
+```typescript
+const api = manager.getAssetHubApi(); // Returns null if not ready
+```
+
+### 2. Connection with Retry
+```typescript
+const api = await manager.getAssetHubApiWithRetry(10000); // Wait up to 10 seconds
+```
+
+### 3. Connection Status Monitoring
+```typescript
+const status = manager.getConnectionStatus();
+// Returns detailed status for each network including endpoint health
 ```
 
 ## Best Practices
 
 1. **Connection Management**
    - Always use the ConnectionManager singleton
-   - Handle connection cleanup properly
-   - Monitor connection states
+   - Use retry methods for critical operations
+   - Monitor connection status regularly
 
 2. **Error Handling**
-   - Implement proper error boundaries
-   - Log connection issues
-   - Handle cleanup on errors
+   - Handle null responses from immediate connection methods
+   - Use appropriate timeouts for retry methods
+   - Check connection status for debugging
 
 3. **Resource Management**
-   - Clean up connections when not needed
-   - Monitor resource usage
-   - Implement proper timeouts
+   - ConnectionManager handles all cleanup automatically
+   - No manual connection management needed
+   - Proper shutdown via disconnect()
 
 ## Common Scenarios
 
@@ -141,135 +159,68 @@ The system automatically handles:
 - Connection timeouts
 - Endpoint failures
 
-### 2. System Events
-Handles various system events:
-- System sleep/wake cycles
-- Network connectivity changes
-- Application state changes
+### 2. API Usage
+- HTTP 503 responses when connections unavailable
+- Automatic retry logic in API endpoints
+- Clear error messages for debugging
 
-### 3. Performance Optimization
-- Connection pooling
-- Resource cleanup
-- State management
+### 3. Performance
+- Lightweight health checking
+- Efficient connection reuse
+- Minimal resource overhead
 
 ## Debugging
 
+### Connection Status Endpoint
+```bash
+curl http://localhost:3001/api/v1/assets/connection-status
+```
+
 ### Common Issues
 1. **Connection Timeouts**
-   - Check network connectivity
-   - Verify endpoint health
-   - Review connection parameters
-
-2. **Reconnection Loops**
    - Check endpoint availability
-   - Review reconnection parameters
-   - Verify network stability
+   - Review network connectivity
+   - Monitor endpoint status
 
-3. **Resource Leaks**
-   - Monitor connection cleanup
-   - Check event listener cleanup
-   - Verify timeout clearing
+2. **All Endpoints Failed**
+   - Check endpoint health
+   - Review blacklisted endpoints
+   - Verify network configuration
 
 ### Logging
-The system provides detailed logging for:
-- Connection attempts
+The system provides clear logging for:
+- Connection attempts and results
 - Health check results
-- Error conditions
-- State transitions
+- Error conditions with context
+- Endpoint status changes
 
-## Future Improvements
+## Architecture Benefits
 
-1. **Monitoring**
-   - Add detailed metrics collection
-   - Implement performance tracking
-   - Enhanced error reporting
+**Simplified Design:**
+- ~70% less code than previous version
+- Clear separation of concerns
+- No complex event systems
+- Predictable error flows
 
-2. **Optimization**
-   - Connection pooling
-   - Better resource management
-   - Enhanced caching
+**Better Reliability:**
+- Single source of truth for connection state
+- Proper connection validation
+- Graceful degradation
+- Clear error propagation
 
-3. **Features**
-   - Additional network support
-   - Enhanced type safety
-   - Better state management 
+**Easier Maintenance:**
+- Simple, focused components
+- Minimal interdependencies
+- Clear interfaces
+- Comprehensive status reporting
 
+## Migration Notes
 
-**Cursor ID** : WebSocket Connection Error Troubleshooting
+**Removed Components:**
+- `RpcEndpointManager.ts` (217 lines) → Replaced by `EndpointProvider.ts` (75 lines)
+- `RpcConnection.ts` (337 lines) → Replaced by `ConnectionFactory.ts` (90 lines)
+- Complex event system → Direct method calls
+- Health check WebSockets → Connection validation
 
-## 12/03 : Improvements on Endpoint Switching Behavior
-
-Endpoint switching behavior and health check system:
-
-1. **Endpoint Switching Behavior**
-Yes, when a health check fails, the system will switch to a different endpoint. Here's how it works in the current code:
-
-```typescript
-// In RpcEndpointManager.ts
-public getEndpoint(network: string): string {
-    // Get healthy endpoints sorted by priority
-    const healthyEndpoints = config.endpoints
-        .filter(e => {
-            const health = this.endpointHealth.get(e.url);
-            return health?.isHealthy;
-        })
-        .sort((a, b) => a.priority - b.priority);
-
-    if (healthyEndpoints.length > 0) {
-        return healthyEndpoints[0].url;  // Returns highest priority healthy endpoint
-    }
-
-    // Fallback to highest priority endpoint if all are unhealthy
-    const fallbackEndpoint = [...config.endpoints]
-        .sort((a, b) => a.priority - b.priority)[0];
-```
-
-The switching process works like this:
-1. When a health check fails, that endpoint is marked as unhealthy
-2. The next time `getEndpoint()` is called (during reconnection), it will:
-   - First try to find a healthy endpoint with the highest priority
-   - If no healthy endpoints exist, fall back to the highest priority endpoint
-
-2. **Constants**
-You're right - if you're running on a cloud server, the previous constants would work fine. Let's revert the constants back:
-
-```typescript:packages/api/services/constants.ts
-// Time constants in milliseconds
-export const HEALTH_CHECK = {
-    INTERVAL: 2 * 60 * 1000,    // Check every 2 minutes if RPC endpoint is healthy
-    TIMEOUT: 15000,             // 15 seconds timeout for health checks
-    REACTIVATION: 5 * 60 * 1000 // Reactivate after 5 minutes, longer recovery time for stability
-} as const;
-
-// Connection management constants
-export const CONNECTION_CONFIG = {
-    MAX_RECONNECT_ATTEMPTS: 10,    // Increased max attempts
-    BASE_RECONNECT_DELAY: 2000,    // 2 seconds base delay
-    MAX_RECONNECT_DELAY: 60000,    // Maximum delay of 1 minute
-    ATTEMPT_RESET_TIMEOUT: 60000,  // Reset attempts after 1 minute
-    CONNECTION_TIMEOUT: 30000      // 30 seconds timeout for initial connections
-} as const;
-```
-
-1. **Health Check Process**:
-   - Every 2 minutes (`HEALTH_CHECK.INTERVAL`), each endpoint is checked
-   - Each check has 15 seconds to complete (`HEALTH_CHECK.TIMEOUT`)
-   - If a check fails, the endpoint is marked as unhealthy
-
-2. **Reconnection Process**:
-   - When a connection fails, `ConnectionManager` will:
-     - Try to get a healthy endpoint first
-     - If no healthy endpoints, use the highest priority endpoint
-     - Use exponential backoff between attempts (starting at 2s, max 60s)
-     - Try up to 10 times before engaging circuit breaker
-
-3. **Recovery Process**:
-   - Failed endpoints are automatically rechecked after 5 minutes (`HEALTH_CHECK.REACTIVATION`)
-   - If the recheck succeeds, the endpoint becomes available again
-   - This prevents permanently blacklisting endpoints that might have temporary issues
-
-The system prioritizes:
-1. Stable connections (longer health check intervals)
-2. Multiple retry attempts (10 instead of 5)
-3. Longer timeouts (15s instead of 5s)
+**Total Reduction:** ~400 lines of complex code → ~200 lines of simple code
 

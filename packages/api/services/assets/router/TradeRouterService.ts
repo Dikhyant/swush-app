@@ -23,11 +23,28 @@ export class TradeRouterService {
         }
 
         try {
-            // Wait for HydraDX API to be available
-            const hydraApi = await ConnectionManager.getInstance().getHydradxApi();
+            // Wait for HydraDX API to be available with retry logic
+            const connectionManager = ConnectionManager.getInstance();
+            console.log('Waiting for HydraDX connection...');
+            
+            let hydraApi = await connectionManager.getHydradxApiWithRetry(30000); // Wait up to 30 seconds
+            
+            // If still not available, try to wait for connection to be established
             if (!hydraApi) {
-                throw new Error('HydraDX API not initialized. Please ensure ConnectionManager is initialized first.');
+                console.log('HydraDX not immediately available, waiting for connection...');
+                const isConnected = await connectionManager.waitForConnection('hydra_dx', 45000); // Wait up to 45 seconds
+                if (isConnected) {
+                    hydraApi = connectionManager.getHydradxApi();
+                }
             }
+            
+            if (!hydraApi) {
+                const status = connectionManager.getConnectionStatus();
+                console.error('HydraDX API not available after waiting. Connection status:', status.hydra_dx);
+                throw new Error('HydraDX API connection not available after extended wait. TradeRouter will be unavailable.');
+            }
+
+            console.log('✅ HydraDX API available, initializing PoolService...');
 
             // Initialize PoolService
             this.poolService = new PoolService(hydraApi);
@@ -46,10 +63,10 @@ export class TradeRouterService {
             }
 
             this.initialized = true;
-            console.log('TradeRouterService initialized successfully');
+            console.log('✅ TradeRouterService initialized successfully');
         } catch (error) {
             this.cleanup(); // Reset state on failure
-            console.error('Failed to initialize TradeRouterService:', error);
+            console.error('❌ Failed to initialize TradeRouterService:', error instanceof Error ? error.message : error);
             throw error;
         }
     }

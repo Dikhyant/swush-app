@@ -1,21 +1,17 @@
 import { TypedApi, PolkadotClient, ChainDefinition } from 'polkadot-api';
 import { 
     polkadot_asset_hub,
-    polkadot,
     hydration 
 } from '@polkadot-api/descriptors';
 import { NETWORKS_SUPPORTED } from '../constants';
-import RpcConnection from './Rpc/RpcConnection';
 import { ApiPromise } from '@polkadot/api';
 
 // Define chain descriptors mapping
 export const CHAIN_DESCRIPTORS: {
     [NETWORKS_SUPPORTED.ASSET_HUB]: typeof polkadot_asset_hub,
-    [NETWORKS_SUPPORTED.POLKADOT]: typeof polkadot,
     [NETWORKS_SUPPORTED.HYDRA_DX]: typeof hydration
 } = {
     [NETWORKS_SUPPORTED.ASSET_HUB]: polkadot_asset_hub,
-    [NETWORKS_SUPPORTED.POLKADOT]: polkadot,
     [NETWORKS_SUPPORTED.HYDRA_DX]: hydration,
 } as const;
 
@@ -45,26 +41,7 @@ export function createConnection<T extends NetworkType>(
     };
 }
 
-// Chain-specific connect function with proper return types
-export async function connectPapi<T extends NetworkType>(
-    rpcUrl: string, 
-    chainType: T
-): Promise<PapiConnection<typeof CHAIN_DESCRIPTORS[T]>> {
-    const papiConn = RpcConnection.getInstance('papi');
-    const result = await papiConn.connect(rpcUrl, chainType);
-    
-    if (!isPapiConnection(result)) {
-        throw new Error('Invalid connection type');
-    }
-    
-    return createConnection(result);
-}
-
-//write a connection for polkadotjs using below example
-export async function connectPolkadotjs(rpcUrl: string): Promise<ApiPromise> {
-    const rpcConnection = RpcConnection.getInstance('polkadotjs');
-    const api = await rpcConnection.connect(rpcUrl) as ApiPromise;
-    return api;
-}
+// Note: Connection functions moved to ConnectionFactory
+// This file now only contains type definitions
 
 
