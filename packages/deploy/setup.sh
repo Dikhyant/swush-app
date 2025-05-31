@@ -5,7 +5,7 @@
 
 # 1. OS hygiene
 apt-get update -y
-apt-get install -y curl git build-essential
+apt-get install -y curl git build-essential net-tools
 
 # 2. NVM + Node 20 LTS
 NVM_VERSION="v0.40.3"
