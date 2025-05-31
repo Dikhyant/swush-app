@@ -3,7 +3,7 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { ApiPromise } from '@polkadot/api';
 import { EndpointProvider } from './EndpointProvider';
 import { ConnectionFactory, AssetHubConnection, ConnectionEventCallback } from './ConnectionFactory';
-import { NETWORKS_SUPPORTED } from '../constants';
+import { CONNECTION_HEALTH_CHECK_INTERVAL, NETWORKS_SUPPORTED } from '../constants';
 
 interface NetworkConnection {
     connection: AssetHubConnection | ApiPromise | null;
@@ -61,7 +61,7 @@ export class ConnectionManager {
             if (!this.isShuttingDown && this.initialized) {
                 await this.performHealthChecks();
             }
-        }, 60000); // Check every minute
+        }, CONNECTION_HEALTH_CHECK_INTERVAL); // Check every minute
     }
 
     private async performHealthChecks(): Promise<void> {

@@ -3,7 +3,7 @@ import { polkadot_asset_hub } from '@polkadot-api/descriptors';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { getWsProvider } from 'polkadot-api/ws-provider/node';
 import { withPolkadotSdkCompat } from 'polkadot-api/polkadot-sdk-compat';
-import { NETWORKS_SUPPORTED, CONNECTION_CONFIG } from '../constants';
+import { NETWORKS_SUPPORTED, CONNECTION_TIMEOUT } from '../constants';
 
 export interface AssetHubConnection {
   api: TypedApi<typeof polkadot_asset_hub>;
@@ -20,7 +20,7 @@ export class ConnectionFactory {
     onConnectionEvent?: ConnectionEventCallback
   ): Promise<AssetHubConnection> {
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Connection timeout')), CONNECTION_CONFIG.CONNECTION_TIMEOUT);
+      setTimeout(() => reject(new Error('Connection timeout')), CONNECTION_TIMEOUT);
     });
 
     const connectionPromise = async (): Promise<AssetHubConnection> => {
@@ -58,7 +58,7 @@ export class ConnectionFactory {
     onConnectionEvent?: ConnectionEventCallback
   ): Promise<ApiPromise> {
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Connection timeout')), CONNECTION_CONFIG.CONNECTION_TIMEOUT);
+      setTimeout(() => reject(new Error('Connection timeout')), CONNECTION_TIMEOUT);
     });
 
     const connectionPromise = async (): Promise<ApiPromise> => {
