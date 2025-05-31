@@ -108,7 +108,7 @@ export class ConnectionManager {
 
         switch (event) {
             case 'connected':
-                console.log(`✅ ${network} connection established`);
+                console.log(`${network} connection established`);
                 connection.consecutiveFailures = 0;
                 connection.lastError = null;
                 this.connectionHealth.set(network, {
@@ -223,7 +223,7 @@ export class ConnectionManager {
                 responseTime: 0
             });
 
-            console.log(`✅ Successfully connected to ${network}`);
+            console.log(`Successfully connected to ${network}`);
         } catch (error) {
             const err = error instanceof Error ? error : new Error('Unknown connection error');
             connectionState.consecutiveFailures++;

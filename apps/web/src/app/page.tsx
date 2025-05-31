@@ -268,7 +268,7 @@ export default function SwapPage() {
               inputToken={inputToken}
               maxTransactionFee={estimatedFees || simulationResult?.estimatedFee || '0'}
               feeBreakdown={feeBreakdown || simulationResult?.feeBreakdown}
-              route={routeDex || 'Asset Hub'}
+              route={routeDex || ''}
             />
 
             <SubmitButtonAction

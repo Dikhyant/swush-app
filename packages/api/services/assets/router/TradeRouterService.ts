@@ -44,7 +44,7 @@ export class TradeRouterService {
                 throw new Error('HydraDX API connection not available after extended wait. TradeRouter will be unavailable.');
             }
 
-            console.log('✅ HydraDX API available, initializing PoolService...');
+            console.log('HydraDX API available, initializing PoolService...');
 
             // Initialize PoolService
             this.poolService = new PoolService(hydraApi);
@@ -63,7 +63,7 @@ export class TradeRouterService {
             }
 
             this.initialized = true;
-            console.log('✅ TradeRouterService initialized successfully');
+            console.log('TradeRouterService initialized successfully');
         } catch (error) {
             this.cleanup(); // Reset state on failure
             console.error('❌ Failed to initialize TradeRouterService:', error instanceof Error ? error.message : error);
