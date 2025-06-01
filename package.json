@@ -34,7 +34,7 @@
   "dependencies": {
     "@acala-network/chopsticks": "^1.0.5",
     "@galacticcouncil/api-augment": "^0.3.1",
-    "@polkadot-api/descriptors": "file:.papi\\descriptors",
+    "@polkadot-api/descriptors": "file:.papi/descriptors",
     "@polkadot-labs/hdkd-helpers": "^0.0.10",
     "@polkadot/api": "~14.0.1",
     "@polkadot/util-crypto": "^13.4.3",

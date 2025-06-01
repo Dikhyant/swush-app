@@ -8,7 +8,10 @@
     "dev": "tsx watch src/server.ts",
     "clean": "rimraf dist .papi",
     "lint": "eslint services --ext .ts",
-    "test": "jest --config=jest.config.js"
+    "test": "jest --config=jest.config.js",
+
+    "test:basic": "tsx scripts/basic-test.ts",
+    "test:integration": "tsx scripts/integration-test.ts"
   },
   "dependencies": {
     "@galacticcouncil/sdk": "^7.2.0",

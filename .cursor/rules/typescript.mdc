@@ -12,4 +12,7 @@ Code Style and Structure
 - Implement proper error handling and logging
 - Add proper error handling to help debug code in case of any errors
 
+Run and Debug
+- Use pnpm to install or review any packages
+- Refer package.json for any dependency issue or command check
 
