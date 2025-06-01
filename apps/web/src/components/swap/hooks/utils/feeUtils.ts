@@ -1,4 +1,5 @@
 import { FeeBreakdown } from '../types';
+import { NETWORKS_SUPPORTED } from '@/services/constants';
 
 // Hardcoded XCM fees for HydraDX from transactionBuilders
 export const HYDRA_DX_XCM_FEES = {
@@ -13,14 +14,14 @@ const BASE_TRANSACTION_FEE = BigInt(40000000); // ~0.04 DOT
 
 /**
  * Calculate fees based on DEX type
- * @param dex - The DEX type ('hydra_dx' or 'asset_hub')
+ * @param dex - The DEX type (NETWORKS_SUPPORTED.HYDRA_DX or NETWORKS_SUPPORTED.ASSET_HUB)
  * @returns Object containing estimated fee and fee breakdown
  */
 export function calculateEstimatedFees(dex: string): {
   estimatedFee: string;
   feeBreakdown: FeeBreakdown;
 } {
-  const isHydraDx = dex === 'hydra_dx';
+  const isHydraDx = dex === NETWORKS_SUPPORTED.HYDRA_DX;
   
   // Calculate XCM fees for HydraDX
   const xcmFee = isHydraDx ? 

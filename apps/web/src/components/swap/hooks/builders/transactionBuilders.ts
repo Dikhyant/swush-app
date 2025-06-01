@@ -3,6 +3,7 @@ import { parseXcmLocation } from '../utils/assetUtils';
 import { constructHydraDxXcmMessage, fetchHydraXCMLocation } from '@/services/xcm/xcmUtils';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 import { HYDRA_DX_XCM_FEES } from '../utils/feeUtils';
+import { NETWORKS_SUPPORTED } from '@/services/constants';
 
 export const buildAssetHubTransaction = async (
   assetHubApi: AssetHubApi,
@@ -64,7 +65,7 @@ export const buildHydraDxTransaction = async (
 ) => {
   try {
     // Get HydraDX connection
-    const hydraDxConnection = await FrontendConnectionManager.getInstance().getConnection('hydra_dx');
+    const hydraDxConnection = await FrontendConnectionManager.getInstance().getConnection(NETWORKS_SUPPORTED.HYDRA_DX);
     if (!hydraDxConnection || !hydraDxConnection.api) {
       throw new Error('HydraDX RPC connection is not active.');
     }

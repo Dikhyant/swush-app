@@ -10,6 +10,7 @@ import {
 import { AssetsMap } from '../types';
 // Import modular fee calculation function
 import { calculateEstimatedFees } from '../utils/feeUtils';
+import { NETWORKS_SUPPORTED } from '@/services/constants';
 
 /**
  * Enhanced Transaction Builders with Modular Fee Calculation
@@ -30,7 +31,7 @@ import { calculateEstimatedFees } from '../utils/feeUtils';
 export interface EnhancedTransactionResult {
   transaction: Transaction<any, any, any, any>;
   dryRunResult?: XcmDryRunResult | ChainExecutionResult;
-  dexType: 'asset_hub' | 'hydra_dx';
+  dexType: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.HYDRA_DX;
   estimatedSuccess: boolean;
   totalEstimatedFees: bigint;
   simulationDuration?: number;
@@ -74,7 +75,7 @@ export const buildEnhancedAssetHubTransaction = async (
     );
 
     // PRIMARY: Use modular fee calculation from feeUtils for reliable and fast calculation
-    const feeData = calculateEstimatedFees('asset_hub');
+    const feeData = calculateEstimatedFees(NETWORKS_SUPPORTED.ASSET_HUB);
     const totalEstimatedFees = BigInt(feeData.estimatedFee);
     
     let dryRunResult: ChainExecutionResult | undefined;
@@ -129,7 +130,7 @@ export const buildEnhancedAssetHubTransaction = async (
     return {
       transaction,
       dryRunResult,
-      dexType: 'asset_hub',
+      dexType: NETWORKS_SUPPORTED.ASSET_HUB,
       estimatedSuccess,
       totalEstimatedFees, // Always use modular fee calculation
       simulationDuration: Date.now() - startTime
@@ -171,7 +172,7 @@ export const buildEnhancedHydraDxTransaction = async (
     );
 
     // PRIMARY: Use modular fee calculation from feeUtils for reliable and fast calculation
-    const feeData = calculateEstimatedFees('hydra_dx');
+    const feeData = calculateEstimatedFees(NETWORKS_SUPPORTED.HYDRA_DX);
     const totalEstimatedFees = BigInt(feeData.estimatedFee);
 
     let dryRunResult: XcmDryRunResult | undefined;
@@ -182,7 +183,7 @@ export const buildEnhancedHydraDxTransaction = async (
     if (options.performDryRun === true) {
       try {
         // Get HydraDX connection for comprehensive testing
-        const hydraDxConnection = await FrontendConnectionManager.getInstance().getConnection('hydra_dx');
+        const hydraDxConnection = await FrontendConnectionManager.getInstance().getConnection(NETWORKS_SUPPORTED.HYDRA_DX);
         
         if (!hydraDxConnection || !hydraDxConnection.api) {
           throw new Error('HydraDX connection not available for dry run validation');
@@ -248,7 +249,7 @@ export const buildEnhancedHydraDxTransaction = async (
     return {
       transaction,
       dryRunResult,
-      dexType: 'hydra_dx',
+      dexType: NETWORKS_SUPPORTED.HYDRA_DX,
       estimatedSuccess,
       totalEstimatedFees, // Always use modular fee calculation
       simulationDuration: Date.now() - startTime
@@ -271,13 +272,13 @@ export const buildEnhancedTransaction = async (
   inputAmountPlanck: bigint,
   minOutputAmountPlanck: bigint,
   walletAddress: string,
-  dexType: 'asset_hub' | 'hydra_dx',
+  dexType: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.HYDRA_DX,
   routePath?: string[],
   alicePublicKey?: Uint8Array,
   options: TransactionBuildOptions = {}
 ): Promise<EnhancedTransactionResult> => {
   
-  if (dexType === 'asset_hub') {
+  if (dexType === NETWORKS_SUPPORTED.ASSET_HUB) {
     return buildEnhancedAssetHubTransaction(
       assetHubApi,
       assetsMap,
@@ -359,7 +360,7 @@ export const createSimulationSummary = (
   };
 
   // Handle Asset Hub results
-  if (result.dexType === 'asset_hub' && result.dryRunResult) {
+  if (result.dexType === NETWORKS_SUPPORTED.ASSET_HUB && result.dryRunResult) {
     const ahResult = result.dryRunResult as ChainExecutionResult;
     summary.breakdown.assetHub = {
       success: ahResult.success,
@@ -369,7 +370,7 @@ export const createSimulationSummary = (
   }
 
   // Handle HydraDX XCM results
-  if (result.dexType === 'hydra_dx' && result.dryRunResult) {
+  if (result.dexType === NETWORKS_SUPPORTED.HYDRA_DX && result.dryRunResult) {
     const xcmResult = result.dryRunResult as XcmDryRunResult;
     
     summary.breakdown.assetHub = {

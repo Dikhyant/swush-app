@@ -1,4 +1,5 @@
 import type { Asset } from '@swush/api';
+import { NETWORKS_SUPPORTED } from '@/services/constants';
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST || 'localhost';
 const API_VERSION = 'v1';
@@ -31,7 +32,7 @@ export interface RouteQuote {
     amountIn: string;
     amountOut: string;
   }[];
-  dex: 'asset_hub' | 'hydra_dx';
+  dex: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.HYDRA_DX;
 }
 
 export interface Balance {

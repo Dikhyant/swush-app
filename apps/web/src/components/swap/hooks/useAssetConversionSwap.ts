@@ -35,7 +35,7 @@ import {
 } from './monitoring/transactionMonitoring';
 import { Enum, TypedApi } from 'polkadot-api';
 import { formatAmount } from '@/services/balances/utils';
-import { NUMBER_FORMAT_OPTIONS } from '@/services/constants';
+import { NETWORKS_SUPPORTED, NUMBER_FORMAT_OPTIONS } from '@/services/constants';
 
 export function useAssetConversionSwap({
   inputToken,
@@ -120,7 +120,7 @@ export function useAssetConversionSwap({
 
       // Get Asset Hub connection
       const connectionManager = FrontendConnectionManager.getInstance();
-      const assetHubConnection = await connectionManager.getConnection('asset_hub');
+      const assetHubConnection = await connectionManager.getConnection(NETWORKS_SUPPORTED.ASSET_HUB);
 
       if (!assetHubConnection || !assetHubConnection.api) {
         throw new Error('Asset Hub RPC connection is not active. Please reconnect your wallet.');
@@ -148,7 +148,7 @@ export function useAssetConversionSwap({
         outputAsset.metadata.decimals
       );
 
-      const isHydraDx = routeState.data?.dex === 'hydra_dx';
+      const isHydraDx = routeState.data?.dex === NETWORKS_SUPPORTED.HYDRA_DX;
       
       // Configure enhanced transaction build options
       const buildOptions: TransactionBuildOptions = {
@@ -174,7 +174,7 @@ export function useAssetConversionSwap({
         inputAmountPlanck,
         minOutputAmountPlanck,
         walletAddress,
-        isHydraDx ? 'hydra_dx' : 'asset_hub',
+        isHydraDx ? NETWORKS_SUPPORTED.HYDRA_DX : NETWORKS_SUPPORTED.ASSET_HUB,
         routeState.data?.path,
         isHydraDx ? polkadotSigner.publicKey : undefined,
         buildOptions
@@ -230,7 +230,7 @@ export function useAssetConversionSwap({
         inputToken.symbol,
         outputToken.symbol,
         parseFloat(inputAmount),
-        routeState.data?.dex || 'asset_hub',
+        routeState.data?.dex || '',
         'success'
       );
 

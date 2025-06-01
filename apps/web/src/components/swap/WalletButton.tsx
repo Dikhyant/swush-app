@@ -18,6 +18,7 @@ import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { WalletButtonProps } from './types';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 import { UserService } from '@/services/userService';
+import { NETWORKS_SUPPORTED } from '@/services/constants';
 // Network configuration for address formatting
 const NETWORK_CONFIG = {
   POLKADOT: {
@@ -87,11 +88,10 @@ export const WalletButton = ({
       
       // Map the network name to the connection id expected by the service
       const networkMapping: Record<string, string> = {
-        'Polkadot': 'asset_hub',
-        'Kusama': 'asset_hub_kusama'
+        'Polkadot': NETWORKS_SUPPORTED.ASSET_HUB,
       };
       
-      const networkId = networkMapping[networkName] || 'asset_hub';
+      const networkId = networkMapping[networkName];
       
       // Get the connection manager instance
       const connectionManager = FrontendConnectionManager.getInstance();
@@ -169,10 +169,9 @@ export const WalletButton = ({
       const connectionManager = FrontendConnectionManager.getInstance();
       const networkName = localStorage.getItem('walletNetwork') || 'Polkadot';
       const networkMapping: Record<string, string> = {
-        'Polkadot': 'asset_hub',
-        'Kusama': 'asset_hub_kusama'
+        'Polkadot': NETWORKS_SUPPORTED.ASSET_HUB,
       };
-      const networkId = networkMapping[networkName] || 'asset_hub';
+      const networkId = networkMapping[networkName];
       
       await connectionManager.disconnect(networkId);
       

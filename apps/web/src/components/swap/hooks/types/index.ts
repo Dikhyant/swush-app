@@ -4,6 +4,7 @@ import { SwushError } from '@/services/TransactionErrorService';
 import { TransactionStatus } from '@/services/types';
 import { TypedApi } from 'polkadot-api';
 import { polkadot_asset_hub } from '@polkadot-api/descriptors';
+import { NETWORKS_SUPPORTED } from '@/services/constants';
 
 export interface UseAssetConversionSwapProps {
   inputToken: TokenInfo | null;
@@ -38,7 +39,7 @@ export interface SimulationResult {
   error?: string;
   enhancedData?: {
     summary: any;
-    dexType: 'asset_hub' | 'hydra_dx';
+    dexType: typeof NETWORKS_SUPPORTED.ASSET_HUB | typeof NETWORKS_SUPPORTED.HYDRA_DX;
     simulationDuration?: number;
   };
 }
