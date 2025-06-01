@@ -18,14 +18,14 @@ export const NETWORK_ENDPOINTS = {
     'wss://sys.ibp.network/asset-hub-polkadot'
   ],
   [NETWORKS_SUPPORTED.HYDRA_DX]: [
+    'wss://hydration-rpc.n.dwellir.com',
     'wss://rpc.hydradx.cloud',
-    'wss://rpc.helikon.io/hydradx',
-    'wss://hydration.dotters.network'
+    'wss://rpc.helikon.io/hydradx'
   ]
 } as const;
 
 export const NUMBER_FORMAT_OPTIONS = { round: 2, trim: true, commify: false };
 
 // Connection timeout for initial connection attempts (reduced for faster failover)
-export const CONNECTION_TIMEOUT = 15000; // 15 seconds
-export const CONNECTION_HEALTH_CHECK_INTERVAL = 60000; // 60 seconds
+export const CONNECTION_TIMEOUT = 10000; // 10 seconds
+export const CONNECTION_HEALTH_CHECK_INTERVAL = 30000; // 30 seconds

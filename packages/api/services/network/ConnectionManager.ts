@@ -61,12 +61,12 @@ export class ConnectionManager {
     }
 
     private setupHealthChecking(): void {
-        // Simple periodic health check
+        // More frequent health checks to catch stale connections faster
         this.healthCheckInterval = setInterval(async () => {
             if (!this.isShuttingDown && this.initialized) {
                 await this.performHealthChecks();
             }
-        }, CONNECTION_HEALTH_CHECK_INTERVAL); // Check every minute
+        }, 30000); // Check every 30 seconds instead of 60
     }
 
     private async performHealthChecks(): Promise<void> {
@@ -382,7 +382,17 @@ export class ConnectionManager {
             return null;
         }
         
-        return connection.connection as ApiPromise;
+        const api = connection.connection as ApiPromise;
+        
+        // Quick stale connection check
+        if (!api.isConnected) {
+            console.warn('HydraDX API connection is stale, marking as not ready');
+            connection.isReady = false;
+            this.scheduleReconnection(NETWORKS_SUPPORTED.HYDRA_DX, 100); // Immediate reconnection
+            return null;
+        }
+        
+        return api;
     }
 
     public async getAssetHubApiWithRetry(timeoutMs: number = 5000): Promise<TypedApi<typeof polkadot_asset_hub> | null> {
@@ -397,8 +407,27 @@ export class ConnectionManager {
 
     public async getHydradxApiWithRetry(timeoutMs: number = 5000): Promise<ApiPromise | null> {
         // Try to get immediate connection
-        const api = this.getHydradxApi();
-        if (api) return api;
+        let api = this.getHydradxApi();
+        if (api) {
+            // Additional validation for critical operations
+            try {
+                const isValid = await ConnectionFactory.validateConnection(api, NETWORKS_SUPPORTED.HYDRA_DX);
+                if (isValid) {
+                    return api;
+                } else {
+                    console.warn('HydraDX API failed validation, reconnecting...');
+                    const connection = this.connections.get(NETWORKS_SUPPORTED.HYDRA_DX);
+                    if (connection) {
+                        connection.isReady = false;
+                        this.scheduleReconnection(NETWORKS_SUPPORTED.HYDRA_DX, 100);
+                    }
+                }
+            } catch (error) {
+                console.warn('HydraDX API validation error:', error);
+                // Proceed with existing connection as fallback
+                return api;
+            }
+        }
 
         // Wait for connection to become available
         const isReady = await this.waitForConnection(NETWORKS_SUPPORTED.HYDRA_DX, timeoutMs);

@@ -63,7 +63,8 @@ export class ConnectionFactory {
 
     const connectionPromise = async (): Promise<ApiPromise> => {
       try {
-        const provider = new WsProvider(endpoint, 2000);
+        // Create provider with more aggressive connection settings
+        const provider = new WsProvider(endpoint, 1000); // Shorter auto-connect retry
         
         const api = await ApiPromise.create({
           provider,
@@ -73,25 +74,59 @@ export class ConnectionFactory {
 
         await api.isReady;
 
+        // Enhanced connection state monitoring
+        let connectionLost = false;
+
         // Set up connection event listeners for Polkadot.js
         if (onConnectionEvent) {
           api.on('connected', () => {
+            connectionLost = false;
             console.log(`HydraDX connected to ${endpoint}`);
             onConnectionEvent(NETWORKS_SUPPORTED.HYDRA_DX, 'connected');
           });
 
           api.on('disconnected', () => {
+            connectionLost = true;
             console.warn(`HydraDX disconnected from ${endpoint}`);
             onConnectionEvent(NETWORKS_SUPPORTED.HYDRA_DX, 'disconnected');
           });
 
           api.on('error', (error: Error) => {
+            connectionLost = true;
             console.error(`HydraDX connection error on ${endpoint}:`, error);
             onConnectionEvent(NETWORKS_SUPPORTED.HYDRA_DX, 'error', error);
           });
 
+          // Monitor provider-level WebSocket events for better detection
+          const wsProvider = provider as any;
+          if (wsProvider.websocket) {
+            wsProvider.websocket.on('close', (code: number, reason: string) => {
+              if (!connectionLost) {
+                connectionLost = true;
+                console.warn(`HydraDX WebSocket closed unexpectedly - Code: ${code}, Reason: ${reason}`);
+                onConnectionEvent(NETWORKS_SUPPORTED.HYDRA_DX, 'disconnected');
+              }
+            });
+
+            wsProvider.websocket.on('error', (error: Error) => {
+              if (!connectionLost) {
+                connectionLost = true;
+                console.error(`HydraDX WebSocket error:`, error);
+                onConnectionEvent(NETWORKS_SUPPORTED.HYDRA_DX, 'error', error);
+              }
+            });
+          }
+
           // Initial connected event
           onConnectionEvent(NETWORKS_SUPPORTED.HYDRA_DX, 'connected');
+        }
+
+        // Additional stability check after initial connection
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify connection is still active
+        if (!api.isConnected) {
+          throw new Error('Connection lost during initial stability check');
         }
 
         return api;
@@ -118,9 +153,28 @@ export class ConnectionFactory {
       } 
       
       if (network === NETWORKS_SUPPORTED.HYDRA_DX) {
-        // For HydraDX (Polkadot.js), check if connected
+        // For HydraDX (Polkadot.js), perform comprehensive validation
         const hydraApi = connection as ApiPromise;
-        return hydraApi?.isConnected === true;
+        
+        // Basic connection check
+        if (!hydraApi?.isConnected) {
+          return false;
+        }
+
+        // Enhanced validation: attempt an actual query to detect stale connections
+        try {
+          // Use a lightweight query with timeout to verify the connection is actually working
+          const validationPromise = hydraApi.rpc.system.chain();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Validation timeout')), 5000)
+          );
+          
+          await Promise.race([validationPromise, timeoutPromise]);
+          return true;
+        } catch (error) {
+          console.warn(`HydraDX connection validation failed with query test:`, error);
+          return false;
+        }
       }
 
       return false;
