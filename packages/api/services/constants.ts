@@ -26,6 +26,6 @@ export const NETWORK_ENDPOINTS = {
 
 export const NUMBER_FORMAT_OPTIONS = { round: 2, trim: true, commify: false };
 
-// Connection timeout for initial connection attempts
-export const CONNECTION_TIMEOUT = 45000; // 45 seconds
+// Connection timeout for initial connection attempts (reduced for faster failover)
+export const CONNECTION_TIMEOUT = 15000; // 15 seconds
 export const CONNECTION_HEALTH_CHECK_INTERVAL = 60000; // 60 seconds

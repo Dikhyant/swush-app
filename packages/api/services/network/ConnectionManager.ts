@@ -12,6 +12,7 @@ interface NetworkConnection {
     lastConnected: Date | null;
     consecutiveFailures: number;
     lastError: Error | null;
+    currentEndpoint: string | null;
 }
 
 interface ConnectionHealth {
@@ -29,6 +30,7 @@ export class ConnectionManager {
     private isShuttingDown: boolean = false;
     private healthCheckInterval: NodeJS.Timeout | null = null;
     private reconnectionTimeouts: Map<string, NodeJS.Timeout> = new Map();
+    private connectionLocks: Map<string, boolean> = new Map(); // Prevent race conditions
 
     private constructor() {
         this.endpointProvider = EndpointProvider.getInstance();
@@ -44,7 +46,8 @@ export class ConnectionManager {
                 isConnecting: false,
                 lastConnected: null,
                 consecutiveFailures: 0,
-                lastError: null
+                lastError: null,
+                currentEndpoint: null
             });
             
             this.connectionHealth.set(network, {
@@ -52,6 +55,8 @@ export class ConnectionManager {
                 lastCheck: new Date(0),
                 responseTime: 0
             });
+
+            this.connectionLocks.set(network, false);
         });
     }
 
@@ -108,9 +113,11 @@ export class ConnectionManager {
 
         switch (event) {
             case 'connected':
-                console.log(`${network} connection established`);
+                console.log(`✅ ${network} connection established`);
                 connection.consecutiveFailures = 0;
                 connection.lastError = null;
+                connection.isReady = true;
+                connection.lastConnected = new Date();
                 this.connectionHealth.set(network, {
                     isHealthy: true,
                     lastCheck: new Date(),
@@ -126,6 +133,10 @@ export class ConnectionManager {
                     lastCheck: new Date(),
                     responseTime: 0
                 });
+                // Mark current endpoint as failed
+                if (connection.currentEndpoint) {
+                    this.endpointProvider.markEndpointFailed(network, connection.currentEndpoint);
+                }
                 // Immediate reconnection attempt for disconnections
                 this.scheduleReconnection(network, 1000); // 1 second delay
                 break;
@@ -139,6 +150,10 @@ export class ConnectionManager {
                     lastCheck: new Date(),
                     responseTime: 0
                 });
+                // Mark current endpoint as failed
+                if (connection.currentEndpoint) {
+                    this.endpointProvider.markEndpointFailed(network, connection.currentEndpoint);
+                }
                 // Schedule reconnection with backoff for errors
                 this.scheduleReconnection(network);
                 break;
@@ -146,6 +161,12 @@ export class ConnectionManager {
     };
 
     private scheduleReconnection(network: string, customDelay?: number): void {
+        // Prevent multiple reconnection attempts
+        if (this.connectionLocks.get(network)) {
+            console.log(`🔒 Reconnection already in progress for ${network}, skipping`);
+            return;
+        }
+
         // Clear any existing reconnection timeout
         const existingTimeout = this.reconnectionTimeouts.get(network);
         if (existingTimeout) {
@@ -168,38 +189,65 @@ export class ConnectionManager {
             if (this.isShuttingDown) return;
             
             try {
-                // Clean up existing connection
-                await this.cleanupConnection(network);
-                // Attempt new connection
-                await this.connectToNetwork(network);
+                await this.connectToNetworkWithLock(network);
             } catch (error) {
                 console.error(`Reconnection failed for ${network}:`, error);
-                // Will be retried on next health check or connection event
+                // Increment failure count and schedule next attempt
+                connectionState.consecutiveFailures++;
+                this.scheduleReconnection(network);
             }
         }, delay);
 
         this.reconnectionTimeouts.set(network, timeout);
     }
 
+    private async connectToNetworkWithLock(network: string): Promise<void> {
+        // Acquire lock to prevent race conditions
+        if (this.connectionLocks.get(network)) {
+            console.log(`🔒 Connection attempt already in progress for ${network}`);
+            return;
+        }
+
+        this.connectionLocks.set(network, true);
+        
+        try {
+            await this.connectToNetwork(network);
+        } finally {
+            this.connectionLocks.set(network, false);
+        }
+    }
+
     private async connectToNetwork(network: string): Promise<void> {
         const connectionState = this.connections.get(network);
-        if (!connectionState || connectionState.isConnecting) return;
+        if (!connectionState) return;
+
+        // Double-check if already connecting (race condition protection)
+        if (connectionState.isConnecting) {
+            console.log(`⚠️ ${network} already connecting, skipping duplicate attempt`);
+            return;
+        }
 
         connectionState.isConnecting = true;
         connectionState.isReady = false;
 
+        let selectedEndpoint: string | null = null;
+
         try {
-            const endpoint = this.endpointProvider.getEndpoint(network);
-            console.log(`🔌 Connecting to ${network} via ${endpoint}`);
+            // Clean up existing connection first
+            await this.cleanupConnection(network);
+
+            selectedEndpoint = this.endpointProvider.getEndpoint(network);
+            connectionState.currentEndpoint = selectedEndpoint;
+            console.log(`🔌 Connecting to ${network} via ${selectedEndpoint}`);
 
             let connection: AssetHubConnection | ApiPromise;
             
             switch (network) {
                 case NETWORKS_SUPPORTED.ASSET_HUB:
-                    connection = await ConnectionFactory.createAssetHubConnection(endpoint, this.handleConnectionEvent);
+                    connection = await ConnectionFactory.createAssetHubConnection(selectedEndpoint, this.handleConnectionEvent);
                     break;
                 case NETWORKS_SUPPORTED.HYDRA_DX:
-                    connection = await ConnectionFactory.createHydradxConnection(endpoint, this.handleConnectionEvent);
+                    connection = await ConnectionFactory.createHydradxConnection(selectedEndpoint, this.handleConnectionEvent);
                     break;
                 default:
                     throw new Error(`Unsupported network: ${network}`);
@@ -223,18 +271,16 @@ export class ConnectionManager {
                 responseTime: 0
             });
 
-            console.log(`Successfully connected to ${network}`);
+            console.log(`✅ Successfully connected to ${network}`);
         } catch (error) {
             const err = error instanceof Error ? error : new Error('Unknown connection error');
             connectionState.consecutiveFailures++;
             connectionState.lastError = err;
             
             // Mark endpoint as failed for this session
-            try {
-                const failedEndpoint = this.endpointProvider.getEndpoint(network);
-                this.endpointProvider.markEndpointFailed(network, failedEndpoint);
-            } catch (endpointError) {
-                // Ignore endpoint errors here
+            if (selectedEndpoint) {
+                this.endpointProvider.markEndpointFailed(network, selectedEndpoint);
+                console.log(`🚫 Marked endpoint as failed: ${selectedEndpoint}`);
             }
             
             console.error(`❌ Failed to connect to ${network}:`, err.message);
@@ -242,11 +288,6 @@ export class ConnectionManager {
         } finally {
             connectionState.isConnecting = false;
         }
-    }
-
-    private async reconnectNetwork(network: string): Promise<void> {
-        // This method is now replaced by scheduleReconnection
-        this.scheduleReconnection(network);
     }
 
     private async cleanupConnection(network: string): Promise<void> {
@@ -266,6 +307,7 @@ export class ConnectionManager {
         } finally {
             connectionState.connection = null;
             connectionState.isReady = false;
+            connectionState.currentEndpoint = null;
         }
     }
 
@@ -282,15 +324,15 @@ export class ConnectionManager {
         console.log('Initializing ConnectionManager...');
         
         try {
-            // Connect to all networks in parallel
+            // Connect to all networks in parallel with locks
             const connectionPromises = Object.values(NETWORKS_SUPPORTED).map(network => 
-                this.connectToNetwork(network)
+                this.connectToNetworkWithLock(network)
             );
 
-            await Promise.all(connectionPromises);
+            await Promise.allSettled(connectionPromises);
             
             this.initialized = true;
-            console.log('All network connections initialized successfully');
+            console.log('✅ ConnectionManager initialization completed');
         } catch (error) {
             console.error('Failed to initialize all connections:', error);
             // Don't throw - some connections might have succeeded
@@ -308,8 +350,8 @@ export class ConnectionManager {
         }
 
         // If not connecting, start connection
-        if (!connectionState.isConnecting) {
-            this.connectToNetwork(network).catch(console.error);
+        if (!connectionState.isConnecting && !this.connectionLocks.get(network)) {
+            this.connectToNetworkWithLock(network).catch(console.error);
         }
 
         // Wait for connection with timeout
@@ -363,8 +405,24 @@ export class ConnectionManager {
         return isReady ? this.getHydradxApi() : null;
     }
 
-    public getConnectionStatus(): Record<string, { isReady: boolean; isHealthy: boolean; lastError: string | null; endpointStatus?: any; consecutiveFailures?: number }> {
-        const status: Record<string, { isReady: boolean; isHealthy: boolean; lastError: string | null; endpointStatus?: any; consecutiveFailures?: number }> = {};
+    public getConnectionStatus(): Record<string, { 
+        isReady: boolean; 
+        isHealthy: boolean; 
+        lastError: string | null; 
+        endpointStatus?: any; 
+        consecutiveFailures?: number;
+        currentEndpoint?: string | null;
+        isConnecting?: boolean;
+    }> {
+        const status: Record<string, { 
+            isReady: boolean; 
+            isHealthy: boolean; 
+            lastError: string | null; 
+            endpointStatus?: any; 
+            consecutiveFailures?: number;
+            currentEndpoint?: string | null;
+            isConnecting?: boolean;
+        }> = {};
         
         for (const [network, connection] of this.connections) {
             const health = this.connectionHealth.get(network);
@@ -375,7 +433,9 @@ export class ConnectionManager {
                 isHealthy: health?.isHealthy || false,
                 lastError: connection.lastError?.message || null,
                 endpointStatus,
-                consecutiveFailures: connection.consecutiveFailures
+                consecutiveFailures: connection.consecutiveFailures,
+                currentEndpoint: connection.currentEndpoint,
+                isConnecting: connection.isConnecting
             };
         }
         
@@ -400,6 +460,11 @@ export class ConnectionManager {
             clearTimeout(timeout);
         }
         this.reconnectionTimeouts.clear();
+
+        // Clear all locks
+        this.connectionLocks.forEach((_, network) => {
+            this.connectionLocks.set(network, false);
+        });
 
         try {
             // Cleanup all connections
