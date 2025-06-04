@@ -1,7 +1,7 @@
 endpoint: 
-# - wss://rpc.helikon.io/hydradx
- - wss://hydradx-rpc.dwellir.com
-# - wss://rpc.hydradx.cloud
+- wss://hydration-rpc.n.dwellir.com
+- wss://rpc.hydradx.cloud
+- wss://rpc.helikon.io/hydradx
 #  - wss://hydradx.paras.ibp.network
 #  - wss://hydradx.paras.dotters.network
 #  - wss://hydration.ibp.network
