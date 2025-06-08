@@ -199,9 +199,6 @@ export class AssetHubRouter {
                 return null;
             }
 
-            // Use constant format options
-            const formatOptions = NUMBER_FORMAT_OPTIONS;
-
             console.log(`\n=== Starting path calculation ===`);
             console.log(`Path: ${path.map((p, i) => pathAssets[i]?.metadata.symbol || p).join(' → ')}`);
             console.log(`Initial amount: ${currentAmount.toString()} planck`);
@@ -212,14 +209,6 @@ export class AssetHubRouter {
                 const toAsset = pathAssets[i + 1]!;
                 const fromXcmLocation = fromAsset.rawXcmLocation;
                 const toXcmLocation = toAsset.rawXcmLocation;
-
-                // console.log(`From XCM location: ${fromAsset.xcmLocation}`);
-                // console.log(`To XCM location: ${toAsset.xcmLocation}`);
-
-                // console.log(`\n--- Hop ${i + 1}: ${fromAsset.metadata.symbol} → ${toAsset.metadata.symbol} ---`);
-                // console.log(`From asset decimals: ${fromAsset.metadata.decimals}`);
-                // console.log(`To asset decimals: ${toAsset.metadata.decimals}`);
-                // console.log(`Current amount (planck): ${currentAmount.toString()}`);
 
                 const quote = await this.api.apis.AssetConversionApi.quote_price_exact_tokens_for_tokens(
                     fromXcmLocation,
@@ -235,8 +224,8 @@ export class AssetHubRouter {
                     return null;
                 }
 
-                const formattedAmountIn = formatAmount(currentAmount.toString(), fromAsset.metadata.decimals, formatOptions);
-                const formattedAmountOut = formatAmount(quote.toString(), toAsset.metadata.decimals, formatOptions);
+                const formattedAmountIn = formatAmount(currentAmount.toString(), fromAsset.metadata.decimals, NUMBER_FORMAT_OPTIONS);
+                const formattedAmountOut = formatAmount(quote.toString(), toAsset.metadata.decimals, NUMBER_FORMAT_OPTIONS);
 
                 if (!formattedAmountIn || !formattedAmountOut) {
                     console.error('Error formatting amounts for hop');
@@ -257,16 +246,11 @@ export class AssetHubRouter {
             // Get final asset for decimals calculation
             const finalAsset = pathAssets[pathAssets.length - 1]!;
 
-            const finalAmount = formatAmount(currentAmount.toString(), finalAsset.metadata.decimals, formatOptions);
+            const finalAmount = formatAmount(currentAmount.toString(), finalAsset.metadata.decimals, NUMBER_FORMAT_OPTIONS);
             if (!finalAmount) {
                 console.error('Error formatting final amount');
                 return null;
             }
-
-            // console.log(`\n=== Final Result ===`);
-            // console.log(`Final amount (planck): ${finalAmount.raw}`);
-            // console.log(`Final amount (human): ${finalAmount.decimal} ${finalAsset.metadata.symbol}`);
-            // console.log(`=== End path calculation ===\n`);
 
             return {
                 path,
