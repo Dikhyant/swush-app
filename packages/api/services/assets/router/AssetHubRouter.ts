@@ -202,25 +202,36 @@ export class AssetHubRouter {
             // Use constant format options
             const formatOptions = NUMBER_FORMAT_OPTIONS;
 
+            console.log(`\n=== Starting path calculation ===`);
+            console.log(`Path: ${path.map((p, i) => pathAssets[i]?.metadata.symbol || p).join(' → ')}`);
+            console.log(`Initial amount: ${currentAmount.toString()} planck`);
+
             // Calculate quotes for each hop
             for (let i = 0; i < path.length - 1; i++) {
                 const fromAsset = pathAssets[i]!;
                 const toAsset = pathAssets[i + 1]!;
-                
                 const fromXcmLocation = fromAsset.rawXcmLocation;
                 const toXcmLocation = toAsset.rawXcmLocation;
-       
-                console.log('currentAmount ', currentAmount);
+
+                // console.log(`From XCM location: ${fromAsset.xcmLocation}`);
+                // console.log(`To XCM location: ${toAsset.xcmLocation}`);
+
+                // console.log(`\n--- Hop ${i + 1}: ${fromAsset.metadata.symbol} → ${toAsset.metadata.symbol} ---`);
+                // console.log(`From asset decimals: ${fromAsset.metadata.decimals}`);
+                // console.log(`To asset decimals: ${toAsset.metadata.decimals}`);
+                // console.log(`Current amount (planck): ${currentAmount.toString()}`);
+
                 const quote = await this.api.apis.AssetConversionApi.quote_price_exact_tokens_for_tokens(
                     fromXcmLocation,
                     toXcmLocation,
                     currentAmount,
-                    true
+                    false //TODO: disabled fee for now
                 );
-                console.log('quote :', quote);
+
+                console.log(`Quote result (planck): ${quote?.toString()}` + " " + fromAsset.metadata.symbol + " → " + toAsset.metadata.symbol);
 
                 if (!quote) {
-                    console.error(`No quote available`);
+                    console.error(`No quote available for ${fromAsset.metadata.symbol} → ${toAsset.metadata.symbol}`);
                     return null;
                 }
 
@@ -239,6 +250,7 @@ export class AssetHubRouter {
                     amountOut: formattedAmountOut.decimal
                 });
 
+                // update the current amount to the quote for next hop
                 currentAmount = quote;
             }
 
@@ -250,6 +262,11 @@ export class AssetHubRouter {
                 console.error('Error formatting final amount');
                 return null;
             }
+
+            // console.log(`\n=== Final Result ===`);
+            // console.log(`Final amount (planck): ${finalAmount.raw}`);
+            // console.log(`Final amount (human): ${finalAmount.decimal} ${finalAsset.metadata.symbol}`);
+            // console.log(`=== End path calculation ===\n`);
 
             return {
                 path,
