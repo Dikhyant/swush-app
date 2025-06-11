@@ -218,7 +218,7 @@ export class AssetHubRouter {
                     fromXcmLocation,
                     toXcmLocation,
                     currentAmount,
-                    false //TODO: disabled fee for now
+                    true
                 );
 
                 console.log(`Quote result (planck): ${quote?.toString()}` + " " + fromAsset.metadata.symbol + " → " + toAsset.metadata.symbol);
