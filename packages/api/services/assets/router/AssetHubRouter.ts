@@ -94,6 +94,10 @@ export class AssetHubRouter {
             const assetHubAmount = parseFloat(assetHubQuote.expectedOutput.decimal);
             const hydraDxAmount = parseFloat(hydraDxQuote.expectedOutput.decimal);
 
+            //print the amount in and amount out for each quote 
+            console.log('Asset Hub Amount:', assetHubAmount);
+            console.log('HydraDX Amount:', hydraDxAmount);
+
             return assetHubAmount > hydraDxAmount ? assetHubQuote : hydraDxQuote;
 
         } catch (error) {
