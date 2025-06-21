@@ -43,6 +43,7 @@ apps/web/build
 apps/web/public
 apps/web/src/app/api/
 apps/web/.yalc
+apps/web/out/*
 
 packages/api/node_modules
 packages/api/.next
