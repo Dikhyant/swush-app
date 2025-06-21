@@ -176,7 +176,7 @@ export async function calculateHydraDxXcmFees(
 
     // Extract the XCM message
     const [_, messages] = targetMessage;
-    const xcmMessage = messages[0] as PolkadotXcmVersionedXcm;
+    const xcmMessage = messages[0];
 
     // Calculate initial execution fee
     console.log('Debug: Calculating initial execution fee...');
@@ -209,7 +209,7 @@ export async function calculateHydraDxXcmFees(
 
     // Calculate HydraDX execution fees using the extracted message
     console.log('Debug: Calculating HydraDX execution fees...');
-    const remoteXcmWeight = await hydraDxApi.apis.XcmPaymentApi.query_xcm_weight(xcmMessage);
+    const remoteXcmWeight = await hydraDxApi.apis.XcmPaymentApi.query_xcm_weight(xcmMessage as PolkadotXcmVersionedXcm);
     if (!remoteXcmWeight.success) {
         throw new Error("Failed to calculate HydraDX execution weight");
     }
