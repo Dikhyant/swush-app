@@ -8,7 +8,7 @@ import { initializeSDK } from '../services';
 
 const app = express();
 const port = process.env.PORT || 3001;
-const use_https = process.env.NEXT_PUBLIC_USE_HTTPS ? true : false;
+const USE_HTTPS = process.env.NEXT_PUBLIC_USE_HTTPS ? true : false;
 
 // Middleware
 app.use(helmet({
@@ -66,7 +66,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 // Start HTTP server (nginx handles HTTPS)
 const server = app.listen(port, () => {
   console.log(`🌐 HTTP Server running on port ${port}`);
-  if (use_https) {
+  if (USE_HTTPS) {
     console.log(`📍 Development: https://localhost:${port}`);
     console.log(`📍 Health check: https://localhost:${port}/health`);
   } else {

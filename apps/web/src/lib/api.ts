@@ -3,7 +3,7 @@ import { NETWORKS_SUPPORTED } from '@/services/constants';
 
 const API_HOST = process.env.NEXT_PUBLIC_API_HOST || 'localhost';
 const API_VERSION = 'v1';
-const USE_HTTPS = process.env.NEXT_PUBLIC_USE_HTTPS === 'true';
+const USE_HTTPS = process.env.NEXT_PUBLIC_USE_HTTPS ? true : false;
 
 // Determine API base URL based on HTTPS setting
 const getApiConfig = () => {
