@@ -14,12 +14,19 @@ interface MonitoringCallbacksConfig {
   onBalanceUpdateNeeded?: (txHash?: string) => void;
 }
 
+interface SwapDetails {
+  inputAmount: string;
+  inputToken: string;
+  outputToken: string;
+}
+
 export const createTransactionCallbacks = (
   walletAddress: string,
   swapRecord: { id: string },
   config: MonitoringCallbacksConfig,
   isHydraDx: boolean,
-  assetHubApi?: AssetHubApi
+  assetHubApi?: AssetHubApi,
+  swapDetails?: SwapDetails
 ): TransactionCallbacks => {
   const {
     setSwapHash,
@@ -35,29 +42,30 @@ export const createTransactionCallbacks = (
         case 'signed':
           if (status.txHash) {
             setSwapHash(status.txHash);
-            setSwapStatus('Transaction signed, waiting for broadcast...');
-            toast.loading('Transaction signed, waiting for broadcast...', { id: 'swap-status' });
+            setSwapStatus('Processing your swap...');
+            
+            // Replace preparation toast with processing toast
+            toast.dismiss('swap-prepare');
+            toast.loading('Processing your swap...', { id: 'swap-status' });
           }
           break;
 
         case 'broadcasted':
-          setSwapStatus('Transaction broadcasted! Waiting for confirmation...');
-          toast.loading('Transaction broadcasted, waiting for confirmation...', { id: 'swap-status' });
+          // Keep same user-friendly message
+          setSwapStatus('Processing your swap...');
+          toast.loading('Processing your swap...', { id: 'swap-status' });
           break;
 
         case 'txBestBlocksState':
-          if (status.blockNumber) {
-            setSwapStatus(`Transaction included in block ${status.blockNumber}`);
-            toast.loading(`Transaction included in block ${status.blockNumber}, waiting for finalization...`, { id: 'swap-status' });
-          }
+          // Keep same user-friendly message
+          setSwapStatus('Processing your swap...');
+          toast.loading('Processing your swap...', { id: 'swap-status' });
           break;
 
         case 'finalized':
           setIsFinalized(true);
 
           if (status.success) {
-            const blockNum = status.blockNumber ? ` in block ${status.blockNumber}` : '';
-
             // Update swap history status
             await SwapHistoryService.updateSwapStatus(swapRecord.id, 'success');
 
@@ -66,15 +74,20 @@ export const createTransactionCallbacks = (
 
             if (!isHydraDx) {
               toast.dismiss('swap-status');
-              setSwapStatus(`Swap complete${blockNum}!`);
-              toast.success('Swap completed successfully! 🎉', {
+              const successMessage = swapDetails 
+                ? `Swap completed! ${swapDetails.inputAmount} ${swapDetails.inputToken} → ${swapDetails.outputToken}`
+                : 'Swap completed successfully!';
+              
+              setSwapStatus('Swap completed!');
+              toast.success(successMessage, {
                 id: 'swap-success',
                 duration: 5000,
-                icon: '✅'
+                icon: '🎉'
               });
             } else {
-              setSwapStatus('Transaction initialized, monitoring XCM transfer...');
-              toast.loading('Transaction initialized, monitoring XCM transfer...', { id: 'swap-status' });
+              // For HydraDX, aggressively maintain the loading toast
+              setSwapStatus('Processing your swap...');
+              toast.loading('Processing your swap...', { id: 'swap-status', duration: 60000 }); // Longer duration
             }
           } else {
             await SwapHistoryService.updateSwapStatus(swapRecord.id, 'failed');
@@ -87,6 +100,7 @@ export const createTransactionCallbacks = (
         setIsSwapping(false);
         if (onSuccess) onSuccess();
       }
+      // For HydraDX, do absolutely nothing here to avoid interfering with XCM monitoring
     },
     onError: async (error: Error) => {
       await SwapHistoryService.updateSwapStatus(swapRecord.id, 'failed');
@@ -98,7 +112,8 @@ export const createTransactionCallbacks = (
 export const handleXcmMonitoring = async (
   assetHubApi: AssetHubApi,
   walletAddress: string,
-  config: MonitoringCallbacksConfig
+  config: MonitoringCallbacksConfig,
+  swapDetails?: SwapDetails
 ) => {
   const {
     setSwapStatus,
@@ -108,7 +123,11 @@ export const handleXcmMonitoring = async (
   } = config;
 
   try {
-    setSwapStatus('Monitoring XCM transaction...');
+    // Keep showing "Processing your swap..." instead of changing to XCM transfer
+    setSwapStatus('Processing your swap...');
+    // Ensure toast continues showing during XCM monitoring
+    toast.loading('Processing your swap...', { id: 'swap-status' });
+    
     const xcmSuccess = await monitorXcmFlow(
       assetHubApi,
       walletAddress
@@ -118,12 +137,17 @@ export const handleXcmMonitoring = async (
       throw new Error('XCM transaction monitoring failed or timed out');
     }
 
+    // Only dismiss and show success after XCM flow completes successfully
     toast.dismiss('swap-status');
-    setSwapStatus('XCM transfer complete!');
-    toast.success('Swap and XCM transfer completed successfully! 🎉', {
+    const successMessage = swapDetails 
+      ? `Swap completed! ${swapDetails.inputAmount} ${swapDetails.inputToken} → ${swapDetails.outputToken}`
+      : 'Swap completed successfully!';
+    
+    setSwapStatus('Swap completed!');
+    toast.success(successMessage, {
       id: 'swap-success',
       duration: 5000,
-      icon: '✅'
+      icon: '🎉'
     });
 
     setIsSwapping(false);

@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { getPolkadotSignerFromPjs, SignPayload, SignRaw } from 'polkadot-api/pjs-signer';
 import { getWalletBySource } from '@talismn/connect-wallets';
 import type { Signer } from '@polkadot/api/types';
+import ChopsticksService from '@/services/ChopsticksService';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 import { TransactionErrorService } from '@/services/TransactionErrorService';
 import {
@@ -72,7 +73,11 @@ export function useAssetConversionSwap({
       swapStatus: `Failed: ${swushError.message}`,
       isSwapping: false
     });
+    
+    // Dismiss any active toasts
+    toast.dismiss('swap-prepare');
     toast.dismiss('swap-status');
+    
     toast.error(`Swap failed: ${swushError.message}`, {
       id: 'swap-error',
       duration: 5000
@@ -92,7 +97,10 @@ export function useAssetConversionSwap({
     }
 
     try {
-      updateSwapState({ isSwapping: true, swapStatus: 'Preparing swap...', swapError: null, isFinalized: false });
+      updateSwapState({ isSwapping: true, swapStatus: 'Please confirm and sign the transaction', swapError: null, isFinalized: false });
+      
+      // Show user-friendly toast for the entire preparation phase
+      toast.loading('Please confirm and sign the transaction', { id: 'swap-prepare' });
 
       // Get wallet source and prepare signer
       const walletSource = localStorage.getItem('walletSource');
@@ -100,25 +108,41 @@ export function useAssetConversionSwap({
         throw new Error('Wallet not connected');
       }
 
-      const wallet = getWalletBySource(walletSource);
-      if (!wallet) {
-        throw new Error('Wallet not found');
+      // Handle chopsticks vs regular wallet
+      const chopsticksService = ChopsticksService.getInstance();
+      let polkadotSigner: any;
+      
+      if (walletSource === 'chopsticks' && chopsticksService.isChopsticksMode()) {
+        // For chopsticks, use real Alice signer with seed phrase
+        // Silent background processing - no status updates
+        
+        try {
+          polkadotSigner = chopsticksService.createAliceSigner();
+        } catch (error) {
+          throw new Error(`Failed to create chopsticks signer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      } else {
+        // Regular wallet flow
+        const wallet = getWalletBySource(walletSource);
+        if (!wallet) {
+          throw new Error('Wallet not found');
+        }
+
+        if (!wallet.extension) {
+          await wallet.enable('Swush');
+        }
+
+        const signer = wallet.signer as Signer;
+        const signPayload = signer.signPayload as SignPayload;
+        const signRaw = signer.signRaw as SignRaw;
+        polkadotSigner = getPolkadotSignerFromPjs(walletAddress, signPayload, signRaw);
+
+        if (!polkadotSigner) {
+          throw new Error('Signer not available');
+        }
       }
 
-      if (!wallet.extension) {
-        await wallet.enable('Swush');
-      }
-
-      const signer = wallet.signer as Signer;
-      const signPayload = signer.signPayload as SignPayload;
-      const signRaw = signer.signRaw as SignRaw;
-      const polkadotSigner = getPolkadotSignerFromPjs(walletAddress, signPayload, signRaw);
-
-      if (!polkadotSigner) {
-        throw new Error('Signer not available');
-      }
-
-      // Get Asset Hub connection
+      // Get Asset Hub connection - silent background processing
       const connectionManager = FrontendConnectionManager.getInstance();
       const assetHubConnection = await connectionManager.getConnection(NETWORKS_SUPPORTED.ASSET_HUB);
 
@@ -128,8 +152,7 @@ export function useAssetConversionSwap({
 
       const assetHubApi = assetHubConnection.api as TypedApi<typeof polkadot_asset_hub>;
 
-      // Fetch assets with XCM locations
-      updateSwapState({ swapStatus: 'Fetching asset information...' });
+      // Fetch assets with XCM locations - silent background processing
       const assetsMap = await getAssetsWithXcmLocations();
 
       // Get input and output assets
@@ -163,9 +186,7 @@ export function useAssetConversionSwap({
         }
       };
 
-      // Build enhanced transaction with comprehensive dry run
-      updateSwapState({ swapStatus: `Preparing ${isHydraDx ? 'HydraDX XCM' : 'Asset Hub'} swap...` });
-      
+      // Build enhanced transaction with comprehensive dry run - silent background processing
       const enhancedResult = await buildEnhancedTransaction(
         assetHubApi,
         assetsMap,
@@ -182,9 +203,7 @@ export function useAssetConversionSwap({
 
       const transaction = enhancedResult.transaction;
 
-      // Enhanced simulation with comprehensive results
-      updateSwapState({ swapStatus: 'Simulating transaction...' });
-      
+      // Enhanced simulation with comprehensive results - silent background processing
       const simulationSummary = createSimulationSummary(enhancedResult, inputToken.decimals);
       const formattedEstimatedFee = formatAmount(
         enhancedResult.totalEstimatedFees, 
@@ -210,15 +229,18 @@ export function useAssetConversionSwap({
       if (onSimulationComplete) {
         const shouldProceed = await onSimulationComplete(simulationResult);
         if (!shouldProceed) {
+          // User cancelled from confirmation sheet
+          toast.dismiss('swap-prepare');
           updateSwapState({ isSwapping: false, swapStatus: null });
           return;
         }
         updateSwapState({ isSwapping: true });
       }
 
-      updateSwapState({ swapStatus: 'Signing transaction...' });
+      // Update status to show we're waiting for user signature
+      updateSwapState({ swapStatus: 'Waiting for signature...' });
 
-      // Get or create user
+      // Get or create user - silent background processing
       const userExists = await UserService.getUserByWalletAddress(walletAddress);
       if (!userExists) {
         await UserService.createOrUpdateUser(walletAddress);
@@ -234,7 +256,7 @@ export function useAssetConversionSwap({
         'success'
       );
 
-      // Create transaction callbacks
+      // Create transaction callbacks with swap details for success message
       const callbacks = createTransactionCallbacks(
         walletAddress,
         swapRecord,
@@ -247,7 +269,12 @@ export function useAssetConversionSwap({
           onBalanceUpdateNeeded
         },
         isHydraDx,
-        assetHubApi
+        assetHubApi,
+        {
+          inputAmount,
+          inputToken: inputToken.symbol,
+          outputToken: outputToken.symbol
+        }
       );
 
       // Execute transaction
@@ -259,6 +286,10 @@ export function useAssetConversionSwap({
 
       // Handle XCM monitoring for HydraDX swaps
       if (isHydraDx) {
+        // Ensure toast continues loading before starting XCM monitoring
+        updateSwapState({ swapStatus: 'Processing your swap...' });
+        toast.loading('Processing your swap...', { id: 'swap-status' });
+        
         await handleXcmMonitoring(
           assetHubApi,
           walletAddress,
@@ -269,6 +300,11 @@ export function useAssetConversionSwap({
             setIsSwapping: (isSwapping) => updateSwapState({ isSwapping }),
             onSuccess,
             onBalanceUpdateNeeded
+          },
+          {
+            inputAmount,
+            inputToken: inputToken.symbol,
+            outputToken: outputToken.symbol
           }
         );
       }

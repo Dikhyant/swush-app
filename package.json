@@ -13,6 +13,8 @@
     "dev:ui": "pnpm --filter @swush/web dev",
     "dev:with-chopsticks": "cd apps/web && pnpm run dev:all",
     "dev:all": "pnpm run dev & pnpm start-chopsticks",
+    "dev:demo": "docker compose -f docker-compose.dev.yml up -d && pnpm dev",
+    "dev:demo:stop": "docker compose -f docker-compose.dev.yml down",
     "dev:restart": "bash packages/deploy/restart-dev.sh",
     "dev:logs": "tail -f dev-output.log",
     "app:restart": "bash packages/deploy/restart.sh",

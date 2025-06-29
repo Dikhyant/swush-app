@@ -117,18 +117,33 @@ export const WalletButton = ({
 
   // Handle chopsticks Alice auto-connect
   const handleChopsticksConnect = async () => {
-    const chopsticksService = ChopsticksService.getInstance();
-    const aliceAccount = chopsticksService.getAliceAccount();
-    
-    // Mock WalletAccount structure for Alice
-    const mockAccount: WalletAccount = {
-      address: aliceAccount.address,
-      name: aliceAccount.name,
-      source: aliceAccount.source,
-      signer: undefined // Not needed for chopsticks
-    };
-    
-    await handleAccountSelected(mockAccount);
+    try {
+      setIsInitializing(true);
+      
+      // Show loading toast for chopsticks connection
+      toast.loading('Connecting Alice account...', { 
+        id: 'wallet-connection',
+        icon: '🧪'
+      });
+      
+      const chopsticksService = ChopsticksService.getInstance();
+      const aliceAccount = chopsticksService.getAliceAccount();
+      
+      // Mock WalletAccount structure for Alice
+      const mockAccount: WalletAccount = {
+        address: aliceAccount.address,
+        name: aliceAccount.name,
+        source: aliceAccount.source,
+        signer: undefined // Not needed for chopsticks
+      };
+      
+      await handleAccountSelected(mockAccount);
+    } catch (error) {
+      console.error('Error connecting to chopsticks:', error);
+      toast.error('Failed to connect Alice account', { id: 'wallet-connection' });
+    } finally {
+      setIsInitializing(false);
+    }
   };
 
   const handleAccountSelected = async (account: WalletAccount) => {
@@ -137,6 +152,18 @@ export const WalletButton = ({
     if (!account || !account.address) {
       console.error('Invalid account selected');
       return;
+    }
+
+    try {
+      // Only set loading if not already set (for chopsticks flow)
+      if (!isInitializing) {
+        setIsInitializing(true);
+        
+        // Show loading toast for regular wallet connection
+        toast.loading('Connecting wallet...', { 
+          id: 'wallet-connection',
+          icon: '🔗'
+        });
     }
 
     // Determine the network based on the address and source
@@ -156,7 +183,6 @@ export const WalletButton = ({
     localStorage.setItem('walletNetwork', network.name);
     localStorage.setItem('assetHubAddress', assetHubAddress);
 
-    try {
       // Initialize RPC connection after wallet is connected
       await initializeRpcConnection(network.name);
       
@@ -168,15 +194,27 @@ export const WalletButton = ({
       setWalletAddress(assetHubAddress);
       setIsOpen(false);
       
-      toast.success('Wallet connected successfully!', {
-        icon: '✅',
+      const successMessage = account.source === 'chopsticks' 
+        ? 'Connected as Alice (Test Mode)'
+        : 'Wallet connected successfully!';
+        
+      toast.success(successMessage, {
+        id: 'wallet-connection', // Replace the loading toast
+        icon: account.source === 'chopsticks' ? '🧪' : '✅',
         style: {
           borderLeft: '4px solid #4caf50',
         },
       });
     } catch (error) {
       console.error('Error during wallet connection:', error);
-      toast.error(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
+        id: 'wallet-connection' // Replace the loading toast
+      });
+    } finally {
+      // Only reset loading if we set it in this function
+      if (account.source !== 'chopsticks') {
+        setIsInitializing(false);
+      }
     }
   };
 
@@ -232,8 +270,8 @@ export const WalletButton = ({
         >
           Disconnect
         </Button>
-            ) : (
-        <Button
+      ) : (
+        <Button 
           onClick={handleConnectClick}
           variant={variant}
           className={className}

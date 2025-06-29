@@ -5,6 +5,7 @@ import ChopsticksService from '@/services/ChopsticksService';
 
 export function ChopsticksStatus() {
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [showStatus, setShowStatus] = useState(false);
   const chopsticksService = ChopsticksService.getInstance();
 
   useEffect(() => {
@@ -17,30 +18,35 @@ export function ChopsticksStatus() {
 
     // Update status periodically
     const interval = setInterval(() => {
-      setStatus(chopsticksService.getConnectionStatus());
+      const currentStatus = chopsticksService.getConnectionStatus();
+      setStatus(currentStatus);
+      
+      // Only show status indicator during connecting or error states
+      setShowStatus(currentStatus === 'connecting' || currentStatus === 'error');
     }, 1000);
 
     return () => clearInterval(interval);
   }, [chopsticksService]);
 
-  if (!chopsticksService.isChopsticksMode()) {
+  // Don't show if not in chopsticks mode or if connected/disconnected
+  if (!chopsticksService.isChopsticksMode() || !showStatus) {
     return null;
   }
 
   const getStatusDisplay = () => {
     switch (status) {
       case 'connecting':
-        return { text: 'Starting Chopsticks...', color: 'text-yellow-500', icon: '🟡' };
-      case 'connected':
-        return { text: 'Chopsticks Connected', color: 'text-green-500', icon: '🟢' };
+        return { text: 'Reconnecting to test network...', color: 'text-yellow-500', icon: '🟡' };
       case 'error':
-        return { text: 'Chopsticks Error', color: 'text-red-500', icon: '🔴' };
+        return { text: 'Test network unavailable', color: 'text-red-500', icon: '🔴' };
       default:
-        return { text: 'Chopsticks Disconnected', color: 'text-gray-500', icon: '⚫' };
+        return null;
     }
   };
 
   const statusDisplay = getStatusDisplay();
+
+  if (!statusDisplay) return null;
 
   return (
     <div className="fixed top-4 right-4 z-50 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
