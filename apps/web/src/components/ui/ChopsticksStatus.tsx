@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import ChopsticksService from '@/services/ChopsticksService';
+import { toast } from 'react-hot-toast';
 
 export function ChopsticksStatus() {
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
   const [showStatus, setShowStatus] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
   const chopsticksService = ChopsticksService.getInstance();
 
   useEffect(() => {
@@ -13,8 +15,8 @@ export function ChopsticksStatus() {
       return;
     }
 
-    // Initialize chopsticks on mount
-    chopsticksService.startChopsticks();
+    // Initialize chopsticks with smart health-check on mount
+    chopsticksService.initializeChopsticks();
 
     // Update status periodically
     const interval = setInterval(() => {
@@ -33,12 +35,28 @@ export function ChopsticksStatus() {
     return null;
   }
 
+  const handleManualRestart = async () => {
+    if (isRestarting) return;
+    
+    setIsRestarting(true);
+    toast.loading('Manually restarting demo environment...', { id: 'manual-restart' });
+    
+    try {
+      await chopsticksService.initializeChopsticks();
+      toast.success('Demo environment restarted successfully!', { id: 'manual-restart' });
+    } catch (error) {
+      toast.error('Manual restart failed. Please try again.', { id: 'manual-restart' });
+    } finally {
+      setIsRestarting(false);
+    }
+  };
+
   const getStatusDisplay = () => {
     switch (status) {
       case 'connecting':
-        return { text: 'Reconnecting to test network...', color: 'text-yellow-500', icon: '🟡' };
+        return { text: 'Setting up demo environment...', color: 'text-yellow-500', icon: '🟡' };
       case 'error':
-        return { text: 'Test network unavailable', color: 'text-red-500', icon: '🔴' };
+        return { text: 'Demo environment unavailable', color: 'text-red-500', icon: '🔴', showRestart: true };
       default:
         return null;
     }

@@ -1,9 +1,12 @@
 import { toast } from 'react-hot-toast';
+import { sr25519CreateDerive } from "@polkadot-labs/hdkd";
+import { entropyToMiniSecret, mnemonicToEntropy } from "@polkadot-labs/hdkd-helpers";
+import { getPolkadotSigner } from "polkadot-api/signer";
 
 class ChopsticksService {
   private static instance: ChopsticksService;
-  private isRunning = false;
   private connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error' = 'disconnected';
+  private healthCheckInterval: NodeJS.Timeout | null = null;
 
   // Alice account from test-wallet-setup.md
   private readonly ALICE_ACCOUNT = {
@@ -21,62 +24,177 @@ class ChopsticksService {
     return ChopsticksService.instance;
   }
 
-  async startChopsticks(): Promise<boolean> {
+  /**
+   * Initialize chopsticks connection - just checks health since Docker manages the process
+   */
+  async initializeChopsticks(): Promise<boolean> {
     if (process.env.NEXT_PUBLIC_USE_CHOPSTICKS !== 'true') {
       return false;
     }
 
     this.connectionStatus = 'connecting';
-    toast.loading('Starting Chopsticks...', { id: 'chopsticks-status' });
+    toast.loading('Checking demo environment...', { id: 'chopsticks-status' });
 
     try {
-      // Chopsticks should be started externally (via pnpm script)
-      // Here we just verify it's running by checking the endpoints
-      await this.verifyChopsticksConnection();
+      const isHealthy = await this.checkHealth();
       
-      this.isRunning = true;
-      this.connectionStatus = 'connected';
-      toast.success('Chopsticks Connected', { id: 'chopsticks-status' });
-      
-      return true;
+      if (isHealthy) {
+        this.connectionStatus = 'connected';
+        this.startHealthMonitoring();
+        
+        toast.success('Demo environment ready!', { 
+          id: 'chopsticks-status',
+          icon: '✅',
+          style: {
+            borderLeft: '4px solid #22c55e',
+          },
+        });
+        
+        return true;
+      } else {
+        // If not healthy, try to restart via Docker
+        return await this.restartChopsticks();
+      }
     } catch (error) {
       this.connectionStatus = 'error';
-      console.error('Chopsticks connection failed:', error);
-      toast.error('Chopsticks connection failed', { id: 'chopsticks-status' });
+      console.error('Chopsticks initialization failed:', error);
+      
+      toast.error('Demo environment unavailable. Try refreshing the page.', { 
+        id: 'chopsticks-status',
+        icon: '🔴',
+        style: {
+          borderLeft: '4px solid #ef4444',
+        },
+      });
       return false;
     }
   }
 
-  private async verifyChopsticksConnection(): Promise<void> {
-    // Test connection to chopsticks endpoints from constants.ts
-    const testEndpoints = [
-      'ws://localhost:3421', // Asset Hub
-      'ws://localhost:3422'  // Hydration
-    ];
-
-    for (const endpoint of testEndpoints) {
-      try {
-        const ws = new WebSocket(endpoint);
-        await new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Connection timeout')), 5000);
-          ws.onopen = () => {
-            clearTimeout(timeout);
-            ws.close();
-            resolve(true);
-          };
-          ws.onerror = () => {
-            clearTimeout(timeout);
-            reject(new Error(`Failed to connect to ${endpoint}`));
-          };
-        });
-      } catch (error) {
-        throw new Error(`Chopsticks not running on ${endpoint}`);
-      }
+  /**
+   * Check if chopsticks endpoints are healthy
+   */
+  private async checkHealth(): Promise<boolean> {
+    try {
+      const response = await fetch('/api/chopsticks/health');
+      const data = await response.json();
+      return data.status === 'healthy';
+    } catch (error) {
+      console.log('Health check failed:', error);
+      return false;
     }
+  }
+
+  /**
+   * Restart chopsticks via Docker Compose
+   */
+  private async restartChopsticks(): Promise<boolean> {
+    this.connectionStatus = 'connecting';
+    toast.loading('Starting demo environment...', { id: 'chopsticks-status' });
+
+    try {
+      const response = await fetch('/api/chopsticks/restart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Wait a moment for chopsticks to start
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        // Verify it's healthy
+        const isHealthy = await this.checkHealth();
+        
+        if (isHealthy) {
+          this.connectionStatus = 'connected';
+          this.startHealthMonitoring();
+          
+          toast.success('Demo environment started!', { 
+            id: 'chopsticks-status',
+            icon: '🆕',
+            style: {
+              borderLeft: '4px solid #4caf50',
+            },
+          });
+          
+          return true;
+        }
+      }
+      
+      throw new Error(result.message || 'Restart failed');
+    } catch (error) {
+      this.connectionStatus = 'error';
+      console.error('Chopsticks restart failed:', error);
+      
+      toast.error('Failed to start demo environment. Server may be restarting...', { 
+        id: 'chopsticks-status',
+        icon: '🔴',
+        style: {
+          borderLeft: '4px solid #ef4444',
+        },
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Monitor health periodically
+   */
+  private startHealthMonitoring() {
+    // Clear existing interval
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+    }
+
+    // Check health every 30 seconds
+    this.healthCheckInterval = setInterval(async () => {
+      if (this.connectionStatus === 'connected') {
+        const isHealthy = await this.checkHealth();
+        if (!isHealthy) {
+          console.log('Chopsticks health check failed, marking as disconnected');
+          this.connectionStatus = 'error';
+        }
+      }
+    }, 30000);
+  }
+
+  /**
+   * Legacy method - kept for backward compatibility
+   */
+  async startChopsticks(): Promise<boolean> {
+    return await this.initializeChopsticks();
   }
 
   getAliceAccount() {
     return this.ALICE_ACCOUNT;
+  }
+
+  // Create a real PAPI signer from Alice's seed phrase
+  createAliceSigner() {
+    try {
+      // Convert mnemonic to entropy and create derive function
+      const entropy = mnemonicToEntropy(this.ALICE_ACCOUNT.mnemonic);
+      const miniSecret = entropyToMiniSecret(entropy);
+      const derive = sr25519CreateDerive(miniSecret);
+      
+      // Derive Alice's keypair
+      const aliceKeyPair = derive(this.ALICE_ACCOUNT.derivationPath);
+      
+      // Create PAPI signer
+      const aliceSigner = getPolkadotSigner(
+        aliceKeyPair.publicKey,
+        "Sr25519",
+        aliceKeyPair.sign,
+      );
+      
+      return aliceSigner;
+    } catch (error) {
+      console.error('Failed to create Alice signer:', error);
+      throw new Error('Failed to create chopsticks signer');
+    }
   }
 
   isChopsticksMode(): boolean {
@@ -88,7 +206,15 @@ class ChopsticksService {
   }
 
   isChopsticksRunning(): boolean {
-    return this.isRunning;
+    return this.connectionStatus === 'connected';
+  }
+
+  // Cleanup on service destruction
+  destroy() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+    }
   }
 }
 
