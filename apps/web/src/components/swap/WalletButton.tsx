@@ -162,7 +162,7 @@ export const WalletButton = ({
         // Show loading toast for regular wallet connection
         toast.loading('Connecting wallet...', { 
           id: 'wallet-connection',
-          icon: '🔗'
+          icon: '🔑'
         });
     }
 

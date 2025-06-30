@@ -1,9 +1,9 @@
-import { toast } from 'react-hot-toast';
 import { TransactionStatus, TransactionCallbacks } from '@/services/types';
 import { UserService } from '@/services/userService';
 import { SwapHistoryService } from '@/services/swapHistoryService';
 import { monitorXcmFlow } from '@/services/xcm/xcmMonitor';
 import { AssetHubApi } from '../types';
+import { SwapToasts, TOAST_IDS } from '../../utils/toastUtils';
 
 interface MonitoringCallbacksConfig {
   setSwapHash: (hash: string | null) => void;
@@ -44,22 +44,19 @@ export const createTransactionCallbacks = (
             setSwapHash(status.txHash);
             setSwapStatus('Processing your swap...');
             
-            // Replace preparation toast with processing toast
-            toast.dismiss('swap-prepare');
-            toast.loading('Processing your swap...', { id: 'swap-status' });
+            // Replace preparation toast with a single processing toast that persists
+            SwapToasts.processing();
           }
           break;
 
         case 'broadcasted':
-          // Keep same user-friendly message
+          // Update status silently without new toast
           setSwapStatus('Processing your swap...');
-          toast.loading('Processing your swap...', { id: 'swap-status' });
           break;
 
         case 'txBestBlocksState':
-          // Keep same user-friendly message
+          // Update status silently without new toast
           setSwapStatus('Processing your swap...');
-          toast.loading('Processing your swap...', { id: 'swap-status' });
           break;
 
         case 'finalized':
@@ -73,24 +70,15 @@ export const createTransactionCallbacks = (
             await UserService.updateUserXP(walletAddress, 10);
 
             if (!isHydraDx) {
-              toast.dismiss('swap-status');
-              const successMessage = swapDetails 
-                ? `Swap completed! ${swapDetails.inputAmount} ${swapDetails.inputToken} → ${swapDetails.outputToken}`
-                : 'Swap completed successfully!';
-              
               setSwapStatus('Swap completed!');
-              toast.success(successMessage, {
-                id: 'swap-success',
-                duration: 5000,
-                icon: '🎉'
-              });
+              SwapToasts.swapSuccess(swapDetails);
             } else {
-              // For HydraDX, aggressively maintain the loading toast
+              // For HydraDX, maintain loading state for XCM monitoring
               setSwapStatus('Processing your swap...');
-              toast.loading('Processing your swap...', { id: 'swap-status', duration: 60000 }); // Longer duration
             }
           } else {
             await SwapHistoryService.updateSwapStatus(swapRecord.id, 'failed');
+            SwapToasts.transactionFailed();
           }
           break;
       }
@@ -123,10 +111,9 @@ export const handleXcmMonitoring = async (
   } = config;
 
   try {
-    // Keep showing "Processing your swap..." instead of changing to XCM transfer
-    setSwapStatus('Processing your swap...');
-    // Ensure toast continues showing during XCM monitoring
-    toast.loading('Processing your swap...', { id: 'swap-status' });
+    // Update to more specific XCM messaging with enhanced styling
+    setSwapStatus('Completing cross-chain transfer...');
+    SwapToasts.xcmTransfer();
     
     const xcmSuccess = await monitorXcmFlow(
       assetHubApi,
@@ -138,23 +125,18 @@ export const handleXcmMonitoring = async (
     }
 
     // Only dismiss and show success after XCM flow completes successfully
-    toast.dismiss('swap-status');
-    const successMessage = swapDetails 
-      ? `Swap completed! ${swapDetails.inputAmount} ${swapDetails.inputToken} → ${swapDetails.outputToken}`
-      : 'Swap completed successfully!';
-    
     setSwapStatus('Swap completed!');
-    toast.success(successMessage, {
-      id: 'swap-success',
-      duration: 5000,
-      icon: '🎉'
-    });
+    SwapToasts.xcmSuccess(swapDetails);
 
     setIsSwapping(false);
     if (onSuccess) onSuccess();
 
   } catch (error) {
     console.error('XCM monitoring error:', error);
+    
+    // Enhanced error handling with styled toast
+    SwapToasts.xcmFailed();
+    
     throw new Error(`XCM monitoring failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }; 

@@ -27,16 +27,16 @@ import {
 import {
   buildEnhancedTransaction,
   createSimulationSummary,
-  EnhancedTransactionResult,
   TransactionBuildOptions
 } from './builders/enhancedTransactionBuilders';
 import {
   createTransactionCallbacks,
   handleXcmMonitoring
 } from './monitoring/transactionMonitoring';
-import { Enum, TypedApi } from 'polkadot-api';
+import { TypedApi } from 'polkadot-api';
 import { formatAmount } from '@/services/balances/utils';
 import { NETWORKS_SUPPORTED, NUMBER_FORMAT_OPTIONS } from '@/services/constants';
+import { SwapToasts, TOAST_IDS } from '../utils/toastUtils';
 
 export function useAssetConversionSwap({
   inputToken,
@@ -74,14 +74,9 @@ export function useAssetConversionSwap({
       isSwapping: false
     });
     
-    // Dismiss any active toasts
-    toast.dismiss('swap-prepare');
-    toast.dismiss('swap-status');
-    
-    toast.error(`Swap failed: ${swushError.message}`, {
-      id: 'swap-error',
-      duration: 5000
-    });
+    // Dismiss any active toasts and show error
+    SwapToasts.dismiss(TOAST_IDS.SWAP_STATUS);
+    SwapToasts.error(`Swap failed: ${swushError.message}`);
     if (onError) onError(swushError);
   }, [onError]);
 
@@ -100,7 +95,7 @@ export function useAssetConversionSwap({
       updateSwapState({ isSwapping: true, swapStatus: 'Please confirm and sign the transaction', swapError: null, isFinalized: false });
       
       // Show user-friendly toast for the entire preparation phase
-      toast.loading('Please confirm and sign the transaction', { id: 'swap-prepare' });
+      SwapToasts.confirmAndSign();
 
       // Get wallet source and prepare signer
       const walletSource = localStorage.getItem('walletSource');
