@@ -206,7 +206,7 @@ export function SwapContainer() {
   const percentageOptions = useMemo(() => [
     { label: '25%', value: 0.25 },
     { label: '50%', value: 0.50 },
-    { label: '75%', value: 0.75 },
+    // { label: '75%', value: 0.75 },
     { label: 'MAX', value: 1 },
   ], []);
 

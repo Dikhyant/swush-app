@@ -13,13 +13,13 @@ import {
   TalismanWallet,
   WalletAccount,
 } from '@talismn/connect-wallets';
-import { toast } from 'react-hot-toast';
 import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
 import { WalletButtonProps } from './types';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 import { UserService } from '@/services/userService';
 import { NETWORKS_SUPPORTED } from '@/services/constants';
 import ChopsticksService from '@/services/ChopsticksService';
+import { SwapToasts, TOAST_IDS } from './utils/toastUtils';
 // Network configuration for address formatting
 const NETWORK_CONFIG = {
   POLKADOT: {
@@ -108,7 +108,7 @@ export const WalletButton = ({
       return connection;
     } catch (error) {
       console.error('Error initializing RPC connection:', error);
-      toast.error(`Failed to connect to network: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: 'connection-toast' });
+      console.error('Network connection failed:', error); // Silent failure for background initialization
       throw error;
     } finally {
       setIsInitializing(false);
@@ -120,11 +120,8 @@ export const WalletButton = ({
     try {
       setIsInitializing(true);
       
-      // Show loading toast for chopsticks connection
-      toast.loading('Connecting Alice account...', { 
-        id: 'wallet-connection',
-        icon: '🧪'
-      });
+      // Only show toast when user actively clicks connect
+      SwapToasts.walletConnecting('Connecting Alice account...', '🧪');
       
       const chopsticksService = ChopsticksService.getInstance();
       const aliceAccount = chopsticksService.getAliceAccount();
@@ -137,16 +134,16 @@ export const WalletButton = ({
         signer: undefined // Not needed for chopsticks
       };
       
-      await handleAccountSelected(mockAccount);
+      await handleAccountSelected(mockAccount, true); // Show toast since user clicked connect
     } catch (error) {
       console.error('Error connecting to chopsticks:', error);
-      toast.error('Failed to connect Alice account', { id: 'wallet-connection' });
+      SwapToasts.walletConnectionFailed('Failed to connect Alice account');
     } finally {
       setIsInitializing(false);
     }
   };
 
-  const handleAccountSelected = async (account: WalletAccount) => {
+  const handleAccountSelected = async (account: WalletAccount, showLoadingToast: boolean = true) => {
     console.log('Selected account:', account);
     
     if (!account || !account.address) {
@@ -159,11 +156,10 @@ export const WalletButton = ({
       if (!isInitializing) {
         setIsInitializing(true);
         
-        // Show loading toast for regular wallet connection
-        toast.loading('Connecting wallet...', { 
-          id: 'wallet-connection',
-          icon: '🔑'
-        });
+        // Show loading toast only if requested (user-initiated)
+        if (showLoadingToast) {
+          SwapToasts.walletConnecting('Connecting wallet...', '🔑');
+        }
     }
 
     // Determine the network based on the address and source
@@ -194,22 +190,19 @@ export const WalletButton = ({
       setWalletAddress(assetHubAddress);
       setIsOpen(false);
       
+      // Always show success toast when wallet connects (user wants to see final result)
       const successMessage = account.source === 'chopsticks' 
         ? 'Connected as Alice (Test Mode)'
         : 'Wallet connected successfully!';
+      const icon = account.source === 'chopsticks' ? '🧪' : '✅';
         
-      toast.success(successMessage, {
-        id: 'wallet-connection', // Replace the loading toast
-        icon: account.source === 'chopsticks' ? '🧪' : '✅',
-        style: {
-          borderLeft: '4px solid #4caf50',
-        },
-      });
+      SwapToasts.walletConnected(successMessage, icon);
     } catch (error) {
       console.error('Error during wallet connection:', error);
-      toast.error(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-        id: 'wallet-connection' // Replace the loading toast
-      });
+      // Only show error toast if user initiated the connection
+      if (showLoadingToast) {
+        SwapToasts.walletConnectionFailed(`Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     } finally {
       // Only reset loading if we set it in this function
       if (account.source !== 'chopsticks') {
@@ -240,10 +233,10 @@ export const WalletButton = ({
       setIsConnected(false);
       setWalletAddress('');
       
-      toast.success('Wallet disconnected');
+      SwapToasts.walletDisconnected();
     } catch (error) {
       console.error('Error disconnecting:', error);
-      toast.error(`Disconnect error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      SwapToasts.error(`Disconnect error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

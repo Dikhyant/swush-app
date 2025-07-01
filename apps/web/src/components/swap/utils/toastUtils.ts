@@ -40,7 +40,9 @@ export const TOAST_IDS = {
   SWAP_STATUS: 'swap-status',
   SWAP_SUCCESS: 'swap-success',
   SWAP_ERROR: 'swap-error',
-  XCM_ERROR: 'xcm-error'
+  XCM_ERROR: 'xcm-error',
+  CHOPSTICKS_STATUS: 'chopsticks-status',
+  WALLET_CONNECTION: 'wallet-connection'
 } as const;
 
 // Swap transaction toast functions
@@ -134,6 +136,88 @@ export const SwapToasts = {
       duration,
       icon: '❌',
       style: errorToastStyle
+    });
+  },
+
+  // Chopsticks-specific toasts
+  chopsticksChecking: () => {
+    return toast.loading('Checking demo environment...', {
+      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      style: loadingToastStyle
+    });
+  },
+
+  chopsticksReady: () => {
+    return toast.success('Demo environment ready!', {
+      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      icon: '✅',
+      duration: 3000,
+      style: successToastStyle
+    });
+  },
+
+  chopsticksStarting: () => {
+    return toast.loading('Starting demo environment...', {
+      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      style: loadingToastStyle
+    });
+  },
+
+  chopsticksStarted: () => {
+    return toast.success('Demo environment started!', {
+      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      icon: '✅',
+      duration: 3000,
+      style: successToastStyle
+    });
+  },
+
+  chopsticksFailed: () => {
+    return toast.error('Demo environment failed to start', {
+      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      icon: '🔴',
+      style: errorToastStyle
+    });
+  },
+
+  chopsticksReconnected: () => {
+    return toast.success('Demo environment reconnected!', {
+      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      icon: '✅',
+      duration: 3000,
+      style: successToastStyle
+    });
+  },
+
+  // Wallet connection toasts
+  walletConnecting: (message: string = 'Connecting wallet...', icon: string = '🔑') => {
+    return toast.loading(message, {
+      id: TOAST_IDS.WALLET_CONNECTION,
+      icon,
+      style: loadingToastStyle
+    });
+  },
+
+  walletConnected: (message: string = 'Wallet connected successfully!', icon: string = '✅') => {
+    return toast.success(message, {
+      id: TOAST_IDS.WALLET_CONNECTION,
+      icon,
+      duration: 3000,
+      style: successToastStyle
+    });
+  },
+
+  walletConnectionFailed: (message: string = 'Failed to connect wallet') => {
+    return toast.error(message, {
+      id: TOAST_IDS.WALLET_CONNECTION,
+      style: errorToastStyle
+    });
+  },
+
+  walletDisconnected: () => {
+    return toast.success('Wallet disconnected', {
+      duration: 2000,
+      style: successToastStyle
     });
   }
 };

@@ -1,7 +1,15 @@
-import { toast } from 'react-hot-toast';
 import { sr25519CreateDerive } from "@polkadot-labs/hdkd";
 import { entropyToMiniSecret, mnemonicToEntropy } from "@polkadot-labs/hdkd-helpers";
 import { getPolkadotSigner } from "polkadot-api/signer";
+import { SwapToasts } from '../components/swap/utils/toastUtils';
+
+// Configuration constants
+const CONFIG = {
+  STARTUP_TIMEOUT: 15000,    // 15 seconds
+  RETRY_TIMEOUT: 10000,      // 10 seconds  
+  HEALTH_CHECK_INTERVAL: 10000, // 10 seconds
+  MAX_RETRIES: 2
+} as const;
 
 class ChopsticksService {
   private static instance: ChopsticksService;
@@ -25,7 +33,7 @@ class ChopsticksService {
   }
 
   /**
-   * Initialize - check health and auto-start if needed
+   * Main initialization - simplified flow
    */
   async initializeChopsticks(): Promise<boolean> {
     if (process.env.NEXT_PUBLIC_USE_CHOPSTICKS !== 'true') {
@@ -33,42 +41,82 @@ class ChopsticksService {
     }
 
     console.log('🔍 Initializing chopsticks...');
-    toast.loading('Checking demo environment...', { id: 'chopsticks-status' });
+    SwapToasts.chopsticksChecking();
 
-    const isHealthy = await this.checkHealth();
+    const success = await this.ensureChopsticksRunning();
     
-    if (isHealthy) {
+    if (success) {
       this.connectionStatus = 'connected';
       this.startHealthMonitoring();
-      
-      toast.success('Demo environment ready!', { 
-        id: 'chopsticks-status',
-        icon: '✅'
-      });
-      
-      return true;
+      SwapToasts.chopsticksReady();
     } else {
-      // Auto-start if down during initialization
-      console.log('🔄 Chopsticks not running, auto-starting...');
-      const restartSuccess = await this.doRestart();
-      
-      if (restartSuccess) {
-        this.connectionStatus = 'connected';
-        this.startHealthMonitoring();
-        return true;
-      } else {
-        this.connectionStatus = 'error';
-        toast.error('Demo environment failed to start', { 
-          id: 'chopsticks-status',
-          icon: '🔴'
-        });
-        return false;
+      this.connectionStatus = 'error';
+      SwapToasts.chopsticksFailed();
+    }
+
+    return success;
+  }
+
+  /**
+   * Unified method to ensure chopsticks is running
+   */
+  private async ensureChopsticksRunning(): Promise<boolean> {
+    // First check if already healthy
+    if (await this.checkHealth()) {
+      return true;
+    }
+
+    // Try to restart and wait for it to be healthy
+    return await this.restartAndWaitForHealth();
+  }
+
+  /**
+   * Simplified restart with unified retry logic
+   */
+  private async restartAndWaitForHealth(): Promise<boolean> {
+    console.log('🔄 Restarting chopsticks...');
+    this.connectionStatus = 'connecting';
+    SwapToasts.chopsticksStarting();
+
+    try {
+      // Trigger restart
+      const response = await fetch('/api/chopsticks/restart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error('Restart command failed');
       }
+
+      // Wait and check health with retries
+      console.log('⏳ Waiting for chopsticks to start...');
+      
+      for (let attempt = 1; attempt <= CONFIG.MAX_RETRIES; attempt++) {
+        const waitTime = attempt === 1 ? CONFIG.STARTUP_TIMEOUT : CONFIG.RETRY_TIMEOUT;
+        
+        await this.wait(waitTime);
+        
+        if (await this.checkHealth()) {
+          SwapToasts.chopsticksStarted();
+          return true;
+        }
+        
+        console.log(`❌ Health check failed (attempt ${attempt}/${CONFIG.MAX_RETRIES})`);
+      }
+
+      throw new Error('Health checks failed after restart');
+      
+    } catch (error) {
+      console.error('Restart failed:', error);
+      SwapToasts.chopsticksFailed();
+      return false;
     }
   }
 
   /**
-   * Check if chopsticks endpoints are healthy
+   * Simple health check
    */
   private async checkHealth(): Promise<boolean> {
     try {
@@ -82,101 +130,58 @@ class ChopsticksService {
   }
 
   /**
-   * Simple restart function
-   */
-  private async doRestart(): Promise<boolean> {
-    console.log('🔄 Restarting chopsticks...');
-    this.connectionStatus = 'connecting';
-    toast.loading('Starting demo environment...', { id: 'chopsticks-status' });
-
-    try {
-      const response = await fetch('/api/chopsticks/restart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        // Wait for chopsticks to start
-        console.log('⏳ Waiting for chopsticks to start...');
-        await new Promise(resolve => setTimeout(resolve, 15000));
-        
-        const isHealthy = await this.checkHealth();
-        
-        if (isHealthy) {
-          toast.success('Demo environment started!', { 
-            id: 'chopsticks-status',
-            icon: '✅'
-          });
-          return true;
-        } else {
-          // Try once more with extra wait
-          await new Promise(resolve => setTimeout(resolve, 8000));
-          const isHealthyRetry = await this.checkHealth();
-          
-          if (isHealthyRetry) {
-            toast.success('Demo environment started!', { 
-              id: 'chopsticks-status',
-              icon: '✅'
-            });
-            return true;
-          }
-        }
-      }
-      
-      throw new Error('Restart failed');
-      
-    } catch (error) {
-      console.error('Restart failed:', error);
-      toast.error('Failed to start demo environment', { 
-        id: 'chopsticks-status',
-        icon: '🔴'
-      });
-      return false;
-    }
-  }
-
-  /**
-   * Simple health monitoring with auto-restart
+   * Simplified health monitoring
    */
   private startHealthMonitoring() {
-    if (this.healthCheckInterval) {
-      clearInterval(this.healthCheckInterval);
-    }
+    this.stopHealthMonitoring(); // Clean up any existing interval
 
-    // Monitor every 10 seconds
     this.healthCheckInterval = setInterval(async () => {
       console.log('🔍 Health check...');
       const isHealthy = await this.checkHealth();
       
-      if (!isHealthy && this.connectionStatus === 'connected') {
-        console.log('⚠️ Chopsticks down, auto-restarting...');
-        this.connectionStatus = 'error';
-        
-        toast.loading('Demo environment disconnected. Auto-restarting...', { 
-          id: 'chopsticks-status',
-          icon: '🔄'
-        });
-        
-        const restartSuccess = await this.doRestart();
-        if (restartSuccess) {
-          this.connectionStatus = 'connected';
-          console.log('✅ Auto-restart successful');
-        } else {
-          console.log('❌ Auto-restart failed');
-        }
-        
-      } else if (isHealthy && this.connectionStatus === 'error') {
-        console.log('✅ Chopsticks recovered');
-        this.connectionStatus = 'connected';
-        
-        toast.success('Demo environment reconnected!', { 
-          id: 'chopsticks-status',
-          icon: '✅'
-        });
-      }
-    }, 10000); // Check every 10 seconds
+      await this.handleHealthStatus(isHealthy);
+    }, CONFIG.HEALTH_CHECK_INTERVAL);
+  }
+
+  /**
+   * Handle health status changes
+   */
+  private async handleHealthStatus(isHealthy: boolean) {
+    const wasConnected = this.connectionStatus === 'connected';
+    const wasError = this.connectionStatus === 'error';
+
+    if (!isHealthy && wasConnected) {
+      console.log('⚠️ Chopsticks down, auto-restarting...');
+      this.connectionStatus = 'error';
+      SwapToasts.chopsticksStarting();
+      
+      const restartSuccess = await this.restartAndWaitForHealth();
+      this.connectionStatus = restartSuccess ? 'connected' : 'error';
+      
+      console.log(restartSuccess ? '✅ Auto-restart successful' : '❌ Auto-restart failed');
+      
+    } else if (isHealthy && wasError) {
+      console.log('✅ Chopsticks recovered');
+      this.connectionStatus = 'connected';
+      SwapToasts.chopsticksReconnected();
+    }
+  }
+
+  /**
+   * Utility method for consistent waiting
+   */
+  private wait(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Clean health monitoring shutdown
+   */
+  private stopHealthMonitoring() {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = null;
+    }
   }
 
   /**
@@ -229,10 +234,7 @@ class ChopsticksService {
    * Cleanup
    */
   destroy() {
-    if (this.healthCheckInterval) {
-      clearInterval(this.healthCheckInterval);
-      this.healthCheckInterval = null;
-    }
+    this.stopHealthMonitoring();
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ChopsticksService from '@/services/ChopsticksService';
-import { toast } from 'react-hot-toast';
+import { SwapToasts } from '../swap/utils/toastUtils';
 
 export function ChopsticksStatus() {
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
@@ -39,13 +39,13 @@ export function ChopsticksStatus() {
     if (isRestarting) return;
     
     setIsRestarting(true);
-    toast.loading('Manually restarting demo environment...', { id: 'manual-restart' });
+    SwapToasts.chopsticksStarting();
     
     try {
       await chopsticksService.initializeChopsticks();
-      toast.success('Demo environment restarted successfully!', { id: 'manual-restart' });
+      SwapToasts.chopsticksStarted();
     } catch (error) {
-      toast.error('Manual restart failed. Please try again.', { id: 'manual-restart' });
+      SwapToasts.chopsticksFailed();
     } finally {
       setIsRestarting(false);
     }
