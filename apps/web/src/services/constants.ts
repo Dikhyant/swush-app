@@ -51,8 +51,8 @@ export const CONNECTION_CONFIG = {
 export const RPC_ENDPOINTS = {
   [NETWORKS_SUPPORTED.ASSET_HUB]: {
     endpoints: [
-      // add for local testing
-      { url: 'ws://localhost:3421', priority: 1, isActive: true },
+      // Dynamic chopsticks endpoint for both dev and production
+      { url: TEST_RPC_ASSET_HUB, priority: 1, isActive: true },
 
       // Primary endpoints (major providers)
       /*         { url: 'wss://polkadot-asset-hub-rpc.polkadot.io', priority: 3, isActive: true }, // Parity (Official)
@@ -75,8 +75,8 @@ export const RPC_ENDPOINTS = {
   },
   [NETWORKS_SUPPORTED.HYDRA_DX]: {
     endpoints: [
-      // Primary endpoints (major providers)
-       { url: 'ws://localhost:3422', priority: 1, isActive: true },
+      // Dynamic chopsticks endpoint for both dev and production
+       { url: TEST_RPC_HYDRATION, priority: 1, isActive: true },
 
       //     { url: 'wss://rpc.hydradx.cloud', priority: 1, isActive: true },          // Galactic Council (Official)
       //     { url: 'wss://hydradx-rpc.dwellir.com', priority: 1, isActive: true },    // Dwellir
