@@ -70,7 +70,8 @@ export const SwapToasts = {
   },
 
   xcmTransfer: () => {
-    return toast.loading('🌉 Completing cross-chain transfer...', {
+    return toast.loading('Completing cross-chain transfer...', {
+      icon: '⚡',
       id: TOAST_IDS.SWAP_STATUS,
       style: loadingToastStyle
     });
