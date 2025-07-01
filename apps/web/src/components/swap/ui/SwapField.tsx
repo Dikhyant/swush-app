@@ -42,7 +42,7 @@ export const SwapField = memo(function SwapField({
 
   return (
     <motion.div 
-      className="group relative p-6 rounded-2xl bg-forest-800/95 backdrop-blur-md border border-forest-600/60 shadow-xl hover:border-flame-400/50 hover:shadow-flame-500/20 transition-all duration-300"
+      className={`group relative ${isInput ? 'p-5' : 'p-6'} rounded-2xl bg-forest-800/95 backdrop-blur-md border border-forest-600/60 shadow-xl hover:border-flame-400/50 hover:shadow-flame-500/20 transition-all duration-300`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: isInput ? 0 : 0.1 }}

@@ -24,7 +24,22 @@ kill_process_on_port 3001
 echo "⏳ Waiting 3 seconds for clean shutdown..."
 sleep 3
 
-echo "📋 Step 2: Starting application (HTTP behind nginx)..."
+echo "📋 Step 2: Rotating logs and starting application..."
+
+# Rotate existing log file if it exists
+if [ -f "output.log" ]; then
+    TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+    mv output.log "output_${TIMESTAMP}.log"
+    echo "📋 Old log saved as: output_${TIMESTAMP}.log"
+fi
+
+# Keep only the last 5 log files to prevent disk space issues
+LOG_COUNT=$(ls -1 output_*.log 2>/dev/null | wc -l)
+if [ "$LOG_COUNT" -gt 5 ]; then
+    REMOVE_COUNT=$((LOG_COUNT - 5))
+    ls -1t output_*.log | tail -n $REMOVE_COUNT | xargs rm -f
+    echo "📋 Cleaned up $REMOVE_COUNT old log files (keeping last 5)"
+fi
 
 # Start the application with production environment variables (fully detached)
 setsid bash -c '
