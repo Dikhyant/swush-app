@@ -17,14 +17,14 @@ export async function GET() {
         : `${WS_PROTOCOL}://${CHOPSTICKS_HOST}:3422`  // Hydration
     ];
 
-    // Test WebSocket connections
+    // Test WebSocket connections with Docker-friendly timeout
     const healthChecks = endpoints.map(endpoint => 
       new Promise((resolve) => {
         const ws = new WebSocket(endpoint);
         const timeout = setTimeout(() => {
           ws.close();
           resolve(false);
-        }, 2000);
+        }, 5000); // Increased timeout for Docker containers
 
         ws.onopen = () => {
           clearTimeout(timeout);

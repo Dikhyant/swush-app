@@ -162,23 +162,7 @@ export const SwapToasts = {
     });
   },
 
-  // Chopsticks-specific toasts
-  chopsticksChecking: () => {
-    return toast.loading('Checking demo environment...', {
-      id: TOAST_IDS.CHOPSTICKS_STATUS,
-      style: getLoadingToastStyle()
-    });
-  },
-
-  chopsticksReady: () => {
-    return toast.success('Demo environment ready!', {
-      id: TOAST_IDS.CHOPSTICKS_STATUS,
-      icon: '✅',
-      duration: 2000,
-      style: getSuccessToastStyle()
-    });
-  },
-
+  // Chopsticks-specific toasts - simplified to just 2 states
   chopsticksStarting: () => {
     return toast.loading('Starting demo environment...', {
       id: TOAST_IDS.CHOPSTICKS_STATUS,
@@ -200,15 +184,6 @@ export const SwapToasts = {
       id: TOAST_IDS.CHOPSTICKS_STATUS,
       icon: '🔴',
       style: getErrorToastStyle()
-    });
-  },
-
-  chopsticksReconnected: () => {
-    return toast.success('Demo environment reconnected!', {
-      id: TOAST_IDS.CHOPSTICKS_STATUS,
-      icon: '✅',
-      duration: 3000,
-      style: getSuccessToastStyle()
     });
   },
 

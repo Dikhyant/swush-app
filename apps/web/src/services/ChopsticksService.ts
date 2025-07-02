@@ -3,12 +3,12 @@ import { entropyToMiniSecret, mnemonicToEntropy } from "@polkadot-labs/hdkd-help
 import { getPolkadotSigner } from "polkadot-api/signer";
 import { SwapToasts } from '../components/swap/utils/toastUtils';
 
-// Configuration constants
+// Configuration constants - Docker-optimized settings
 const CONFIG = {
-  STARTUP_TIMEOUT: 15000,    // 15 seconds
-  RETRY_TIMEOUT: 10000,      // 10 seconds  
-  HEALTH_CHECK_INTERVAL: 10000, // 10 seconds
-  MAX_RETRIES: 2
+  STARTUP_TIMEOUT: 30000,    // 30 seconds - Docker containers need more time
+  RETRY_TIMEOUT: 15000,      // 15 seconds  
+  HEALTH_CHECK_INTERVAL: 30000, // 30 seconds - Less aggressive for Docker
+  MAX_RETRIES: 3             // Allow more retries for Docker startup
 } as const;
 
 class ChopsticksService {
@@ -41,33 +41,37 @@ class ChopsticksService {
     }
 
     console.log('🔍 Initializing chopsticks...');
-    SwapToasts.chopsticksChecking();
 
-    const success = await this.ensureChopsticksRunning();
+    const result = await this.ensureChopsticksRunning();
     
-    if (success) {
+    if (result.success) {
       this.connectionStatus = 'connected';
       this.startHealthMonitoring();
-      SwapToasts.chopsticksReady();
+      
+      // Only show success toast if we actually restarted (not if already running)
+      if (result.wasRestarted) {
+        SwapToasts.chopsticksStarted();
+      }
     } else {
       this.connectionStatus = 'error';
       SwapToasts.chopsticksFailed();
     }
 
-    return success;
+    return result.success;
   }
 
   /**
    * Unified method to ensure chopsticks is running
    */
-  private async ensureChopsticksRunning(): Promise<boolean> {
+  private async ensureChopsticksRunning(): Promise<{success: boolean, wasRestarted: boolean}> {
     // First check if already healthy
     if (await this.checkHealth()) {
-      return true;
+      return { success: true, wasRestarted: false };
     }
 
     // Try to restart and wait for it to be healthy
-    return await this.restartAndWaitForHealth();
+    const restartSuccess = await this.restartAndWaitForHealth();
+    return { success: restartSuccess, wasRestarted: restartSuccess };
   }
 
   /**
@@ -163,7 +167,7 @@ class ChopsticksService {
     } else if (isHealthy && wasError) {
       console.log('✅ Chopsticks recovered');
       this.connectionStatus = 'connected';
-      SwapToasts.chopsticksReconnected();
+      SwapToasts.chopsticksStarted();
     }
   }
 
