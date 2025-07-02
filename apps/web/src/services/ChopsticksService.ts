@@ -1,7 +1,8 @@
 import { sr25519CreateDerive } from "@polkadot-labs/hdkd";
 import { entropyToMiniSecret, mnemonicToEntropy } from "@polkadot-labs/hdkd-helpers";
 import { getPolkadotSigner } from "polkadot-api/signer";
-import { SwapToasts } from '../components/swap/utils/toastUtils';
+import { SwapToasts, TOAST_IDS } from '../components/swap/utils/toastUtils';
+import { toast } from "react-hot-toast";
 
 // Configuration constants - Docker-optimized settings
 const CONFIG = {
@@ -103,6 +104,7 @@ class ChopsticksService {
         await this.wait(waitTime);
         
         if (await this.checkHealth()) {
+          toast.dismiss(TOAST_IDS.CHOPSTICKS_STATUS);
           SwapToasts.chopsticksStarted();
           return true;
         }

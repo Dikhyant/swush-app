@@ -68,7 +68,9 @@ export const TOAST_IDS = {
   SWAP_ERROR: 'swap-error',
   XCM_ERROR: 'xcm-error',
   CHOPSTICKS_STATUS: 'chopsticks-status',
-  WALLET_CONNECTION: 'wallet-connection'
+  WALLET_CONNECTION: 'wallet-connection',
+  CHOPSTICKS_STATUS_STARTED: 'chopsticks-status-started',
+  CHOPSTICKS_STATUS_FAILED: 'chopsticks-status-failed'
 } as const;
 
 // Swap transaction toast functions
@@ -166,22 +168,22 @@ export const SwapToasts = {
   chopsticksStarting: () => {
     return toast.loading('Starting demo environment...', {
       id: TOAST_IDS.CHOPSTICKS_STATUS,
-      style: getLoadingToastStyle()
+      style: getLoadingToastStyle(),
+      duration: 100000
     });
   },
 
   chopsticksStarted: () => {
     return toast.success('Demo environment started!', {
-      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      id: TOAST_IDS.CHOPSTICKS_STATUS_STARTED,
       icon: '✅',
-      duration: 3000,
       style: getSuccessToastStyle()
     });
   },
 
   chopsticksFailed: () => {
     return toast.error('Demo environment failed to start', {
-      id: TOAST_IDS.CHOPSTICKS_STATUS,
+      id: TOAST_IDS.CHOPSTICKS_STATUS_FAILED,
       icon: '🔴',
       style: getErrorToastStyle()
     });
