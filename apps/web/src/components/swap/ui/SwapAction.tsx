@@ -11,6 +11,7 @@ interface SubmitButtonProps {
   isSwapping: boolean;
   insufficientBalance: boolean;
   disabled: boolean;
+  customLabel?: string;
 }
 
 export const SubmitButtonAction = ({
@@ -20,7 +21,8 @@ export const SubmitButtonAction = ({
   onSwap,
   isSwapping,
   insufficientBalance,
-  disabled
+  disabled,
+  customLabel
 }: SubmitButtonProps) => {
   return (
     <div className="">
@@ -86,7 +88,7 @@ export const SubmitButtonAction = ({
                   <Loader2 className="w-5 h-5" />
                 </motion.div>
               )}
-              {insufficientBalance ? 'Insufficient Balance' : isSwapping ? 'Swapping...' : 'Swap'}
+              {insufficientBalance ? 'Insufficient Balance' : isSwapping ? 'Processing...' : customLabel || 'Swap'}
             </span>
           </motion.button>
         )}

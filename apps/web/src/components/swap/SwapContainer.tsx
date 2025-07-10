@@ -24,9 +24,14 @@ import { useSwapHistory } from '@/components/swap/hooks/useSwapHistory'
 import { LoadState } from '@/components/swap/ui/LoadState'
 import { ArrowSymbolDown } from '@/components/swap'
 import { calculateMinimumReceived } from '@/components/swap'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
+import { CrossChainTab } from '@/components/swap/ui/CrossChainTab'
+import { OnRampTab } from '@/components/swap/ui/OnRampTab'
+import { TopNavigation } from '@/components/swap/ui/TopNavigation'
 
 export function SwapContainer() {
   // UI state
+  const [activeTab, setActiveTab] = useState('swap')
   const [inputAmount, setInputAmount] = useState('')
   const [slippageTolerance, setSlippageTolerance] = useState(10)
   const [transactionDeadline, setTransactionDeadline] = useState(20)
@@ -215,12 +220,17 @@ export function SwapContainer() {
     showHistory
   });
 
-  if (!inputToken || !outputToken) {
-    return <LoadState />
-  }
+  // Show LoadState only inside the swap tab content when tokens are not loaded
+  const showSwapLoadState = !inputToken || !outputToken
 
   return (
     <>
+      {/* Top Navigation with Logo and Menu */}
+      <TopNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+
       {/* Header Actions */}
       <HeaderActions
         isConnected={isConnected}
@@ -236,72 +246,102 @@ export function SwapContainer() {
       {/* Main Content */}
       <div className="w-full flex flex-col items-center justify-start px-4 py-4 md:px-4 md:py-4 relative z-10">
         <div className="w-full max-w-md space-y-5 md:space-y-4">
-          <SwapHeader
-            slippageTolerance={slippageTolerance}
-            setSlippageTolerance={setSlippageTolerance}
-          />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
-          <div className="space-y-8">
-            <div className="">
-              <SwapField
-                type="input"
-                token={inputToken}
-                amount={inputAmount}
-                balance={inputBalance}
-                onTokenSelect={(token) => {
-                  setInputToken(token)
-                }}
-                onAmountChange={handleInputChange}
-                openDialog={openInputDialog}
-                setOpenDialog={setOpenInputDialog}
-                availableTokens={tokens}
-                percentageOptions={percentageOptions}
-                onPercentageSelect={(value) => handleInputChange((parseFloat(inputBalance) * value).toString())}
-                isLoading={isConnected && isBalanceLoading}
-                balancesLoaded={balancesLoaded}
-                isConnected={isConnected}
-              />
+            <TabsContent value="swap" className="space-y-6 mt-0">
+              {showSwapLoadState ? (
+                <div className="space-y-6">
+                  <div className="h-12 w-full bg-forest-800/50 rounded-lg animate-pulse" />
+                  <div className="space-y-6">
+                    <div className="h-24 w-full bg-forest-800/50 rounded-lg animate-pulse" />
+                    <div className="h-8 w-8 mx-auto bg-forest-800/50 rounded-full animate-pulse" />
+                    <div className="h-24 w-full bg-forest-800/50 rounded-lg animate-pulse" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <SwapHeader
+                    slippageTolerance={slippageTolerance}
+                    setSlippageTolerance={setSlippageTolerance}
+                  />
 
-              <ArrowSymbolDown />
+                  <div className="space-y-8">
+                    <div className="">
+                      <SwapField
+                        type="input"
+                        token={inputToken}
+                        amount={inputAmount}
+                        balance={inputBalance}
+                        onTokenSelect={(token) => {
+                          setInputToken(token)
+                        }}
+                        onAmountChange={handleInputChange}
+                        openDialog={openInputDialog}
+                        setOpenDialog={setOpenInputDialog}
+                        availableTokens={tokens}
+                        percentageOptions={percentageOptions}
+                        onPercentageSelect={(value) => handleInputChange((parseFloat(inputBalance) * value).toString())}
+                        isLoading={isConnected && isBalanceLoading}
+                        balancesLoaded={balancesLoaded}
+                        isConnected={isConnected}
+                      />
 
-              <SwapField
-                type="output"
-                token={outputToken}
-                amount={outputAmount}
-                balance={outputBalance}
-                onTokenSelect={(token) => {
-                  setOutputToken(token)
-                }}
-                openDialog={openOutputDialog}
-                setOpenDialog={setOpenOutputDialog}
-                availableTokens={tokens}
-                isLoading={routeState.isLoading || (isConnected && isBalanceLoading)}
-                balancesLoaded={balancesLoaded}
-                isConnected={isConnected}
-                error={routeState.error}
-              />
-            </div>
+                      <ArrowSymbolDown />
 
-            <SwapDetails
-              minimumReceived={calculateMinimumReceived(outputAmount, slippageTolerance)}
-              outputToken={outputToken}
-              inputToken={inputToken}
-              maxTransactionFee={estimatedFees || simulationResult?.estimatedFee || '0'}
-              feeBreakdown={feeBreakdown || simulationResult?.feeBreakdown}
-              route={routeDex || ''}
-              isLoading={routeState.isLoading}
-            />
+                      <SwapField
+                        type="output"
+                        token={outputToken}
+                        amount={outputAmount}
+                        balance={outputBalance}
+                        onTokenSelect={(token) => {
+                          setOutputToken(token)
+                        }}
+                        openDialog={openOutputDialog}
+                        setOpenDialog={setOpenOutputDialog}
+                        availableTokens={tokens}
+                        isLoading={routeState.isLoading || (isConnected && isBalanceLoading)}
+                        balancesLoaded={balancesLoaded}
+                        isConnected={isConnected}
+                        error={routeState.error}
+                      />
+                    </div>
 
-            <SubmitButtonAction
-              isConnected={isConnected}
-              isSwapping={isSwapping}
-              setIsConnected={setIsConnected}
-              setWalletAddress={setWalletAddress}
-              onSwap={() => handleSwapExecution(isConnected)}
-              insufficientBalance={insufficientBalance}
-              disabled={!inputAmount || inputAmount === '' || parseFloat(inputAmount) <= 0 || insufficientBalance}
-            />
-          </div>
+                    <SwapDetails
+                      minimumReceived={calculateMinimumReceived(outputAmount, slippageTolerance)}
+                      outputToken={outputToken}
+                      inputToken={inputToken}
+                      maxTransactionFee={estimatedFees || simulationResult?.estimatedFee || '0'}
+                      feeBreakdown={feeBreakdown || simulationResult?.feeBreakdown}
+                      route={routeDex || ''}
+                      isLoading={routeState.isLoading}
+                    />
+
+                    <SubmitButtonAction
+                      isConnected={isConnected}
+                      isSwapping={isSwapping}
+                      setIsConnected={setIsConnected}
+                      setWalletAddress={setWalletAddress}
+                      onSwap={() => handleSwapExecution(isConnected)}
+                      insufficientBalance={insufficientBalance}
+                      disabled={!inputAmount || inputAmount === '' || parseFloat(inputAmount) <= 0 || insufficientBalance}
+                    />
+                  </div>
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="bridge" className="space-y-6 mt-0">
+              <div className="space-y-8">
+                <CrossChainTab tokens={tokens} isConnected={isConnected} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="onramp" className="space-y-6 mt-0">
+              <div className="space-y-8">
+                <OnRampTab tokens={tokens} isConnected={isConnected} />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
@@ -335,9 +375,9 @@ export function SwapContainer() {
         onClose={handleCancelSwap}
         onConfirm={handleConfirmSwap}
         inputAmount={inputAmount}
-        inputToken={inputToken.symbol}
+        inputToken={inputToken?.symbol || 'TOKEN'}
         outputAmount={outputAmount}
-        outputToken={outputToken.symbol}
+        outputToken={outputToken?.symbol || 'TOKEN'}
         slippageTolerance={slippageTolerance}
         simulationResult={simulationResult}
         isConfirming={isConfirmingSwap}
