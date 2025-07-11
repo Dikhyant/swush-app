@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 interface TopNavigationProps {
   activeTab: string
@@ -33,8 +34,9 @@ export const TopNavigation = ({
       {/* Horizontal Menu - Responsive */}
       <nav className="flex items-center gap-1">
         {menuItems.map((item) => (
-          <button
+          <Link
             key={item.id}
+            href={`?tab=${item.id}`}
             onClick={() => onTabChange(item.id)}
             className={`
               px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-300
@@ -45,7 +47,7 @@ export const TopNavigation = ({
             `}
           >
             {item.label}
-          </button>
+          </Link>
         ))}
       </nav>
     </div>

@@ -14,6 +14,7 @@ const SwapHistoryDialog = dynamic(() => import('@/components/swap/ui/SwapHistory
   ssr: false
 })
 import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
+import { useQueryState, parseAsString } from 'nuqs'
 import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
 import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
 import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
@@ -30,8 +31,8 @@ import { OnRampTab } from '@/components/swap/ui/OnRampTab'
 import { TopNavigation } from '@/components/swap/ui/TopNavigation'
 
 export function SwapContainer() {
-  // UI state
-  const [activeTab, setActiveTab] = useState('swap')
+  // UI state - Tab routing via URL
+  const [activeTab, setActiveTab] = useQueryState('tab', parseAsString.withDefault('swap'))
   const [inputAmount, setInputAmount] = useState('')
   const [slippageTolerance, setSlippageTolerance] = useState(10)
   const [transactionDeadline, setTransactionDeadline] = useState(20)

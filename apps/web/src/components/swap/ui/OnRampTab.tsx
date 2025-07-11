@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SwapField } from '@/components/swap'
 
 interface OnRampTabProps {
@@ -8,29 +8,49 @@ interface OnRampTabProps {
 
 export function OnRampTab({ tokens, isConnected }: OnRampTabProps) {
   const [inputAmount, setInputAmount] = useState('')
-  const [selectedToken, setSelectedToken] = useState(tokens[0])
+  const [selectedToken, setSelectedToken] = useState(tokens[0] || null)
+
+  // Update selected token when tokens are loaded
+  useEffect(() => {
+    if (!selectedToken && tokens.length > 0) {
+      setSelectedToken(tokens[0])
+    }
+  }, [tokens, selectedToken])
 
   // Dummy USDC token for output
   const usdcToken = { symbol: 'USDC', name: 'USD Coin' }
+
+  // Don't render until we have tokens loaded
+  if (!selectedToken && tokens.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="h-24 w-full bg-forest-800/50 rounded-lg animate-pulse" />
+        <div className="h-16 w-full bg-forest-800/50 rounded-lg animate-pulse" />
+        <div className="h-24 w-full bg-forest-800/50 rounded-lg animate-pulse" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* Input Token Selection */}
       <div className="space-y-4">
-        <SwapField
-          type="input"
-          token={selectedToken}
-          amount={inputAmount}
-          balance="0"
-          onTokenSelect={setSelectedToken}
-          onAmountChange={setInputAmount}
-          openDialog={false}
-          setOpenDialog={() => {}}
-          availableTokens={tokens}
-          isLoading={false}
-          balancesLoaded={true}
-          isConnected={isConnected}
-        />
+        {selectedToken && (
+          <SwapField
+            type="input"
+            token={selectedToken}
+            amount={inputAmount}
+            balance="0"
+            onTokenSelect={setSelectedToken}
+            onAmountChange={setInputAmount}
+            openDialog={false}
+            setOpenDialog={() => {}}
+            availableTokens={tokens}
+            isLoading={false}
+            balancesLoaded={true}
+            isConnected={isConnected}
+          />
+        )}
 
         {/* Conversion Arrow */}
         <div className="flex justify-center">
