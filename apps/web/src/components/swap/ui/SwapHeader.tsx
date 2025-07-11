@@ -75,7 +75,7 @@ export const HeaderActions = ({
   setIsSwapping
 }: HeaderActionsProps) => {
   return (
-    <div className="fixed top-4 right-4 hidden sm:flex items-center gap-4 z-50">
+    <div className="fixed top-4 right-4 hidden lg:flex items-center gap-4 z-50">
       <Button
         onClick={onHistoryClick}
         variant="outline"
