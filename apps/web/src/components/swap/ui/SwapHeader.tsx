@@ -13,6 +13,7 @@ import { WalletButton, WalletMenu } from '@/components/swap';
 interface SwapHeaderProps {
   slippageTolerance: number;
   setSlippageTolerance: (value: number) => void;
+  onHistoryClick: () => void;
 }
 
 interface HeaderActionsProps {
@@ -28,10 +29,12 @@ interface HeaderActionsProps {
 
 export const SwapHeader = ({
   slippageTolerance,
-  setSlippageTolerance
+  setSlippageTolerance,
+  onHistoryClick
 }: SwapHeaderProps) => {
   return (
     <div className="flex justify-end items-center px-1">
+      {/* Settings, refresh, and history buttons */}
       <div className="flex gap-2 items-center">
         <Dialog>
           <DialogTrigger asChild>
@@ -56,8 +59,17 @@ export const SwapHeader = ({
             </div>
           </DialogContent>
         </Dialog>
-        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
+{/*         <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
           <RotateCcw className="w-5 h-5" />
+        </Button> */}
+        {/* History button - Only visible on mobile/tablet */}
+        <Button 
+          onClick={onHistoryClick}
+          variant="ghost" 
+          size="icon" 
+          className="text-slate-400 hover:text-white hover:bg-slate-800/50 lg:hidden"
+        >
+          <History className="w-5 h-5" />
         </Button>
       </div>
     </div>

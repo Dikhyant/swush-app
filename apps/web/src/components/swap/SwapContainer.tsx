@@ -263,6 +263,7 @@ export function SwapContainer() {
                   <SwapHeader
                     slippageTolerance={slippageTolerance}
                     setSlippageTolerance={setSlippageTolerance}
+                    onHistoryClick={() => setShowHistory(true)}
                   />
 
                   <div className="space-y-8">
