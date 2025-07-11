@@ -22,7 +22,6 @@ import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversi
 import { useSwapConfirmation } from '@/components/swap/hooks/useSwapConfirmation'
 import { useSwapExecution } from '@/components/swap/hooks/useSwapExecution'
 import { useSwapHistory } from '@/components/swap/hooks/useSwapHistory'
-import { LoadState } from '@/components/swap/ui/LoadState'
 import { ArrowSymbolDown } from '@/components/swap'
 import { calculateMinimumReceived } from '@/components/swap'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
@@ -35,7 +34,6 @@ export function SwapContainer() {
   const [activeTab, setActiveTab] = useQueryState('tab', parseAsString.withDefault('swap'))
   const [inputAmount, setInputAmount] = useState('')
   const [slippageTolerance, setSlippageTolerance] = useState(10)
-  const [transactionDeadline, setTransactionDeadline] = useState(20)
   const [insufficientBalance, setInsufficientBalance] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [openInputDialog, setOpenInputDialog] = useState(false)
