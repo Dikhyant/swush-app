@@ -238,7 +238,6 @@ export function SwapContainer() {
         setWalletAddress={setWalletAddress}
         walletAddress={walletAddress}
         onDisconnect={handleWalletDisconnect}
-        onHistoryClick={() => setShowHistory(true)}
         isSwapping={isSwapping}
         setIsSwapping={setIsSwapping}
       />

@@ -22,7 +22,6 @@ interface HeaderActionsProps {
   setWalletAddress: (value: string) => void;
   walletAddress: string;
   onDisconnect: () => void;
-  onHistoryClick: () => void;
   isSwapping: boolean;
   setIsSwapping: (value: boolean) => void;
 }
@@ -62,12 +61,12 @@ export const SwapHeader = ({
 {/*         <Button variant="ghost" size="icon" className="text-slate-400 hover:text-white hover:bg-slate-800/50">
           <RotateCcw className="w-5 h-5" />
         </Button> */}
-        {/* History button - Only visible on mobile/tablet */}
+        {/* History button - Available on all screen sizes */}
         <Button 
           onClick={onHistoryClick}
           variant="ghost" 
           size="icon" 
-          className="text-slate-400 hover:text-white hover:bg-slate-800/50 lg:hidden"
+          className="text-slate-400 hover:text-white hover:bg-slate-800/50"
         >
           <History className="w-5 h-5" />
         </Button>
@@ -82,20 +81,11 @@ export const HeaderActions = ({
   setWalletAddress,
   walletAddress,
   onDisconnect,
-  onHistoryClick,
   isSwapping,
   setIsSwapping
 }: HeaderActionsProps) => {
   return (
     <div className="fixed top-4 right-4 hidden lg:flex items-center gap-4 z-50">
-      <Button
-        onClick={onHistoryClick}
-        variant="outline"
-        size="icon"
-        className="bg-slate-800/90 border-slate-700/50 hover:bg-slate-700 text-slate-300 transition-all duration-200"
-      >
-        <History className="w-4 h-4" />
-      </Button>
       {!isConnected ? (
         <WalletButton
           isConnected={isConnected}
