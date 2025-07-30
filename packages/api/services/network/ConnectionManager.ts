@@ -188,10 +188,8 @@ export class ConnectionManager {
                     lastCheck: new Date(),
                     responseTime: 0
                 });
-                // Notify observers that connection was restored
-                this.notifyConnectionObservers(network, connection.connection, true).catch(err => 
-                    console.error('Error notifying connection restoration:', err)
-                );
+                // Note: Observer notification is handled in connectToNetwork method 
+                // to avoid race condition with connection object assignment
                 break;
 
             case 'disconnected':

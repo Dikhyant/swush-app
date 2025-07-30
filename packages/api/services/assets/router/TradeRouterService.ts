@@ -76,7 +76,7 @@ export class TradeRouterService implements ConnectionObserver {
             this.lastInitializedAssets = externalAssets; // Store for potential reinitializaton
             console.log('TradeRouterService initialized successfully');
         } catch (error) {
-            this.cleanup(); // Reset state on failure
+            this.fullCleanup(); // Reset state completely on initialization failure
             console.error('❌ Failed to initialize TradeRouterService:', error instanceof Error ? error.message : error);
             if (error instanceof Error && error.stack) {
                 console.error('Stack trace:', error.stack);
@@ -104,6 +104,13 @@ export class TradeRouterService implements ConnectionObserver {
     }
 
     public cleanup(): void {
+        this.tradeRouter = null;
+        this.poolService = null;
+        this.initialized = false;
+        // Don't clear lastInitializedAssets - preserve them for potential reinitalization
+    }
+
+    private fullCleanup(): void {
         this.tradeRouter = null;
         this.poolService = null;
         this.initialized = false;
