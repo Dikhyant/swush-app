@@ -132,6 +132,11 @@ export class TradeRouterService implements ConnectionObserver {
             try {
                 // Reinitialize with the same assets when connection is restored
                 await this.initialize(this.lastInitializedAssets);
+                
+                // Re-enrich cached assets now that TradeRouter is available again
+                console.log('🔄 Re-enriching assets after TradeRouter restoration...');
+                const { FetchAssetService } = await import('../FetchAssetService');
+                await FetchAssetService.getInstance().reEnrichWithHydraDxData();
             } catch (error) {
                 console.error('Failed to reinitialize TradeRouterService after connection restoration:', error);
             }

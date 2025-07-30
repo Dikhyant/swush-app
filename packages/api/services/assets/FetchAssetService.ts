@@ -305,7 +305,14 @@ export class FetchAssetService {
         const mergedAssets = new Map<string, Asset>(assetHubAssets);
 
         try {
-            const tradeRouter = await TradeRouterService.getInstance().getTradeRouter();
+            // Check if TradeRouter is available (it might not be during initial bootstrapping)
+            const tradeRouterService = TradeRouterService.getInstance();
+            if (!(tradeRouterService as any).initialized) {
+                console.log('⚠️ TradeRouter not yet initialized, skipping HydraDX enrichment for now');
+                return mergedAssets;
+            }
+
+            const tradeRouter = await tradeRouterService.getTradeRouter();
             const hydradxPools = await tradeRouter.getPools();
 
             // Process all HydraDX pools
@@ -358,6 +365,49 @@ export class FetchAssetService {
         } catch (error) {
             console.error('Error enriching with HydraDX data:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Re-enrich existing cached assets with HydraDX data after TradeRouter becomes available
+     */
+    public async reEnrichWithHydraDxData(): Promise<void> {
+        try {
+            console.log('🔄 Re-enriching cached assets with HydraDX data...');
+            
+            // Get current cached assets
+            const currentAssets = this.cacheService.get<Map<string, Asset>>(CACHE_KEYS.MERGED_ASSETS);
+            if (!currentAssets) {
+                console.log('No cached assets found to re-enrich');
+                return;
+            }
+
+            // Separate AssetHub assets from others for enrichment
+            const assetHubAssets = new Map<string, Asset>();
+            const nativeAssets = new Map<string, Asset>();
+            const foreignAssets = new Map<string, Asset>();
+
+            for (const [key, asset] of currentAssets) {
+                if (asset.assetType === 'Native') {
+                    nativeAssets.set(key, asset);
+                } else if (asset.assetType === 'Foreign') {
+                    foreignAssets.set(key, asset);
+                }
+                assetHubAssets.set(key, asset);
+            }
+
+            // Re-enrich with HydraDX data
+            const enrichedAssets = await this.enrichWithHydraDxData(assetHubAssets, nativeAssets, foreignAssets);
+            
+            // Update cache with enriched assets
+            this.cacheService.set(CACHE_KEYS.MERGED_ASSETS, enrichedAssets);
+            
+            const enrichedCount = Array.from(enrichedAssets.values()).filter(asset => asset.hydradx).length;
+            console.log(`✅ Re-enrichment completed: ${enrichedCount} assets now have HydraDX data`);
+            
+        } catch (error) {
+            console.error('Error during re-enrichment with HydraDX data:', error);
+            // Don't throw - this is a non-critical enhancement
         }
     }
 }    
