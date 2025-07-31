@@ -16,17 +16,17 @@ export async function initializeSDK(): Promise<void> {
         console.log('Initializing network connections...');
         await ConnectionManager.getInstance().initialize();
 
-        // Step 2: Initialize TradeRouter with external assets (allow partial failure)
+        // Step 2: Initialize TradeRouter (self-contained, no asset dependency)
         console.log('Initializing trade router...');
         try {
-            await TradeRouterService.getInstance().initialize([]);
+            await TradeRouterService.getInstance().initialize();
             console.log('TradeRouter initialized successfully');
         } catch (error) {
             console.warn('⚠️ TradeRouter initialization failed, continuing without it:', error instanceof Error ? error.message : error);
             // Don't throw - continue with other services
         }
-
-        // Step 3: Initialize Asset Service (which will set up caches)
+        
+        // Step 3: Initialize Asset Service (which will fetch assets and set up caches)
         console.log('Initializing asset service...');
         try {
             await FetchAssetService.getInstance().initialize();

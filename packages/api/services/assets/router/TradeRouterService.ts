@@ -9,8 +9,8 @@ export class TradeRouterService implements ConnectionObserver {
     private tradeRouter: TradeRouter | null = null;
     private poolService: PoolService | null = null;
     private initialized = false;
-    private lastInitializedAssets: any[] = [];
     private connectionManager: ConnectionManager;
+    private restorationTimeoutId: NodeJS.Timeout | null = null;
 
     private constructor() {
         this.connectionManager = ConnectionManager.getInstance();
@@ -25,7 +25,7 @@ export class TradeRouterService implements ConnectionObserver {
         return TradeRouterService.instance;
     }
 
-    public async initialize(externalAssets: any[]): Promise<void> {
+    public async initialize(): Promise<void> {
         if (this.initialized) {
             console.log('TradeRouterService already initialized');
             return;
@@ -62,9 +62,10 @@ export class TradeRouterService implements ConnectionObserver {
                 throw new Error('Failed to create PoolService');
             }
             
-            // Sync registry with assets
-            console.log("Syncing registry with", externalAssets.length, "assets");
-            await this.poolService.syncRegistry(externalAssets);
+            // PoolService can manage its own registry - no external assets needed
+            console.log("Initializing PoolService registry...");
+            // Note: syncRegistry can be called with empty array or the SDK may handle it internally
+            await this.poolService.syncRegistry([]);
             
             // Initialize TradeRouter
             this.tradeRouter = new TradeRouter(this.poolService);
@@ -73,10 +74,9 @@ export class TradeRouterService implements ConnectionObserver {
             }
 
             this.initialized = true;
-            this.lastInitializedAssets = externalAssets; // Store for potential reinitializaton
             console.log('TradeRouterService initialized successfully');
         } catch (error) {
-            this.cleanup(); // Reset state on failure
+            this.fullCleanup(); // Reset state completely on initialization failure
             console.error('❌ Failed to initialize TradeRouterService:', error instanceof Error ? error.message : error);
             if (error instanceof Error && error.stack) {
                 console.error('Stack trace:', error.stack);
@@ -104,10 +104,27 @@ export class TradeRouterService implements ConnectionObserver {
     }
 
     public cleanup(): void {
+        // Cancel any pending restoration timeout
+        if (this.restorationTimeoutId) {
+            clearTimeout(this.restorationTimeoutId);
+            this.restorationTimeoutId = null;
+        }
+        
         this.tradeRouter = null;
         this.poolService = null;
         this.initialized = false;
-        this.lastInitializedAssets = [];
+    }
+
+    private fullCleanup(): void {
+        // Cancel any pending restoration timeout
+        if (this.restorationTimeoutId) {
+            clearTimeout(this.restorationTimeoutId);
+            this.restorationTimeoutId = null;
+        }
+        
+        this.tradeRouter = null;
+        this.poolService = null;
+        this.initialized = false;
     }
 
     // ConnectionObserver implementation
@@ -120,14 +137,33 @@ export class TradeRouterService implements ConnectionObserver {
     }
 
     public async onConnectionRestored(network: string, connection: AssetHubConnection | ApiPromise): Promise<void> {
-        if (network === NETWORKS_SUPPORTED.HYDRA_DX && this.lastInitializedAssets.length > 0) {
+        if (network === NETWORKS_SUPPORTED.HYDRA_DX) {
             console.log('🔄 TradeRouterService: HydraDX connection restored, reinitializing...');
-            try {
-                // Reinitialize with the same assets when connection is restored
-                await this.initialize(this.lastInitializedAssets);
-            } catch (error) {
-                console.error('Failed to reinitialize TradeRouterService after connection restoration:', error);
+            
+            // Cancel any existing restoration timeout to prevent race conditions
+            if (this.restorationTimeoutId) {
+                clearTimeout(this.restorationTimeoutId);
+                this.restorationTimeoutId = null;
             }
+            
+            // Schedule restoration with a longer delay to ensure API is fully ready
+            // This allows the connection to stabilize before attempting complex operations
+            this.restorationTimeoutId = setTimeout(async () => {
+                try {
+                    // Clear the timeout ID since it's now executing
+                    this.restorationTimeoutId = null;
+                    
+                    console.log('🔄 Starting delayed TradeRouter restoration...');
+                    await this.initialize(); // No assets needed - self-contained
+                    console.log('✅ TradeRouterService restoration completed successfully');
+                } catch (error) {
+                    console.error('❌ Failed to reinitialize TradeRouterService after connection restoration:', error);
+                    if (error instanceof Error && error.stack) {
+                        console.error('Stack trace:', error.stack);
+                    }
+                    // Don't fail the entire process - cache refresh will work when API is ready
+                }
+            }, 5000); // 5 second delay to ensure API is fully ready
         }
     }
 } 
