@@ -23,21 +23,22 @@ export const NETWORK_ENDPOINTS = {
     'wss://rpc2.cay.hydration.cloud'
   ] */
   [NETWORKS_SUPPORTED.HYDRA_DX]: [
+    // Priority: Most reliable endpoints first
     'wss://hydration-rpc.n.dwellir.com',
-    'wss://hydration.dotters.network',
-    'wss://rpc.helikon.io/hydradx',
     'wss://hydration.ibp.network',
+    'wss://rpc.helikon.io/hydradx',
+    'wss://hydration.dotters.network',
+    // Secondary: Hydration cloud endpoints (some may be less stable)
     'wss://rpc.cay.hydration.cloud',
-    'wss://rpc.parm.hydration.cloud',
-    'wss://rpc.roach.hydration.cloud',
     'wss://rpc.zipp.hydration.cloud',
     'wss://rpc.sin.hydration.cloud',
     'wss://rpc.coke.hydration.cloud'
+    // Removed problematic endpoints: parm.hydration.cloud, roach.hydration.cloud
   ]
 } as const;
 
 export const NUMBER_FORMAT_OPTIONS = { round: 2, trim: true, commify: false };
 
 // Connection timeout for initial connection attempts (reduced for faster failover)
-export const CONNECTION_TIMEOUT = 10000; // 10 seconds
+export const CONNECTION_TIMEOUT = 20000; // 20 seconds (increased for better stability)
 export const CONNECTION_HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
