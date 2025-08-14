@@ -8,7 +8,7 @@ export const swapQueryParams = {
   // Token selection (using token symbols/identifiers)
   useFromTokenState: () => useQueryState(
     'from',
-    parseAsString.withDefault('').withOptions({
+    parseAsString.withOptions({
       shallow: false, // Trigger server re-render if needed
       history: 'replace' // Don't create history entries for token changes
     })
@@ -16,7 +16,7 @@ export const swapQueryParams = {
   
   useToTokenState: () => useQueryState(
     'to', 
-    parseAsString.withDefault('').withOptions({
+    parseAsString.withOptions({
       shallow: false,
       history: 'replace'
     })

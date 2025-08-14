@@ -39,13 +39,14 @@ export function useSwapTokens() {
   }, [isInitialized]);
 
   // Set default tokens if none are selected and assets are loaded
+  // Only set defaults when parameters are null (not present in URL), not when they are empty strings
   useEffect(() => {
-    if (assets.length > 0 && isInitialized && (!fromTokenIdentifier || !toTokenIdentifier)) {
-      // Find some default tokens (first two available tokens)
+    if (assets.length > 0 && isInitialized) {
       const availableTokens = assets.filter(asset => asset && asset.metadata && asset.metadata.symbol);
       
       if (availableTokens.length >= 2) {
-        if (!fromTokenIdentifier) {
+        // Only set defaults if parameters are null (missing from URL)
+        if (fromTokenIdentifier === null) {
           const defaultFrom = availableTokens[0];
           const fromIdentifier = getAssetIdentifier(assets, defaultFrom.id);
           if (fromIdentifier) {
@@ -53,7 +54,7 @@ export function useSwapTokens() {
           }
         }
         
-        if (!toTokenIdentifier) {
+        if (toTokenIdentifier === null) {
           const defaultTo = availableTokens[1];
           const toIdentifier = getAssetIdentifier(assets, defaultTo.id);
           if (toIdentifier) {
