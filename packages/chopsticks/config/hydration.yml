@@ -214,7 +214,3 @@ import-storage:
           - 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
           - 1000099 # Acala (ACA)
         - free: '100000000000000000000000'  
-  TechnicalCommittee:
-    Members: ["5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"]
-  Council:
-    Members: ["5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"]
