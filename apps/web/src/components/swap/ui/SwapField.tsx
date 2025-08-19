@@ -42,7 +42,7 @@ export const SwapField = memo(function SwapField({
 
   return (
     <motion.div 
-      className={`group relative ${isInput ? 'p-5' : 'p-6'} rounded-2xl bg-forest-800/60 backdrop-blur-md border border-forest-600/30 shadow-lg shadow-black/10 hover:border-forest-500/30 hover:bg-forest-800/80 transition-all duration-300`}
+      className={`group relative p-5 rounded-2xl bg-forest-800/60 backdrop-blur-md border border-forest-600/30 shadow-lg shadow-black/10 hover:border-forest-500/30 hover:bg-forest-800/80 transition-all duration-300`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: isInput ? 0 : 0.1 }}
@@ -81,7 +81,7 @@ export const SwapField = memo(function SwapField({
       <div className="flex items-center">
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <DialogTrigger asChild>
-            <div className="flex-shrink-0">
+            <div className={`flex-shrink-0${!isInput ? ' pt-2' : ''}`}>
               <div className="flex items-center gap-3 pl-2 py-3 rounded-xl hover:bg-forest-800 border-forest-600 hover:border-flame-400 transition-all duration-200 cursor-pointer">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-flame-400 to-flame-500 flex items-center justify-center shadow-lg">
                   <span className="text-white text-lg font-bold">{token.icon}</span>
