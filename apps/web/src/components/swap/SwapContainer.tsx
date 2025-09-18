@@ -221,7 +221,7 @@ export function SwapContainer() {
   return (
     <>
       {/* Header Actions */}
-      <HeaderActions
+      {/* <HeaderActions
         isConnected={isConnected}
         setIsConnected={setIsConnected}
         setWalletAddress={setWalletAddress}
@@ -230,7 +230,7 @@ export function SwapContainer() {
         onHistoryClick={() => setShowHistory(true)}
         isSwapping={isSwapping}
         setIsSwapping={setIsSwapping}
-      />
+      /> */}
 
       {/* Main Content */}
       <div className="w-full h-full flex flex-col items-center justify-center px-4 py-4 md:px-4 md:py-4 relative z-10">
@@ -238,6 +238,7 @@ export function SwapContainer() {
           <SwapHeader
             slippageTolerance={slippageTolerance}
             setSlippageTolerance={setSlippageTolerance}
+            onHistoryClick={() => setShowHistory(true)}
           />
 
           <div className="space-y-7">
