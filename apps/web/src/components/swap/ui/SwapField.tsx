@@ -42,7 +42,7 @@ export const SwapField = memo(function SwapField({
 
   return (
     <motion.div 
-      className={`group relative p-5 rounded-2xl bg-forest-800/60 backdrop-blur-md border border-forest-600/30 shadow-lg shadow-black/10 hover:border-forest-500/30 hover:bg-forest-800/80 transition-all duration-300`}
+      className={`group relative p-6 rounded-2xl bg-blackPearl backdrop-blur-md shadow-lg shadow-black/25`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: isInput ? 0 : 0.1 }}
@@ -52,10 +52,10 @@ export const SwapField = memo(function SwapField({
       
       {/* Content */}
       <div className="relative z-10">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-9">
           {/* Balance display - only show when connected */}
           <div className="flex items-center gap-2">
-            <Wallet className="w-4 h-4 text-forest-400" />
+            <Wallet className="w-4 h-4 text-white/60" />
             <span className="text-sm font-medium text-forest-300">
               {isConnected ? `${displayBalance} ${token?.symbol || ''}` : ''}
             </span>
@@ -67,9 +67,9 @@ export const SwapField = memo(function SwapField({
               <Button
                 key={label}
                 variant="default"
-                size="sm"
+                size="xss"
                 onClick={() => onPercentageSelect?.(value)}
-                className="text-xs font-medium bg-forest-700/50 border-forest-600 text-forest-300 hover:bg-forest-600 hover:text-white transition-all duration-200"
+                className="text-[10px] font-medium bg-bluishCyan border-forest-600 text-white/50 hover:bg-forest-600 hover:text-white transition-all duration-200"
                 disabled={isLoading || !balance || parseFloat(balance) <= 0}
               >
                 {label}
@@ -78,11 +78,11 @@ export const SwapField = memo(function SwapField({
           </div>
         </div>
 
-      <div className="flex items-center">
+      <div className="flex items-end">
         <Dialog open={openDialog} onOpenChange={setOpenDialog}>
           <DialogTrigger asChild>
             <div className={`flex-shrink-0${!isInput ? ' pt-2' : ''}`}>
-              <div className="flex items-center gap-3 pl-2 py-3 rounded-xl hover:bg-forest-800 border-forest-600 hover:border-flame-400 transition-all duration-200 cursor-pointer">
+              <div className="flex items-center gap-3 rounded-xl hover:bg-forest-800 border-forest-600 hover:border-flame-400 transition-all duration-200 cursor-pointer">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-flame-400 to-flame-500 flex items-center justify-center shadow-lg">
                   <span className="text-white text-lg font-bold">{token.icon}</span>
                 </div>
@@ -113,7 +113,7 @@ export const SwapField = memo(function SwapField({
             value={amount}
             onChange={handleInputChange}
             readOnly={!isInput}
-            className="border-0 bg-transparent text-2xl md:text-3xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="border-0 bg-transparent px-0 text-2xl md:text-3xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             placeholder="0"
           />
         </div>

@@ -36,7 +36,10 @@ const config: Config = {
           700: '#2C5F5D', // Deep teal from logo
           800: '#1A3A37', // Forest green from logo
           900: '#0F2922', // Mystical dark from logo
-        }
+        },
+        blackPearl: "#01151D",
+        darkSlateGray: "#1F3041",
+        bluishCyan: "#022029",
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
