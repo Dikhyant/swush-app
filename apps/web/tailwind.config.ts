@@ -41,6 +41,8 @@ const config: Config = {
         darkSlateGray: "#1F3041",
         bluishCyan: "#022029",
         burningOrange: "#FB6D3F",
+        creole: "#1C0902",
+        zinwallditeBrown: "#2F1005",
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
