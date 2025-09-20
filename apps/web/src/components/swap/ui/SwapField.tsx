@@ -69,7 +69,7 @@ export const SwapField = memo(function SwapField({
                 variant="default"
                 size="xss"
                 onClick={() => onPercentageSelect?.(value)}
-                className="text-[10px] font-medium bg-bluishCyan border-forest-600 text-white/50 hover:bg-forest-600 hover:text-white transition-all duration-200"
+                className="text-[10px] font-medium bg-bluishCyan border-forest-600 text-white/50 hover:bg-creole hover:text-white transition-all duration-200"
                 disabled={isLoading || !balance || parseFloat(balance) <= 0}
               >
                 {label}
@@ -94,7 +94,7 @@ export const SwapField = memo(function SwapField({
               </div>
             </div>
           </DialogTrigger>
-          <DialogContent className="bg-forest-900 border-forest-800">
+          <DialogContent className="bg-blackPearl border-darkSlateGray">
             <DialogHeader>
               <DialogTitle className="text-white">Select a token</DialogTitle>
             </DialogHeader>

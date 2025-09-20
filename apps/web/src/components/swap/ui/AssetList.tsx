@@ -19,12 +19,12 @@ export const AssetList = ({ assets, onSelect, currentAsset, onClose }: AssetList
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-davyGray w-8 h-8" />
         <Input
           placeholder="Search assets..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 bg-slate-800 border-slate-700 text-white"
+          className="pl-12 bg-woodsmoke text-white text-opacity-30 border-0 h-[54px]"
         />
       </div>
       <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-2">

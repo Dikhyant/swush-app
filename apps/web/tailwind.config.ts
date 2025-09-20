@@ -44,6 +44,9 @@ const config: Config = {
         burningOrange: "#FB6D3F",
         cadmiumOrange: "#FF7F1D",
         creole: "#1C0902",
+        davyGray: "#545456",
+        midnight: "#011F2A",
+        woodsmoke: "#0A0B0D",
         zinwallditeBrown: "#2F1005",
   		},
   		borderRadius: {
