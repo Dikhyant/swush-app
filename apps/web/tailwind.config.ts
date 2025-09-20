@@ -45,6 +45,7 @@ const config: Config = {
         cadmiumOrange: "#FF7F1D",
         creole: "#1C0902",
         davyGray: "#545456",
+        greyBlue: "#6C86AD",
         midnight: "#011F2A",
         woodsmoke: "#0A0B0D",
         zinwallditeBrown: "#2F1005",
