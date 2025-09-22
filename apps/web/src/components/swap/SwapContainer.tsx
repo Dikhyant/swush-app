@@ -71,6 +71,7 @@ export function SwapContainer() {
     estimatedFees,
     feeBreakdown,
     debouncedFetchRoute,
+    isProcessing,
     resetRoute
   } = useSwapRoute({
     inputToken,
@@ -278,6 +279,7 @@ export function SwapContainer() {
                 isLoading={routeState.isLoading || (isConnected && isBalanceLoading)}
                 balancesLoaded={balancesLoaded}
                 isConnected={isConnected}
+                isProcessing={isProcessing}
                 error={routeState.error}
               />
             </div>
@@ -290,6 +292,7 @@ export function SwapContainer() {
               feeBreakdown={feeBreakdown || simulationResult?.feeBreakdown}
               route={routeDex || ''}
               isLoading={routeState.isLoading}
+              isProcessing={isProcessing}
             />
 
             <SubmitButtonAction

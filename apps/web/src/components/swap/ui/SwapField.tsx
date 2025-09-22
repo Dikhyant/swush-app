@@ -8,6 +8,7 @@ import { AssetList } from './AssetList';
 import { SwapFieldProps } from '../types';
 import { formatBalance } from '../utils';
 import { Loader2, ChevronDown, Wallet, ChevronLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const SwapField = memo(function SwapField({
   type,
@@ -24,8 +25,10 @@ export const SwapField = memo(function SwapField({
   isLoading,
   balancesLoaded = true,
   isConnected = false,
+  isProcessing = false,
   error
 }: SwapFieldProps) {
+  console.log({isProcessing})
   const isInput = type === 'input';
   const bgColor = isInput ? 'bg-pink-500' : 'bg-blue-500';
   const displayBalance = formatBalance(balance, balancesLoaded);
@@ -114,6 +117,9 @@ export const SwapField = memo(function SwapField({
           </DialogContent>
         </Dialog>
         <div className="flex-1 relative">
+          {
+            !isInput && isProcessing ? <Skeleton className="w-52 h-7 justify-self-end" /> :
+          
           <Input
             type="text"
             inputMode="decimal"
@@ -122,7 +128,7 @@ export const SwapField = memo(function SwapField({
             readOnly={!isInput}
             className="border-0 bg-transparent px-0 text-2xl md:text-3xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             placeholder="0"
-          />
+          />}
         </div>
       </div>
       

@@ -4,6 +4,7 @@ import { TokenInfo } from '../types';
 import { FeeBreakdown } from '../hooks/types';
 import { formatAmount } from '@/services/balances/utils';
 import { NUMBER_FORMAT_OPTIONS } from '@/services/constants';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Define DOT token information for fee display
 const DOT_DECIMALS = 10;
@@ -17,6 +18,7 @@ interface SwapDetailsProps {
   feeBreakdown?: FeeBreakdown;
   route: string;
   isLoading?: boolean;
+  isProcessing?: boolean;
 }
 
 export const SwapDetails = memo(function SwapDetails({
@@ -26,7 +28,8 @@ export const SwapDetails = memo(function SwapDetails({
   maxTransactionFee,
   feeBreakdown,
   route,
-  isLoading = false
+  isLoading = false,
+  isProcessing = false,
 }: SwapDetailsProps) {
   // Format fees for display if available - memoized for performance
   const formattedFees = useMemo(() => {
@@ -94,16 +97,24 @@ export const SwapDetails = memo(function SwapDetails({
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-400">Minimum Received</span>
-            <span className="text-slate-300">
-              {displayValue(minimumReceived, outputToken.symbol)}
-            </span>
+            {
+              isProcessing ? <Skeleton className="w-20 h-5" /> :
+            
+              <span className="text-slate-300">
+                {displayValue(minimumReceived, outputToken.symbol)}
+              </span>
+            }
           </div>
 
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-400">Max Transaction Fee</span>
-            <span className="text-slate-300">
-              {displayValue(formattedMaxFee, DOT_SYMBOL)}
-            </span>
+            {
+              isProcessing ? <Skeleton className="w-16 h-5" /> :
+
+              <span className="text-slate-300">
+                {displayValue(formattedMaxFee, DOT_SYMBOL)}
+              </span>
+            }
           </div>
           {/*           
           {feeBreakdown && formattedFees ? (
@@ -149,7 +160,11 @@ export const SwapDetails = memo(function SwapDetails({
 
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-400">Route</span>
-            <span className="text-slate-300">{displayValue(route, '', '—')}</span>
+            {
+              isProcessing ? <Skeleton className="w-16 h-5" /> :
+            
+              <span className="text-slate-300">{displayValue(route, '', '—')}</span>
+            }
           </div>
         </div>
 

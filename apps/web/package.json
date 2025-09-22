@@ -22,7 +22,7 @@
     "@talismn/connect-wallets": "^1.2.8",
     "@types/lodash.debounce": "^4.0.9",
     "@types/ws": "^8.5.13",
-    "class-variance-authority": "^0.7.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.11.17",
@@ -34,7 +34,7 @@
     "react": "^18",
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
-    "tailwind-merge": "^2.5.3",
+    "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {

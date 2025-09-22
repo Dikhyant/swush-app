@@ -24,6 +24,7 @@ export interface RouteState {
 }
 
 export function useSwapRoute({ inputToken, outputToken }: UseSwapRouteProps) {
+  const [isProcessing, setIsProcessing] = useState<boolean>(false)
   const [outputAmount, setOutputAmount] = useState('');
   const [routeDex, setRouteDex] = useState<string | null>(null);
   const [routeState, setRouteState] = useState<RouteState>({
@@ -69,8 +70,15 @@ export function useSwapRoute({ inputToken, outputToken }: UseSwapRouteProps) {
     setOutputAmount('');
     setRouteDex('');
 
+    const delay = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
     try {
+      (async () => {
+        setIsProcessing(true)
+      })()
+      console.log("start processing");
       // If dummy mode is enabled, synthesize a fake route
+      await delay(900) // added this to create a dummy api delay. Need to be removed later
       const route: RouteQuote = USE_DUMMY_ROUTE
         ? {
             path: [inputToken.symbol, outputToken.symbol],
@@ -93,6 +101,8 @@ export function useSwapRoute({ inputToken, outputToken }: UseSwapRouteProps) {
             toAsset: outputToken.id,
             amountIn: currentInputAmount
           });
+
+        // setIsProcessing(false);
       
       // Only update if this is still the latest input amount and ref hasn't been cleared
       if (latestInputAmountRef.current === currentInputAmount && latestInputAmountRef.current !== '') {
@@ -146,6 +156,11 @@ export function useSwapRoute({ inputToken, outputToken }: UseSwapRouteProps) {
         setEstimatedFees(estimatedFee);
         setFeeBreakdown(fees);
       }
+    } finally {
+      (async () => {
+        setIsProcessing(false)
+      })()
+      console.log("end processing")
     }
   }, [inputToken, outputToken, USE_DUMMY_ROUTE]);
 
@@ -197,6 +212,7 @@ export function useSwapRoute({ inputToken, outputToken }: UseSwapRouteProps) {
     estimatedFees,
     feeBreakdown,
     debouncedFetchRoute,
+    isProcessing,
     resetRoute
   };
 }

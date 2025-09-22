@@ -74,6 +74,7 @@ export interface SwapFieldProps {
   isLoading?: boolean;
   balancesLoaded?: boolean;
   isConnected?: boolean;
+  isProcessing?: boolean;
   error?: string | null;
 }
 
