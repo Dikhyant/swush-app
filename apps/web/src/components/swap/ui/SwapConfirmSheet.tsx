@@ -205,24 +205,24 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
         {/* Simulation Results */}
         {simulationResult && (
           <div className={`mb-4 p-3 rounded-lg border ${
-            simulationResult.success && simulationResult.willSucceed
+            simulationResult?.success && simulationResult?.willSucceed
               ? 'bg-green-900/20 border-green-800/30 text-green-300'
               : 'bg-amber-900/20 border-amber-800/30 text-amber-300'
           }`}>
             <div className="flex items-center gap-2 mb-1">
-              {simulationResult.success && simulationResult.willSucceed ? (
+              {simulationResult?.success && simulationResult?.willSucceed ? (
                 <CheckCircle size={16} className="text-green-400" />
               ) : (
                 <AlertCircle size={16} className="text-amber-400" />
               )}
               <span className="font-medium">
-                {simulationResult.success && simulationResult.willSucceed
+                {simulationResult?.success && simulationResult?.willSucceed
                   ? 'Transaction Simulation Successful'
                   : 'Transaction May Fail'}
               </span>
             </div>
-            {!simulationResult.success && simulationResult.error && (
-              <p className="text-sm ml-6">{simulationResult.error}</p>
+            {!simulationResult?.success && simulationResult?.error && (
+              <p className="text-sm ml-6">{simulationResult?.error}</p>
             )}
           </div>
         )}
@@ -232,8 +232,8 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
           <div className="flex justify-between text-sm">
             <span className="text-forest-400">Network Fee</span>
             <span className="text-forest-200">
-              {simulationResult?.estimatedFee && simulationResult.estimatedFee !== '0' 
-                ? `${simulationResult.estimatedFee} ${inputToken}` 
+              {simulationResult?.estimatedFee && simulationResult?.estimatedFee !== '0' 
+                ? `${simulationResult?.estimatedFee} ${inputToken}` 
                 : '—'}
             </span>
           </div>
