@@ -114,7 +114,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
       <DialogContent className="w-[517px] h-[647px] px-6 pt-4 bg-blackPearl border-darkSlateGray" isCloseIconVisible={false} isOverlayVisible={false} >
         <div>
           <div className="relative flex items-center justify-center" >
-            <DialogClose>
+            <DialogClose onClick={handleClose} >
               <ChevronLeft className="text-white absolute left-0 self-center" />
             </DialogClose>
             <p className="text-lg font-medium text-white h-fit" >Confirm Swap</p>
@@ -152,6 +152,17 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
                 : '—'}
               </SubText>
             </div>
+
+            <Button 
+              variant="primary"
+              size="primary"
+              className="mt-[26px]"
+            >Confirm Swap</Button>
+
+            <button
+              className="text-[20px] font-medium hover:bg-transparent text-white mt-5"
+              onClick={handleClose}
+            >Close</button>
           </div>
         </div>
       </DialogContent>
