@@ -24,6 +24,7 @@ import { useSwapHistory } from '@/components/swap/hooks/useSwapHistory'
 import { LoadState } from '@/components/swap/ui/LoadState'
 import { ArrowSymbolDown } from '@/components/swap'
 import { calculateMinimumReceived } from '@/components/swap'
+import { SwapCompleteDialog } from './ui/SwapCompleteDialog'
 
 export function SwapContainer() {
   // UI state
@@ -328,6 +329,10 @@ export function SwapContainer() {
         slippageTolerance={slippageTolerance}
         simulationResult={simulationResult}
         isConfirming={isConfirmingSwap}
+      />
+
+      <SwapCompleteDialog 
+
       />
     </>
   )

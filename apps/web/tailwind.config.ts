@@ -36,6 +36,7 @@ const config: Config = {
   				'800': '#1A3A37',
   				'900': '#0F2922'
   			},
+			"baltic-sea": "#242C32",
   			blackPearl: '#01151D',
   			darkSlateGray: '#1F3041',
   			bluishCyan: '#022029',
@@ -46,6 +47,7 @@ const config: Config = {
   			davyGray: '#545456',
   			greyBlue: '#6C86AD',
   			midnight: '#011F2A',
+			"tealish-green": "#01E17B",
   			woodsmoke: '#0A0B0D',
   			zinwallditeBrown: '#2F1005',
   			card: {
