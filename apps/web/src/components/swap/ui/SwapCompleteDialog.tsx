@@ -10,6 +10,11 @@ interface SwapCompleteDialogProps {
     isOpen?: boolean
     isSwappingInProgress?: boolean
     isSwapComplete?: boolean
+    inputAmount: string
+    inputToken: string
+    outputAmount: string
+    outputToken: string
+    duration: number
 }
 
 
@@ -17,6 +22,11 @@ export function SwapCompleteDialog({
     isOpen = false,
     isSwappingInProgress = false,
     isSwapComplete = false,
+    inputAmount,
+    inputToken,
+    outputAmount,
+    outputToken,
+    duration,
 }:SwapCompleteDialogProps) {
     const [swapProgress, setSwapProgress] = useState<number>(10)
 
@@ -35,11 +45,11 @@ export function SwapCompleteDialog({
     },[isSwapComplete])
     return (
         <Dialog open={isOpen}>
-            <DialogContent className={cn("bg-baltic-sea border-none w-[489px] h-[178px] overflow-hidden"
+            <DialogContent className={cn("bg-baltic-sea border-none rounded-xl w-[489px] py-0 overflow-hidden"
             )} isCloseIconVisible={false} >
                 {
                     (isSwappingInProgress || swapProgress < 100) && (
-                        <div className="w-full h-full flex items-center justify-center gap-x-2" >
+                        <div className="w-full h-full flex items-center justify-center gap-x-2 py-[78px]" >
                             <Zap className="size-8 text-white" />
                             <p className="text-[32px] font-bold text-white" >Swapping in Progress…</p>
 
@@ -53,12 +63,13 @@ export function SwapCompleteDialog({
                 }
                 {
                     isSwapComplete && swapProgress >= 100 && (
-                        <div className="flex flex-col items-center" >
+                        <div className="flex flex-col items-center pb-[46px] pt-[36px]" >
                             <div className="flex items-center justify-center rounded-full bg-tune size-[65px]" >
                                 <Image src="/icons/check_circle.svg" alt="check-icon" width={40} height={40} />
                             </div>
 
                             <p className="text-white text-[32px] font-bold" >Swap Complete!</p>
+                            <p className="text-cloud text-base font-normal" >{`${inputAmount} ${inputToken} → ${outputAmount} ${outputToken} in ${duration / 1000}s`}</p>
                         </div>
                     )
                 }

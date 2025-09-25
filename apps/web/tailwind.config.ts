@@ -43,6 +43,7 @@ const config: Config = {
   			blueWhale: '#003843',
   			burningOrange: '#FB6D3F',
   			cadmiumOrange: '#FF7F1D',
+			cloud: "#C8C5C5",
   			creole: '#1C0902',
   			davyGray: '#545456',
   			greyBlue: '#6C86AD',

@@ -341,6 +341,11 @@ export function SwapContainer() {
         isOpen={isSwappingInProgress || isSwapComplete}
         isSwappingInProgress={isSwappingInProgress}
         isSwapComplete={isSwapComplete}
+        inputAmount={inputAmount}
+        inputToken={inputToken.symbol}
+        outputAmount={outputAmount}
+        outputToken={outputToken.name}
+        duration={4000}
       />
     </>
   )
