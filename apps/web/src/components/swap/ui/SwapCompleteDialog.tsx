@@ -20,12 +20,6 @@ export function SwapCompleteDialog({
 }:SwapCompleteDialogProps) {
     const [swapProgress, setSwapProgress] = useState<number>(10)
 
-    console.log({
-        isSwappingInProgress,
-        isSwapComplete,
-        swapProgress
-    })
-
     useEffect(() => {
         if(!isSwapComplete) return
 
@@ -44,7 +38,7 @@ export function SwapCompleteDialog({
             <DialogContent className={cn("bg-baltic-sea border-none w-[489px] h-[178px] overflow-hidden"
             )} isCloseIconVisible={false} >
                 {
-                    isSwappingInProgress || swapProgress < 100 && (
+                    (isSwappingInProgress || swapProgress < 100) && (
                         <div className="w-full h-full flex items-center justify-center gap-x-2" >
                             <Zap className="size-8 text-white" />
                             <p className="text-[32px] font-bold text-white" >Swapping in Progress…</p>
