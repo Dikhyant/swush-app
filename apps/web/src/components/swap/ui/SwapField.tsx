@@ -1,11 +1,11 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TokenButton } from '../button/TokenButton';
 import { AssetList } from './AssetList';
-import { SwapFieldProps } from '../types';
+import { SwapFieldProps, AssetGroup } from '../types';
 import { formatBalance } from '../utils';
 import { Loader2, ChevronDown, Wallet, ChevronLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,6 +42,26 @@ export const SwapField = memo(function SwapField({
       onAmountChange?.(value);
     }
   }, [onAmountChange]);
+
+  // Group available tokens by symbol to create cascading UI (symbol -> networks)
+  const assetGroups = useMemo<AssetGroup[]>(() => {
+    const map = new Map<string, AssetGroup>();
+    availableTokens.forEach((t) => {
+      const existing = map.get(t.symbol);
+      const tokenWithNetwork = { ...t, network: t.name };
+      if (existing) {
+        existing.tokens.push(tokenWithNetwork);
+      } else {
+        map.set(t.symbol, {
+          symbol: t.symbol,
+          name: t.name,
+          icon: t.icon,
+          tokens: [tokenWithNetwork]
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [availableTokens]);
 
   return (
     <motion.div 
@@ -101,7 +121,7 @@ export const SwapField = memo(function SwapField({
             <DialogHeader className="relative" >
               
               <div className="w-full flex items-center justify-center" >
-              <DialogTitle className="text-white text-lg font-medium">Select a token</DialogTitle>
+              <DialogTitle className="text-white text-lg font-medium">All Networks</DialogTitle>
               </div>
               {/* <div className="absolute w-full h-full" >
               <ChevronLeft className="size-5 text-white" />
@@ -109,7 +129,7 @@ export const SwapField = memo(function SwapField({
               
             </DialogHeader>
             <AssetList 
-              assets={availableTokens} 
+              assetGroups={assetGroups} 
               onSelect={onTokenSelect}
               currentAsset={token}
               onClose={() => setOpenDialog(false)}

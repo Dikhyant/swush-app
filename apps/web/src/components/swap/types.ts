@@ -23,6 +23,19 @@ export interface TokenInfo {
   decimals: number;
 }
 
+// Extended token information that can optionally include a network/chain label
+export interface NetworkTokenInfo extends TokenInfo {
+  network?: string;
+}
+
+// Group of the same asset symbol across multiple networks
+export interface AssetGroup {
+  symbol: string;
+  name: string;
+  icon: string;
+  tokens: NetworkTokenInfo[];
+}
+
 export interface DetailedRouteInfo {
   route: {
     path: string;
@@ -31,9 +44,9 @@ export interface DetailedRouteInfo {
 }
 
 export interface AssetListProps {
-  assets: any[];
-  onSelect: (asset: any) => void;
-  currentAsset: any;
+  assetGroups: AssetGroup[];
+  onSelect: (asset: NetworkTokenInfo) => void;
+  currentAsset: NetworkTokenInfo;
   onClose: () => void;
 }
 
