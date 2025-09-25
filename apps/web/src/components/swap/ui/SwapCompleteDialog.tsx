@@ -56,6 +56,7 @@ interface SwapCompleteDialogProps {
     outputAmount: string
     outputToken: string
     duration: number
+    onClose?: () => void
 }
 
 
@@ -68,6 +69,7 @@ export function SwapCompleteDialog({
     outputAmount,
     outputToken,
     duration,
+    onClose,
 }:SwapCompleteDialogProps) {
     const [swapProgress, setSwapProgress] = useState<number>(10)
     const [isGiftRevealed, setIsGiftRevealed] = useState<boolean>(false)
@@ -85,10 +87,22 @@ export function SwapCompleteDialog({
             })
         },300)
     },[isSwapComplete])
+
+    const reset = () => {
+        setSwapProgress(10)
+        setIsGiftRevealed(false)
+    }
     return (
-        <Dialog open={isOpen}>
-            <DialogContent className={cn("bg-baltic-sea border-none rounded-xl w-[489px] py-0 overflow-hidden"
-            )} isCloseIconVisible={false} >
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if(swapProgress < 100) return
+            if(!isGiftRevealed) return
+            if(!open) {
+                onClose?.();
+                reset()
+            }
+        }} >
+            <DialogContent className={cn("bg-blackPearl border-none rounded-xl w-[489px] py-0 overflow-hidden"
+            )} isCloseIconVisible={swapProgress >= 100 && isGiftRevealed} >
                 {
                     (isSwappingInProgress || swapProgress < 100) && (
                         <div className="w-full h-full flex items-center justify-center gap-x-2 py-[78px]" >

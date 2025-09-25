@@ -346,6 +346,7 @@ export function SwapContainer() {
         outputAmount={outputAmount}
         outputToken={outputToken.name}
         duration={4000}
+        onClose={resetConfirmationState}
       />
     </>
   )

@@ -69,6 +69,8 @@ export function useSwapConfirmation({ setIsSwapping }: UseSwapConfirmationProps)
   const resetConfirmationState = useCallback(() => {
     setShowConfirmation(false);
     setIsConfirmingSwap(false);
+    setIsSwapComplete(false);
+    setIsSwappingInProgress(false);
     if (window.swapConfirmResolve) {
       window.swapConfirmResolve(false);
       window.swapConfirmResolve = undefined;
