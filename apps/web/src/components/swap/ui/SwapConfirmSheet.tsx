@@ -26,17 +26,19 @@ interface SwapCardProps {
   token: string
   tokenIcon?: string
   amount: string
+  className?: string
 }
 const SwapCard: React.FC<SwapCardProps> = ({
   label,
   token,
   tokenIcon,
-  amount
+  amount,
+  className
 }) => {
   return (
-    <div className="space-y-1" >
+    <div className={cn("space-y-1", className)} >
       {label && <p className="text-white text-sm font-medium" >{label}</p>}
-      <div className="bg-midnight border-darkSlateGray border h-[90px] flex items-center rounded-2xl p-6" >
+      <div className="h-fit flex items-center rounded-2xl" >
         {
           tokenIcon ? <Image src={tokenIcon} alt="token-icon" className="size-[45px]" /> :
           <div className="size-[45px] rounded-full bg-blackPearl" ></div>
@@ -110,8 +112,8 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
   };
 
   return (
-    <Dialog open={isOpen}>
-      <DialogContent className="w-[90%] sm:w-full max-w-[517px] h-[608px] px-6 pt-4 bg-blackPearl border-darkSlateGray" isCloseIconVisible={false}  >
+    <Dialog open={isOpen || true}>
+      <DialogContent className="w-[90%] sm:w-full max-w-[517px] px-6 pt-4 pb-8 bg-blackPearl border-darkSlateGray" isCloseIconVisible={false}  >
         <div>
           <div className="relative flex items-center justify-center" >
             <DialogClose onClick={handleClose} >
@@ -120,13 +122,15 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
             <p className="text-lg font-medium text-white h-fit" >Confirm Swap</p>
           </div>
           <div className="flex flex-col items-stretch justify-start mt-7" >
+            <div className="bg-midnight border border-darkSlateGray rounded-2xl pt-6 pb-4" >
             <SwapCard 
               label="You Pay"
               token={inputToken}
               amount={inputAmount}
+              className="pl-8 pr-6"
             />
-            <div className="flex justify-center relative mt-[14px] h-[20px]" >
-              <div className="absolute bottom-[-10px] size-[30px] rounded-full bg-burningOrange flex items-center justify-center self-center" >
+            <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-darkSlateGray" >
+              <div className="absolute size-[30px] rounded-full bg-burningOrange flex items-center justify-center self-center" >
                 <ArrowDown className="text-white size-5" />
               </div>
             </div>
@@ -134,9 +138,11 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
               label="You Receive"
               token={outputToken}
               amount={outputAmount}
+              className="pl-8 pr-6 pt-4"
             />
+            </div>
 
-            <div className="grid grid-cols-2 gap-y-5 mt-[61px]" >
+            <div className="grid grid-cols-2 gap-y-5 mt-8" >
               <SubText>Network Fee</SubText>
               <SubText className="justify-self-end" >
               {simulationResult?.estimatedFee && simulationResult.estimatedFee !== '0' 
