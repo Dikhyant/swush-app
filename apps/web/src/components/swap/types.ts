@@ -21,18 +21,19 @@ export interface TokenInfo {
   symbol: string;
   icon: string;
   decimals: number;
+  network?: string;
 }
 
 // Extended token information that can optionally include a network/chain label
-export interface NetworkTokenInfo extends TokenInfo {
-  network?: string;
-}
+// Note: NetworkTokenInfo is now equivalent to TokenInfo since network was added to TokenInfo
+export interface NetworkTokenInfo extends TokenInfo {}
 
 // Group of the same asset symbol across multiple networks
 export interface AssetGroup {
   symbol: string;
   name: string;
   icon: string;
+  network: string;
   tokens: NetworkTokenInfo[];
 }
 
@@ -54,6 +55,7 @@ export interface TokenButtonProps {
   token: string;
   symbol: string;
   icon: React.ReactNode;
+  network: string;
   onClick: () => void;
 }
 

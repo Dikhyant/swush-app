@@ -134,16 +134,8 @@ export function useSwapTokens() {
           setIsInitialized(true);
           return;
         }
-
-        const fetchedAssets = await api.assets.getAll();
-        setAssets(fetchedAssets);
-        setIsInitialized(true);
       } catch (error) {
         console.error('Failed to fetch assets:', error);
-        // Fallback to dummy assets on failure to keep the app usable
-        setAssets(DUMMY_ASSETS);
-        setIsInitialized(true);
-        toast.error('Failed to load assets from API. Using dummy data.');
       }
     };
 
