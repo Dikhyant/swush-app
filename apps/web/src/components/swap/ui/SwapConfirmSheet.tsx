@@ -122,24 +122,24 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
             <p className="text-lg font-medium text-white h-fit" >Confirm Swap</p>
           </div>
           <div className="flex flex-col items-stretch justify-start mt-7" >
-            <div className="bg-midnight border border-darkSlateGray rounded-2xl pt-6 pb-4" >
-            <SwapCard 
-              label="You Pay"
-              token={inputToken}
-              amount={inputAmount}
-              className="pl-8 pr-6"
-            />
-            <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-darkSlateGray" >
-              <div className="absolute size-[30px] rounded-full bg-burningOrange flex items-center justify-center self-center" >
-                <ArrowDown className="text-white size-5" />
+            <div className="bg-midnight border border-darkSlateGray rounded-2xl pt-6 pb-4 shadow-[4px_4px_12px_0_rgba(0,0,0,0.25)]" >
+              <SwapCard 
+                label="You Pay"
+                token={inputToken}
+                amount={inputAmount}
+                className="pl-8 pr-6"
+              />
+              <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-darkSlateGray" >
+                <div className="absolute size-[30px] rounded-full bg-burningOrange flex items-center justify-center self-center" >
+                  <ArrowDown className="text-white size-5" />
+                </div>
               </div>
-            </div>
-            <SwapCard 
-              label="You Receive"
-              token={outputToken}
-              amount={outputAmount}
-              className="pl-8 pr-6 pt-4"
-            />
+              <SwapCard 
+                label="You Receive"
+                token={outputToken}
+                amount={outputAmount}
+                className="pl-8 pr-6 pt-4"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-y-5 mt-8" >
@@ -168,7 +168,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
               >Confirm Swap</Button>
 
               <button
-                className="text-[20px] font-medium hover:bg-transparent text-white mt-5 w-full rounded-full bg-midnight h-[60px]"
+                className="text-[20px] font-medium hover:bg-midnight/80 text-white mt-5 w-full rounded-full bg-midnight h-[60px]"
                 onClick={handleClose}
               >Close</button>
             </div>
