@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { TokenButtonProps } from '../types';
 
-export const TokenButton = ({ token, symbol, icon, onClick }: TokenButtonProps) => (
+export const TokenButton = ({ token, symbol, icon, network, onClick }: TokenButtonProps) => (
   <button
     onClick={onClick}
     className="flex items-center gap-3 rounded-xl hover:bg-midnight transition-all duration-200 w-full group"
@@ -10,7 +10,7 @@ export const TokenButton = ({ token, symbol, icon, onClick }: TokenButtonProps) 
       {icon}
     </div>
     <div className="flex flex-col items-start">
-      <span className="text-lg text-white group-hover:text-slate-300 transition-colors duration-200">{token}</span>
+      <span className="text-lg text-white group-hover:text-slate-300 transition-colors duration-200">{network}</span>
     </div>
   </button>
 ); 

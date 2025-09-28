@@ -48,7 +48,8 @@ export const SwapField = memo(function SwapField({
     const map = new Map<string, AssetGroup>();
     availableTokens.forEach((t) => {
       const existing = map.get(t.symbol);
-      const tokenWithNetwork = { ...t, network: t.name };
+      // Preserve the actual network information instead of using token name
+      const tokenWithNetwork = { ...t, network: t.network };
       if (existing) {
         existing.tokens.push(tokenWithNetwork);
       } else {
@@ -56,6 +57,7 @@ export const SwapField = memo(function SwapField({
           symbol: t.symbol,
           name: t.name,
           icon: t.icon,
+          network: t.network || 'Unknown',
           tokens: [tokenWithNetwork]
         });
       }

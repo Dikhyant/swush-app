@@ -16,6 +16,7 @@ export const AssetList = ({ assetGroups, onSelect, currentAsset, onClose }: Asse
     return (
       group.symbol.toLowerCase().includes(q) ||
       group.name.toLowerCase().includes(q) ||
+      group.network ||
       group.tokens.some(t => (t.network || '').toLowerCase().includes(q))
     );
   });
@@ -66,6 +67,7 @@ export const AssetList = ({ assetGroups, onSelect, currentAsset, onClose }: Asse
                       key={`${group.symbol}-${token.id}-${token.network || 'default'}`}
                       symbol={group.symbol}
                       token={token.network || token.name}
+                      network={token.network || ''}
                       icon={
                         <div className={`w-full h-full ${
                           token.name === currentAsset.name ? 'bg-blue-500' : 'bg-slate-600'
