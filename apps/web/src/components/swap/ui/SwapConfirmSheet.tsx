@@ -127,7 +127,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
                 label="You Pay"
                 token={inputToken}
                 amount={inputAmount}
-                className="pl-8 pr-6"
+                className="pl-4 sm:pl-8 pr-6"
               />
               <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-darkSlateGray" >
                 <div className="absolute size-[30px] rounded-full bg-burningOrange flex items-center justify-center self-center" >
@@ -138,7 +138,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
                 label="You Receive"
                 token={outputToken}
                 amount={outputAmount}
-                className="pl-8 pr-6 pt-4"
+                className="pl-4 sm:pl-8 pr-6 pt-4"
               />
             </div>
 

@@ -101,13 +101,13 @@ export function SwapCompleteDialog({
                 reset()
             }
         }} >
-            <DialogContent className={cn("bg-blackPearl border-none rounded-xl max-sm:w-[90%] w-[489px] py-0 overflow-hidden"
+            <DialogContent className={cn("bg-blackPearl border-none rounded-xl w-[90%] sm:w-[489px] py-0 overflow-hidden"
             )} isCloseIconVisible={swapProgress >= 100 && isGiftRevealed} >
                 {
                     (isSwappingInProgress || swapProgress < 100) && (
                         <div className="w-full h-full flex items-center justify-center gap-x-2 py-[78px]" >
                             <Zap className="size-8 text-white" />
-                            <p className="max-sm:text-xl text-[32px] font-bold text-white" >Swapping in Progress…</p>
+                            <p className="text-xl sm:text-[32px] font-bold text-white" >Swapping in Progress…</p>
 
                             <Progress 
                                 className="absolute left-[-5px] w-[110%] bottom-[-7px] h-4" 
@@ -124,12 +124,12 @@ export function SwapCompleteDialog({
                                 <Image src="/icons/check_circle.svg" alt="check-icon" width={40} height={40} />
                             </div>
 
-                            <p className="text-white max-sm:text-xl text-[32px] font-bold" >Swap Complete!</p>
-                            <p className="text-cloud max-sm:text-sm text-base font-normal" >{`${inputAmount} ${inputToken} → ${outputAmount} ${outputToken} in ${duration / 1000}s`}</p>
+                            <p className="text-white text-xl sm:text-3xl font-bold" >Swap Complete!</p>
+                            <p className="text-cloud text-sm sm:text-base font-normal" >{`${inputAmount} ${inputToken} → ${outputAmount} ${outputToken} in ${duration / 1000}s`}</p>
 
                             {
-                                isGiftRevealed ? <SwushPointCard points={60} className="max-sm:mt-9 mt-[61px]" /> :
-                                <SecretGift className="mt-[29px]" onMouseDown={() => {
+                                isGiftRevealed ? <SwushPointCard points={60} className="mt-9 sm:mt-16" /> :
+                                <SecretGift className="mt-8" onMouseDown={() => {
                                     setIsGiftRevealed(true)
                                 }} />
                             }
