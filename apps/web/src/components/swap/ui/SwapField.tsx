@@ -138,7 +138,7 @@ export const SwapField = memo(function SwapField({
         </Dialog>
         <div className="flex-1 relative">
           {
-            !isInput && isProcessing ? <Skeleton className="w-52 h-7 justify-self-end" /> :
+            !isInput && isProcessing ? <Skeleton className="max-sm:w-32 w-52 h-7 justify-self-end" /> :
           
           <Input
             type="text"
