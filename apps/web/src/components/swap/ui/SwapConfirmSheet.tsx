@@ -17,7 +17,7 @@ const SubText:React.FC<SubTextProps> = ({
   children,
 }) => {
   return (
-    <p className={cn("text-sm font-normal text-white/70",className)} >{children}</p>
+    <p className={cn("text-sm font-normal text-white/70 max-w-24 sm:max-w-40",className)} >{children}</p>
   )
 }
 
@@ -44,7 +44,7 @@ const SwapCard: React.FC<SwapCardProps> = ({
           <div className="size-[45px] rounded-full bg-blackPearl" ></div>
         }
         <p className="text-[20px] font-medium uppercase ml-3 text-white" >{token ? token : "NOT FOUND"}</p>
-        <p className="ml-auto text-white max-sm:text-2xl text-4xl font-medium max-w-44 overflow-hidden" >{amount}</p>
+        <p className="ml-auto text-white text-2xl sm:text-4xl font-medium max-w-20 sm:max-w-44 overflow-hidden" >{amount}</p>
       </div>
     </div>
   )
@@ -152,7 +152,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
               <SubText>Slippage Tolerance</SubText>
               <SubText className="justify-self-end" >{slippageTolerance}%</SubText>
               <SubText>Minimum Received</SubText>
-              <SubText className="justify-self-end" >
+              <SubText className="justify-self-end text-right" >
               {outputAmount && parseFloat(outputAmount) > 0
                 ? `${formatBalance((parseFloat(outputAmount) * (1 - slippageTolerance / 100)).toString(), true)} ${outputToken}`
                 : '—'}
@@ -163,12 +163,12 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
               <Button 
                 variant="primary"
                 size="primary"
-                className="mt-[26px] w-full max-sm:text-sm"
+                className="mt-[26px] w-full text-sm sm:text-xl"
                 onClick={onConfirm}
               >Confirm Swap</Button>
 
               <button
-                className="max-sm:text-sm text-[20px] font-medium hover:bg-midnight/80 text-white mt-5 w-full rounded-full bg-midnight h-[60px]"
+                className="text-sm sm:text-xl font-medium hover:bg-midnight/80 text-white mt-5 w-full rounded-full bg-midnight h-[60px]"
                 onClick={handleClose}
               >Close</button>
             </div>
