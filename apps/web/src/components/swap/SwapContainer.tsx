@@ -16,7 +16,6 @@ const SwapHistoryDialog = dynamic(() => import('@/components/swap/ui/SwapHistory
 import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
 import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
 import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
-import { useSwapSteps } from '@/components/swap/hooks/useSwapSteps'
 import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
 import { useSwapConfirmation } from '@/components/swap/hooks/useSwapConfirmation'
 import { useSwapExecution } from '@/components/swap/hooks/useSwapExecution'
@@ -79,19 +78,8 @@ export function SwapContainer() {
     outputToken
   })
 
-  // Swap steps
-  const {
-    swapSteps,
-    isSwapping,
-    setIsSwapping,
-    showSwapProgress,
-    handleSwap,
-    handleSignStep,
-    closeSwapProgress,
-  } = useSwapSteps({
-    inputToken: inputToken?.symbol || 'TOKEN',
-    outputToken: outputToken?.symbol || 'TOKEN'
-  })
+  // Swap state
+  const [isSwapping, setIsSwapping] = useState(false)
 
   // Swap confirmation
   const {
@@ -132,11 +120,6 @@ export function SwapContainer() {
       setInputAmount('');
       resetRoute(); // This will reset the output amount and route state
 
-      // Slight delay before closing the progress modal to show success state
-      setTimeout(() => {
-        closeSwapProgress();
-      }, 1500);
-
       // Reset confirmation UI state
       resetConfirmationState();
     },
@@ -146,7 +129,6 @@ export function SwapContainer() {
       resetRoute();
       setIsSwapping(false);
       resetConfirmationState();
-      closeSwapProgress();
     },
     onSimulationComplete: handleSimulationComplete,
     onBalanceUpdateNeeded: handleBalanceUpdateNeeded
@@ -159,10 +141,8 @@ export function SwapContainer() {
     inputAmount,
     insufficientBalance,
     executeAssetConversionSwap,
-    handleSwap,
     setIsSwapping,
-    setIsConfirmingSwap: resetConfirmationState,
-    closeSwapProgress
+    setIsConfirmingSwap: resetConfirmationState
   });
 
   // Handle wallet disconnect with confirmation state cleanup
@@ -225,17 +205,6 @@ export function SwapContainer() {
 
   return (
     <>
-      {/* Header Actions */}
-      {/* <HeaderActions
-        isConnected={isConnected}
-        setIsConnected={setIsConnected}
-        setWalletAddress={setWalletAddress}
-        walletAddress={walletAddress}
-        onDisconnect={handleWalletDisconnect}
-        onHistoryClick={() => setShowHistory(true)}
-        isSwapping={isSwapping}
-        setIsSwapping={setIsSwapping}
-      /> */}
 
       {/* Main Content */}
       <div className="w-full h-full flex flex-col items-center justify-center px-4 md:px-4 relative z-10 overflow-y-scroll">
