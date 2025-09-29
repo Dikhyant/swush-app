@@ -119,7 +119,7 @@ export const SwapField = memo(function SwapField({
               </div>
             </div>
           </DialogTrigger>
-          <DialogContent className="bg-blackPearl border-darkSlateGray max-sm:w-[90%]">
+          <DialogContent className="bg-blackPearl border-darkSlateGray rounded-xl w-full max-w-[90%] sm:max-w-lg">
             <DialogHeader className="relative" >
               
               <div className="w-full flex items-center justify-center" >
