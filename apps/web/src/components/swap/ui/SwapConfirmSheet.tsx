@@ -113,7 +113,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
 
   return (
     <Dialog open={isOpen || true}>
-      <DialogContent className="w-[90%] sm:w-full max-w-md px-4 sm:px-6 py-4 sm:pb-8 bg-blackPearl border-darkSlateGray rounded-xl" isCloseIconVisible={false}  >
+      <DialogContent className="w-[90%] sm:w-full max-w-md px-4 py-4 sm:pb-8 bg-blackPearl border-darkSlateGray rounded-xl sm:rounded-2xl" isCloseIconVisible={false}  >
         <div>
           <div className="relative flex items-center justify-center" >
             <DialogClose onClick={handleClose} className="absolute right-0 self-center" >
