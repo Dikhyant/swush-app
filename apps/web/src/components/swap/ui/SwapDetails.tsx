@@ -107,7 +107,7 @@ export const SwapDetails = memo(function SwapDetails({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
     >
-      <div className="grid grid-cols-2 gap-y-3 tall:gap-y-5" >
+      <div className="grid grid-cols-2 gap-y-3 sm:gap-y-3" >
         <SubText>Minimum Received</SubText>
         <SubText className="justify-self-end" >
           {
