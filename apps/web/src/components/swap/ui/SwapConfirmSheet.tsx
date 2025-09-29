@@ -43,8 +43,8 @@ const SwapCard: React.FC<SwapCardProps> = ({
           tokenIcon ? <Image src={tokenIcon} alt="token-icon" className="size-[45px]" /> :
           <div className="size-[45px] rounded-full bg-blackPearl" ></div>
         }
-        <p className="text-[20px] font-medium uppercase ml-3 text-white" >{token ? token : "NOT FOUND"}</p>
-        <p className="ml-auto text-white text-2xl sm:text-4xl font-medium max-w-20 sm:max-w-44 overflow-hidden" >{amount}</p>
+        <p className="text-lg font-medium uppercase ml-3 text-white" >{token ? token : "NOT FOUND"}</p>
+        <p className="ml-auto text-white text-xl sm:text-2xl font-medium max-w-20 sm:max-w-44 overflow-hidden" >{amount}</p>
       </div>
     </div>
   )
@@ -163,12 +163,12 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
               <Button 
                 variant="primary"
                 size="primary"
-                className="mt-[26px] w-full text-sm sm:text-xl"
+                className="mt-[26px] w-full text-sm sm:text-base"
                 onClick={onConfirm}
               >Confirm Swap</Button>
 
               <button
-                className="text-sm sm:text-xl font-medium hover:bg-midnight/80 text-white mt-5 w-full rounded-full bg-midnight h-[60px]"
+                className="text-sm sm:text-base font-medium hover:bg-midnight/80 text-white mt-5 w-full rounded-full bg-midnight h-[60px]"
                 onClick={handleClose}
               >Close</button>
             </div>
