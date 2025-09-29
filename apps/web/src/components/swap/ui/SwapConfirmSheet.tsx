@@ -113,7 +113,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
 
   return (
     <Dialog open={isOpen || true}>
-      <DialogContent className="w-[90%] sm:w-full max-w-[517px] px-6 pt-4 pb-8 bg-blackPearl border-darkSlateGray" isCloseIconVisible={false}  >
+      <DialogContent className="w-[90%] sm:w-full max-w-[517px] px-6 pt-4 pb-8 bg-blackPearl border-darkSlateGray rounded-xl" isCloseIconVisible={false}  >
         <div>
           <div className="relative flex items-center justify-center" >
             <DialogClose onClick={handleClose} >
@@ -122,7 +122,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
             <p className="text-lg font-medium text-white h-fit" >Confirm Swap</p>
           </div>
           <div className="flex flex-col items-stretch justify-start mt-7" >
-            <div className="bg-midnight border border-darkSlateGray rounded-2xl pt-6 pb-4 shadow-[4px_4px_12px_0_rgba(0,0,0,0.25)]" >
+            <div className="bg-midnight border border-darkSlateGray rounded-2xl pt-4 pb-4 shadow-[4px_4px_12px_0_rgba(0,0,0,0.25)]" >
               <SwapCard 
                 label="You Pay"
                 token={inputToken}
