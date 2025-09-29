@@ -16,7 +16,7 @@ const SubText:React.FC<SubTextProps> = ({
   className,
 }) => {
   return (
-    <p className={cn("text-white/70 text-xs tall:text-sm font-normal",className)} >{children}</p>
+    <p className={cn("text-white/70 text-xs sm:text-sm font-normal",className)} >{children}</p>
   )
 }
 
