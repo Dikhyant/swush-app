@@ -1,0 +1,282 @@
+import type { TExchangeChain } from "@paraspell/xcm-router";
+
+export type AssetRegistryEntry = {
+  symbol: string;
+  name: string;
+  description?: string;
+  category: "stablecoin" | "native" | "defi" | "wrapped";
+  logo?: string;
+  dexConfig?: {
+    preferredExchange?: TExchangeChain;
+  };
+  // Map of keys from useCurrencyOptions to network info
+  networkInstances: Record<string, {
+    network: string;
+    assetType: "Native" | "Asset ID" | "Multi-Location";
+    displayName: string;
+    verified?: boolean;
+  }>;
+};
+
+// Simple registry mapping keys from useCurrencyOptions.ts to asset info
+export const ASSET_REGISTRY: Record<string, AssetRegistryEntry> = {
+  // USDC variants (different asset keys from useCurrencyOptions)
+  "USDC": {
+    symbol: "USDC",
+    name: "USD Coin",
+    description: "USD-backed stablecoin by Circle",
+    category: "stablecoin",
+    networkInstances: {
+      "USDC-1984": {
+        network: "AssetHub",
+        assetType: "Asset ID",
+        displayName: "USDC (AssetHub)",
+        verified: true
+      },
+      // "USDC-NO_ID": {
+      //   network: "Moonbeam",
+      //   assetType: "Multi-Location",
+      //   displayName: "USDC (Moonbeam)",
+      //   verified: true
+      // },
+      "USDC-22": {
+        network: "Hydration",
+        assetType: "Asset ID",
+        displayName: "USDC (Hydration)",
+        verified: true
+      },
+      "USDC-14": {
+        network: "Acala",
+        assetType: "Asset ID",
+        displayName: "USDC (Acala)",
+        verified: true
+      },
+      "USDC-5": {
+        network: "BifrostPolkadot",
+        assetType: "Asset ID",
+        displayName: "USDC (BifrostPolkadot)",
+        verified: true
+      },
+    }
+  },
+
+  // USDT variants
+  "USDT": {
+    symbol: "USDT",
+    name: "Tether USD",
+    description: "Tether USD stablecoin",
+    category: "stablecoin",
+    networkInstances: {
+      // "USDT-10": {
+      //   network: "Moonbeam",
+      //   assetType: "Asset ID",
+      //   displayName: "USDT (Moonbeam)",
+      //   verified: false
+      // },
+      "USDt-1984": {
+        network: "AssetHubPolkadot",
+        assetType: "Asset ID",
+        displayName: "USDt (AssetHubPolkadot)",
+        verified: true
+      },
+      "USDT-10": {
+        network: "Hydration",
+        assetType: "Asset ID",
+        displayName: "USDT (Hydration)",
+        verified: true
+      },
+      // "USDT-1000767": {
+      //   network: "Moonbeam",
+      //   assetType: "Asset ID",
+      //   displayName: "USDT (Moonbeam)",
+      //   verified: false
+      // }
+      "USDT-2": {
+        network: "BifrostPolkadot",
+        assetType: "Asset ID",
+        displayName: "USDT (BifrostPolkadot)",
+        verified: true
+      },
+      "USDT-12": {
+        network: "Acala",
+        assetType: "Asset ID",
+        displayName: "USDT (Acala)",
+        verified: true
+      },
+    }
+  },
+
+  // Native tokens
+  "DOT": {
+    symbol: "DOT",
+    name: "Polkadot",
+    description: "Polkadot native token",
+    category: "native",
+    networkInstances: {
+      "DOT-AssetHubPolkadot": {
+        network: "AssetHubPolkadot",
+        assetType: "Multi-Location",
+        displayName: "DOT (Native)",
+        verified: true
+      },
+      "DOT-5": {
+        network: "Hydration",
+        assetType: "Asset ID",
+        displayName: "DOT (HydraDx)",
+        verified: true
+      },
+      // "xcDOT-42259045809535163221576417993425387648": {
+      //   network: "Moonbeam",
+      //   assetType: "Asset ID",
+      //   displayName: "xcDOT (Moonbeam)",
+      //   verified: false
+      // },
+      "DOT-Acala": {
+        network: "Acala",
+        assetType: "Native",
+        displayName: "DOT (Acala)",
+        verified: true
+      },
+      "DOT-0": {
+        network: "BifrostPolkadot",
+        assetType: "Asset ID",
+        displayName: "DOT (BifrostPolkadot)",
+        verified: true
+      }
+    }
+  },
+
+  "ASTR": {
+    symbol: "ASTR",
+    name: "Astar",
+    description: "Astar native token",
+    category: "native",
+    networkInstances: {
+      "ASTR-NO_ID": {
+        network: "Astar",
+        assetType: "Native",
+        displayName: "ASTR (Native)",
+        verified: true
+      },
+    }
+  },
+
+  "KSM": {
+    symbol: "KSM",
+    name: "Kusama",
+    description: "Kusama native token",
+    category: "native",
+    networkInstances: {
+      "KSM-NO_ID": {
+        network: "Kusama",
+        assetType: "Native",
+        displayName: "KSM (Native)",
+        verified: true
+      },
+    }
+  },
+
+  "BNC": {
+    symbol: "BNC",
+    name: "Bifrost",
+    description: "Bifrost native token",
+    category: "native",
+    networkInstances: {
+      "BNC-NO_ID": {
+        network: "BifrostPolkadot",
+        assetType: "Native",
+        displayName: "BNC (Native)",
+        verified: true
+      },
+    }
+  },
+
+  "HDX": {
+    symbol: "HDX",
+    name: "HydraDX",
+    description: "HydraDX native token",
+    category: "native",
+    networkInstances: {
+      "HDX-NO_ID": {
+        network: "Hydration",
+        assetType: "Native",
+        displayName: "HDX (HydraDx)",
+        verified: true
+      },
+    }
+  },
+
+  // Additional common assets
+  "WETH": {
+    symbol: "WETH",
+    name: "Wrapped Ethereum",
+    description: "Wrapped Ethereum token",
+    category: "wrapped",
+    networkInstances: {
+      "WETH-NO_ID": {
+        network: "Various",
+        assetType: "Multi-Location",
+        displayName: "WETH (Cross-Chain)",
+        verified: true
+      },
+    }
+  },
+
+  "WBTC": {
+    symbol: "WBTC",
+    name: "Wrapped Bitcoin",
+    description: "Wrapped Bitcoin token",
+    category: "wrapped",
+    networkInstances: {
+      "WBTC-NO_ID": {
+        network: "Various",
+        assetType: "Multi-Location",
+        displayName: "WBTC (Cross-Chain)",
+        verified: true
+      },
+    }
+  },
+
+  "GLMR": {
+    symbol: "GLMR",
+    name: "Moonbeam",
+    description: "Moonbeam native token",
+    category: "native",
+    networkInstances: {
+      "GLMR-NO_ID": {
+        network: "Moonbeam",
+        assetType: "Native",
+        displayName: "GLMR (Native)",
+        verified: true
+      },
+    }
+  },
+
+  "ACA": {
+    symbol: "ACA",
+    name: "Acala",
+    description: "Acala native token",
+    category: "native",
+    networkInstances: {
+      "ACA-NO_ID": {
+        network: "Acala",
+        assetType: "Native",
+        displayName: "ACA (Native)",
+        verified: true
+      },
+    }
+  },
+
+};
+
+
+// DEX compatibility matrix based on your asset registry
+export const DEX_CHAIN_COMPATIBILITY: Record<string, string[]> = {
+  "HydrationDex": ["AssetHubPolkadot", "Hydration", "Moonbeam", "Acala", "BifrostPolkadot"],
+  "AssetHubPolkadotDex": ["AssetHubPolkadot", "Hydration"],
+
+  "AcalaDex": ["Acala", "Hydration"],
+  "BifrostKusamaDex": ["BifrostKusama"],
+  "BifrostPolkadotDex": ["BifrostPolkadot", "Hydration"],
+};
+
