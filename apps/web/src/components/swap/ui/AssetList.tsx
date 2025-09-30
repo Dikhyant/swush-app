@@ -51,7 +51,7 @@ export const AssetList = ({ assetGroups, onSelect, currentAsset, onClose }: Asse
                   <span className="text-white text-base font-bold">{group.icon}</span>
                 </div>
                 <div className="flex flex-col items-start">
-                  <span className="text-white text-sm font-semibold">{group.symbol}</span>
+                  <span className="text-white text-md font-semibold">{group.symbol}</span>
                   <span className="text-forest-400 text-xs">{group.tokens.length} Networks</span>
                 </div>
               </div>
