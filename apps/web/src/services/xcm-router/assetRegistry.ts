@@ -28,9 +28,9 @@ export const ASSET_REGISTRY: Record<string, AssetRegistryEntry> = {
     category: "stablecoin",
     networkInstances: {
       "USDC-1984": {
-        network: "AssetHub",
+        network: "AssetHubPolkadot",
         assetType: "Asset ID",
-        displayName: "USDC (AssetHub)",
+        displayName: "USDC (AssetHubPolkadot)",
         verified: true
       },
       // "USDC-NO_ID": {

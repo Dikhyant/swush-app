@@ -1,6 +1,6 @@
-import { Suspense } from 'react'
+'use client'
+
 import { SwapContainer } from '@/components/swap/SwapContainer'
-import { LoadState } from '@/components/swap/ui/LoadState'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import Image from 'next/image'
 
@@ -35,9 +35,7 @@ export default function SwapPage() {
           />
         </div>
         
-        <Suspense fallback={<LoadState />}>
-          <SwapContainer />
-        </Suspense>
+        <SwapContainer />
       </div>
     </ErrorBoundary>
   )

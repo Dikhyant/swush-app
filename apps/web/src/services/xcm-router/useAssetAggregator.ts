@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+'use client';
+
+import { useMemo, useCallback } from "react";
 import useCurrencyOptions from "./useCurrencyOptions";
 import { type AssetRegistryEntry, ASSET_REGISTRY, DEX_CHAIN_COMPATIBILITY } from "./assetRegistry";
 import { getCompatibleDEXs, getOptimalDEXArray } from "./assetRegistryUtils";
@@ -34,7 +36,7 @@ export type UnifiedAsset = {
 // Backward compatibility
 export type AggregatedAsset = UnifiedAsset;
 
-// Helper functions
+// Helper functions - exported for use in other modules
 export const determineCurrency = (asset: TAssetInfo): TCurrencyInput => {
   if (asset.location) {
     return { location: asset.location };
@@ -65,28 +67,32 @@ const createUnifiedNetworkData = (
 
 const useAssetAggregator = (
   from: TChain | undefined,
-  exchangeNode: TExchangeChain[],
+  exchangeNode: readonly TExchangeChain[] | TExchangeChain[],
   to: TChain | undefined
 ) => {
-  // Extract registry metadata for targeted queries
-  const networks = new Set<string>();
-  const expectedKeys = new Set<string>();
-  
-  Object.values(ASSET_REGISTRY).forEach(asset => {
-    Object.entries(asset.networkInstances).forEach(([key, instance]) => {
-      networks.add(instance.network);
-      expectedKeys.add(key);
+  // Extract registry metadata for targeted queries (memoized to prevent infinite loops)
+  const registryMetadata = useMemo(() => {
+    const networks = new Set<string>();
+    const expectedKeys = new Set<string>();
+    
+    Object.values(ASSET_REGISTRY).forEach(asset => {
+      Object.entries(asset.networkInstances).forEach(([key, instance]) => {
+        networks.add(instance.network);
+        expectedKeys.add(key);
+      });
     });
-  });
-  
-  const registryMetadata = {
-    targetNetworks: Array.from(networks),
-    expectedAssetKeys: expectedKeys
-  };
+    
+    return {
+      targetNetworks: Array.from(networks),
+      expectedAssetKeys: expectedKeys
+    };
+  }, []); // Empty dependency array since ASSET_REGISTRY is static
 
-  // Filter out valid networks before passing to useCurrencyOptions
-  const validTargetNetworks = registryMetadata.targetNetworks.filter(network => 
-    CHAINS.includes(network as TChain)
+  // Filter out valid networks before passing to useCurrencyOptions (memoized to prevent infinite loops)
+  const validTargetNetworks = useMemo(() => 
+    registryMetadata.targetNetworks.filter(network => 
+      CHAINS.includes(network as TChain)
+    ), [registryMetadata.targetNetworks]
   );
 
   // Get existing currency options with validated registry-driven filtering
@@ -184,45 +190,44 @@ const useAssetAggregator = (
       .sort((a, b) => a.symbol.localeCompare(b.symbol));
   }, [currencyToMap]);
 
-  // Helper functions for RouterBuilder compatibility
-  const getTAssetFromKey = (key: string, direction: 'from' | 'to'): TAssetInfo | undefined => {
+  // Helper functions for RouterBuilder compatibility (memoized to prevent infinite loops)
+  const getTAssetFromKey = useCallback((key: string, direction: 'from' | 'to'): TAssetInfo | undefined => {
     const map = direction === 'from' ? currencyFromMap : currencyToMap;
     return map[key];
-  };
+  }, [currencyFromMap, currencyToMap]);
 
   // Get networks for a specific asset (pre-computed)
-  const getNetworksForAsset = (symbol: string, direction: 'from' | 'to') => {
+  const getNetworksForAsset = useCallback((symbol: string, direction: 'from' | 'to') => {
     const assets = direction === 'from' ? unifiedFromAssets : unifiedToAssets;
     const asset = assets.find(a => a.symbol === symbol);
     return asset ? asset.supportedNetworks : [];
-  };
+  }, [unifiedFromAssets, unifiedToAssets]);
 
-  // Get asset key for specific asset-network combination
-  const getAssetKeyForNetwork = (symbol: string, network: string, direction: 'from' | 'to'): string | null => {
+  const getAssetKeyForNetwork = useCallback((symbol: string, network: string, direction: 'from' | 'to'): string | null => {
     const networks = getNetworksForAsset(symbol, direction);
     const networkData = networks.find(n => n.network === network);
     return networkData ? networkData.assetKey : null;
-  };
+  }, [unifiedFromAssets, unifiedToAssets]);
 
   // Function to get optimal exchanges array for RouterBuilder
-  const getOptimalExchanges = (
+  const getOptimalExchanges = useCallback((
     fromAssetKey: string,
     toAssetKey: string,
     fromChain: string,
     toChain: string
   ): TExchangeChain[] => {
     return getOptimalDEXArray(fromAssetKey, toAssetKey, fromChain, toChain);
-  };
+  }, []); // Pure function, no dependencies
 
   // Function to validate exchange compatibility
-  const validateExchangeCompatibility = (
+  const validateExchangeCompatibility = useCallback((
     exchange: TExchangeChain,
     fromChain: string,
     toChain: string
   ): boolean => {
     const compatibleDEXs = getCompatibleDEXs(fromChain, toChain);
     return compatibleDEXs.includes(exchange);
-  };
+  }, []); // Pure function, no dependencies
 
   return {
     // Original currency options (RouterBuilder compatibility)

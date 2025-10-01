@@ -1,19 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import dynamic from 'next/dynamic'
-import { SubmitButtonAction, SwapHeader, SwapField, SwapDetails } from '@/components/swap'
+import { SwapHeader } from '@/components/swap/ui/SwapHeader'
 import { HeaderActions } from '@/components/swap/ui/SwapHeader'
-
-// Dynamic imports for non-critical components
-const SwapConfirmSheet = dynamic(() => import('@/components/swap/ui/SwapConfirmSheet').then(mod => ({ default: mod.SwapConfirmSheet })), {
-  ssr: false
-})
-
-const SwapHistoryDialog = dynamic(() => import('@/components/swap/ui/SwapHistoryDialog').then(mod => ({ default: mod.SwapHistoryDialog })), {
-  ssr: false
-})
-import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
+import { SwapField } from '@/components/swap/ui/SwapField'
+import { SwapDetails } from '@/components/swap/ui/SwapDetails'
+import { SubmitButtonAction } from '@/components/swap/ui/SwapAction'
+import { SwapConfirmSheet } from '@/components/swap/ui/SwapConfirmSheet'
+import { SwapHistoryDialog } from '@/components/swap/ui/SwapHistoryDialog'
+import { useXcmTokens } from '@/components/swap/hooks/useXcmTokens'
 import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
 import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
 import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
@@ -21,8 +16,8 @@ import { useSwapConfirmation } from '@/components/swap/hooks/useSwapConfirmation
 import { useSwapExecution } from '@/components/swap/hooks/useSwapExecution'
 import { useSwapHistory } from '@/components/swap/hooks/useSwapHistory'
 import { LoadState } from '@/components/swap/ui/LoadState'
-import { ArrowSymbolDown } from '@/components/swap'
-import { calculateMinimumReceived } from '@/components/swap'
+import { ArrowSymbolDown } from '@/components/swap/ui/ArrowSymbolDown'
+import { calculateMinimumReceived } from '@/components/swap/utils'
 import { SwapCompleteDialog } from './ui/SwapCompleteDialog'
 
 export function SwapContainer() {
@@ -39,7 +34,17 @@ export function SwapContainer() {
   const [walletAddress, setWalletAddress] = useState('')
 
   // Custom hooks - Token and Balance handling (nuqs handles URL params automatically)
-  const { inputToken, setInputToken, outputToken, setOutputToken, tokens } = useSwapTokens()
+  const { 
+    inputToken, 
+    setInputToken, 
+    outputToken, 
+    setOutputToken, 
+    tokens,
+    // Expose helpers for Phase 2 (routing)
+    getOptimalExchanges,
+    determineCurrency,
+    getTAssetFromKey,
+  } = useXcmTokens()
 
   // Token balances
   const {
@@ -163,11 +168,14 @@ export function SwapContainer() {
     // Reset amounts and route state
     setInsufficientBalance(false);
 
-    // If we have both tokens and an input amount, fetch new route
+    // Only fetch route if we have an input amount (not just token selection)
     if (inputToken && outputToken && inputAmount && parseFloat(inputAmount) > 0) {
       debouncedFetchRoute(inputAmount);
+    } else {
+      // Clear route when tokens change but no amount - prevents loading state on token selection
+      resetRoute();
     }
-  }, [inputToken, outputToken, inputAmount, debouncedFetchRoute]);
+  }, [inputToken, outputToken, inputAmount, debouncedFetchRoute, resetRoute]);
 
   // Event handlers
   const handleInputChange = useCallback((value: string) => {

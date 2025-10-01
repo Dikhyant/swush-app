@@ -1,3 +1,5 @@
+'use client';
+
 import type { TAssetInfo, TChain } from "@paraspell/sdk";
 
 import { useMemo } from "react";
@@ -11,7 +13,7 @@ import {
 // for the currencyFrom and currencyTo fields in the transfer form.
 const useCurrencyOptions = (
   from: TChain | undefined,
-  exchangeNode: TExchangeChain [],
+  exchangeNode: readonly TExchangeChain[] | TExchangeChain[],
   to: TChain | undefined,
   targetNetworks?: string[] // Optional: Registry-driven network filtering
 ) => {
