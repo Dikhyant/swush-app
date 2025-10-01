@@ -28,7 +28,6 @@ export const SwapField = memo(function SwapField({
   isProcessing = false,
   error
 }: SwapFieldProps) {
-  console.log({isProcessing})
   const isInput = type === 'input';
   const bgColor = isInput ? 'bg-pink-500' : 'bg-blue-500';
   const displayBalance = formatBalance(balance, balancesLoaded);
@@ -109,11 +108,11 @@ export const SwapField = memo(function SwapField({
             <div className="flex-shrink-0">
               <div className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-blueWhale border-forest-600 hover:border-flame-400 transition-all duration-200 cursor-pointer">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-flame-400 to-flame-500 flex items-center justify-center shadow-lg">
-                  <span className="text-white text-lg font-bold">{token.icon}</span>
+                  <span className="text-white text-lg font-bold">{token?.icon || '?'}</span>
                 </div>
                 <div className="flex flex-col items-start w-[60px] md:w-[80px]">
-                  <span className="font-semibold text-white truncate w-full">{token.symbol}</span>
-                  <span className="text-sm text-forest-400 truncate w-full" title={token.network}>{token.network}</span>
+                  <span className="font-semibold text-white truncate w-full">{token?.symbol || 'Select Token'}</span>
+                  <span className="text-sm text-forest-400 truncate w-full" title={token?.network}>{token?.network || 'Network'}</span>
                 </div>
                 <ChevronDown className="w-5 h-5 text-forest-400 flex-shrink-0" />
               </div>

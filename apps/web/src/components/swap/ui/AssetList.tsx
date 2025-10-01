@@ -70,7 +70,7 @@ export const AssetList = ({ assetGroups, onSelect, currentAsset, onClose }: Asse
                       network={token.network || ''}
                       icon={
                         <div className={`w-full h-full ${
-                          token.name === currentAsset.name ? 'bg-blue-500' : 'bg-slate-600'
+                          token.name === currentAsset?.name ? 'bg-blue-500' : 'bg-slate-600'
                         } rounded-full flex items-center justify-center`}>
                           <span className="text-white text-sm font-bold">{group.icon}</span>
                         </div>

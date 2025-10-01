@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import useAssetAggregator, { determineCurrency } from '@/services/xcm-router/useAssetAggregator';
 import { EXCHANGE_CHAINS } from '@paraspell/xcm-router';
 import type { TokenInfo } from '@/components/swap/types';
@@ -59,7 +59,23 @@ export function useXcmTokens() {
     return allTokens;
   }, [unifiedFromAssets, unifiedToAssets]);
 
-  // Token selection handlers - simply store the full token object
+  // Auto-select default tokens when assets load (if no tokens are selected)
+  useEffect(() => {
+    if (tokens.length > 0 && !inputToken && !outputToken) {
+      // Find DOT as input token (common default)
+      const dotToken = tokens.find(t => t.symbol === 'DOT');
+      if (dotToken) {
+        setInputToken(dotToken);
+      }
+
+      // Find USDC as output token (common default)
+      const usdcToken = tokens.find(t => t.symbol === 'USDC');
+      if (usdcToken) {
+        setOutputToken(usdcToken);
+      }
+    }
+  }, [tokens, inputToken, outputToken]);
+  
   const handleSetInputToken = useCallback((token: TokenInfo) => {
     setInputToken(token);
   }, []);

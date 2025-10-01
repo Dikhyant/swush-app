@@ -49,7 +49,7 @@ export interface DetailedRouteInfo {
 export interface AssetListProps {
   assetGroups: AssetGroup[];
   onSelect: (asset: NetworkTokenInfo) => void;
-  currentAsset: NetworkTokenInfo;
+  currentAsset?: NetworkTokenInfo | null;
   onClose: () => void;
 }
 
@@ -78,7 +78,7 @@ export interface WalletButtonProps {
 
 export interface SwapFieldProps {
   type: 'input' | 'output';
-  token: TokenInfo;
+  token?: TokenInfo | null;
   amount: string;
   balance: string;
   onTokenSelect: (token: TokenInfo) => void;

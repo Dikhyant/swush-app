@@ -44,6 +44,9 @@ export function SwapContainer() {
     getOptimalExchanges,
     determineCurrency,
     getTAssetFromKey,
+    // For loading state check
+    unifiedFromAssets,
+    unifiedToAssets,
   } = useXcmTokens()
 
   // Token balances
@@ -207,7 +210,8 @@ export function SwapContainer() {
     showHistory
   });
 
-  if (!inputToken || !outputToken) {
+  // Show loading state only while assets are actually loading
+  if (unifiedFromAssets?.length === 0 || unifiedToAssets?.length === 0) {
     return <LoadState />
   }
 
@@ -306,9 +310,9 @@ export function SwapContainer() {
         onClose={handleCancelSwap}
         onConfirm={handleConfirmSwap}
         inputAmount={inputAmount}
-        inputToken={inputToken.symbol}
+        inputToken={inputToken?.symbol || ''}
         outputAmount={outputAmount}
-        outputToken={outputToken.symbol}
+        outputToken={outputToken?.symbol || ''}
         slippageTolerance={slippageTolerance}
         simulationResult={simulationResult}
         isConfirming={isConfirmingSwap}
@@ -319,9 +323,9 @@ export function SwapContainer() {
         isSwappingInProgress={isSwappingInProgress}
         isSwapComplete={isSwapComplete}
         inputAmount={inputAmount}
-        inputToken={inputToken.symbol}
+        inputToken={inputToken?.symbol || ''}
         outputAmount={outputAmount}
-        outputToken={outputToken.name}
+        outputToken={outputToken?.name || ''}
         duration={4000}
         onClose={resetConfirmationState}
       />

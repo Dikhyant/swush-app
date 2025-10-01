@@ -26,8 +26,8 @@ const DOT_SYMBOL = 'DOT';
 
 interface SwapDetailsProps {
   minimumReceived: string;
-  outputToken: TokenInfo;
-  inputToken: TokenInfo;
+  outputToken?: TokenInfo | null;
+  inputToken?: TokenInfo | null;
   maxTransactionFee: string;
   feeBreakdown?: FeeBreakdown;
   route: string;
@@ -59,10 +59,10 @@ export const SwapDetails = memo(function SwapDetails({
         totalFee?: bigint;
       };
       return {
-        transaction: standardFees.transactionFee !== undefined ? formatAmount(standardFees.transactionFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0',
-        xcm: standardFees.xcmFee !== undefined ? formatAmount(standardFees.xcmFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0',
-        trading: standardFees.tradingFee !== undefined ? formatAmount(standardFees.tradingFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0',
-        total: standardFees.totalFee !== undefined ? formatAmount(standardFees.totalFee, inputToken.decimals, NUMBER_FORMAT_OPTIONS).decimal : '0'
+        transaction: standardFees.transactionFee !== undefined ? formatAmount(standardFees.transactionFee, inputToken?.decimals || 10, NUMBER_FORMAT_OPTIONS).decimal : '0',
+        xcm: standardFees.xcmFee !== undefined ? formatAmount(standardFees.xcmFee, inputToken?.decimals || 10, NUMBER_FORMAT_OPTIONS).decimal : '0',
+        trading: standardFees.tradingFee !== undefined ? formatAmount(standardFees.tradingFee, inputToken?.decimals || 10, NUMBER_FORMAT_OPTIONS).decimal : '0',
+        total: standardFees.totalFee !== undefined ? formatAmount(standardFees.totalFee, inputToken?.decimals || 10, NUMBER_FORMAT_OPTIONS).decimal : '0'
       };
     }
     // Handle custom fee breakdown from enhanced simulation
@@ -85,7 +85,7 @@ export const SwapDetails = memo(function SwapDetails({
       };
     }
     })();
-  }, [feeBreakdown, inputToken.decimals]);
+  }, [feeBreakdown, inputToken?.decimals]);
 
   // Format max transaction fee always using DOT decimals - ensure it's never undefined
   const formattedMaxFee = useMemo(() => {
@@ -111,7 +111,7 @@ export const SwapDetails = memo(function SwapDetails({
         <SubText>Minimum Received</SubText>
         <SubText className="justify-self-end" >
           {
-            isProcessing ? <Skeleton className="w-20 h-5" /> : displayValue(minimumReceived, outputToken.symbol)
+            isProcessing ? <Skeleton className="w-20 h-5" /> : displayValue(minimumReceived, outputToken?.symbol || '')
           }
         </SubText>
         <SubText>Max Transaction Fee</SubText>
@@ -148,7 +148,7 @@ export const SwapDetails = memo(function SwapDetails({
                 </div>
                 <div className="">
                   <p className="text-xs text-slate-300 font-medium leading-relaxed">
-                    {`${inputToken.symbol} → ${outputToken.symbol}`}
+                    {`${inputToken?.symbol || 'Token'} → ${outputToken?.symbol || 'Token'}`}
                   </p>
                 </div>
               </div>
