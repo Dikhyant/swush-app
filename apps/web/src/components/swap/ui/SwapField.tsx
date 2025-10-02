@@ -138,18 +138,19 @@ export const SwapField = memo(function SwapField({
           </DialogContent>
         </Dialog>
         <div className="flex-1 relative">
-          {
-            !isInput && isProcessing ? <Skeleton className="w-full max-w-24 sm:max-w-52 h-11 justify-self-end" /> :
-          
-          <Input
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={handleInputChange}
-            readOnly={!isInput}
-            className="border-0 bg-transparent px-0 text-2xl md:text-3xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            placeholder="0"
-          />}
+          {!isInput && isProcessing ? (
+            <Skeleton className="w-full max-w-24 sm:max-w-52 h-11 ml-auto" />
+          ) : (
+            <Input
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={handleInputChange}
+              readOnly={!isInput}
+              className="border-0 bg-transparent px-0 text-2xl md:text-3xl text-white focus-visible:ring-0 focus-visible:ring-offset-0 text-right appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              placeholder="0"
+            />
+          )}
         </div>
       </div>
       

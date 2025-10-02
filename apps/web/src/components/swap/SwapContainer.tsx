@@ -310,6 +310,7 @@ export function SwapContainer() {
               }}
               insufficientBalance={insufficientBalance}
               disabled={!inputAmount || inputAmount === '' || parseFloat(inputAmount) <= 0 || insufficientBalance}
+              isLoadingQuote={isLoadingQuote}
             />
           </div>
         </div>
