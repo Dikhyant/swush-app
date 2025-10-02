@@ -13,6 +13,8 @@ import type {
 import type { TokenInfo } from '@/components/swap/types';
 import type { FeeSummary } from '@/services/xcm-router/feeCalculator';
 import { calculateTotalFees, formatFeeSummary } from '@/services/xcm-router/feeCalculator';
+import { formatAmount } from '@/services/balances/utils';
+import { NUMBER_FORMAT_OPTIONS } from '@/services/constants';
 import { ROUTE_FETCH_TIMEOUT } from '@/lib/const';
 
 // TEMPORARY: Dummy wallet address until wallet integration is complete
@@ -41,28 +43,6 @@ function toSmallestUnit(amount: string, decimals: number): bigint {
   return BigInt(combined);
 }
 
-/**
- * Convert smallest unit (bigint) to decimal string
- * 
- * Example: 1500000000000n with 12 decimals → "1.500000"
- * 
- * @param amount - Amount in smallest unit as bigint
- * @param decimals - Number of decimal places
- * @returns Decimal amount as string (formatted to 6 decimal places)
- */
-function toDecimalUnit(amount: bigint, decimals: number): string {
-  const divisor = BigInt(10 ** decimals);
-  const wholePart = amount / divisor;
-  const fractionalPart = amount % divisor;
-  
-  // Pad fractional part with leading zeros
-  const fractionalStr = fractionalPart.toString().padStart(decimals, '0');
-  
-  // Format to 6 decimal places for display
-  const result = `${wholePart}.${fractionalStr}`;
-  const dotIndex = result.indexOf('.');
-  return result.slice(0, dotIndex + 7); // Keep 6 decimal places
-}
 
 /**
  * Route state interface matching ParaSpell RouterBuilder response
@@ -304,10 +284,11 @@ export function useXcmRoute({
       if (quoteSettled.status === 'fulfilled') {
         const quoteResult = quoteSettled.value;
         
-        // Convert output amount to decimal for display
-        const outputDecimal = toDecimalUnit(
+        // Convert output amount to decimal for display using formatAmount
+        const { decimal: outputDecimal } = formatAmount(
           quoteResult.amountOut, 
-          outputToken.decimals
+          outputToken.decimals,
+          NUMBER_FORMAT_OPTIONS
         );
         
         setOutputAmount(outputDecimal);

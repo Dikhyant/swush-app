@@ -1,4 +1,6 @@
 import { TRouterXcmFeeResult } from "@paraspell/xcm-router";
+import { formatAmount } from '@/services/balances/utils';
+import { NUMBER_FORMAT_OPTIONS } from '@/services/constants';
 
 export type FeeDetail = {
   rawAmount: string;
@@ -75,15 +77,18 @@ export const calculateTotalFees = (feeResult: TRouterXcmFeeResult): FeeSummary =
   
   return {
     totalFees: Object.fromEntries(
-      Array.from(feeMap.entries()).map(([currency, { raw, decimals }]) => [
-        currency,
-        {
-          rawAmount: raw.toString(),
-          adjustedAmount: (Number(raw) / Math.pow(10, decimals)).toFixed(6),
-          decimals,
-          currency
-        }
-      ])
+      Array.from(feeMap.entries()).map(([currency, { raw, decimals }]) => {
+        const { decimal: adjustedAmount } = formatAmount(raw, decimals, NUMBER_FORMAT_OPTIONS);
+        return [
+          currency,
+          {
+            rawAmount: raw.toString(),
+            adjustedAmount,
+            decimals,
+            currency
+          }
+        ];
+      })
     ),
     breakdown: {
       origin: feeResult.origin,
@@ -106,7 +111,7 @@ export const formatFeeSummary = (feeSummary: FeeSummary): string => {
  * Gets adjusted fee amount for a specific fee value and decimals
  */
 export const getAdjustedFeeAmount = (fee: string | bigint | undefined, decimals: number): string => {
-  if (!fee) return "0.000000";
-  const feeValue = typeof fee === 'bigint' ? fee.toString() : fee;
-  return (Number(feeValue) / Math.pow(10, decimals)).toFixed(6);
+  if (!fee) return "0";
+  const { decimal } = formatAmount(fee, decimals, NUMBER_FORMAT_OPTIONS);
+  return decimal;
 };

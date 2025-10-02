@@ -61,13 +61,23 @@ export const SwapDetails = memo(function SwapDetails({
           )}
         </SubText>
         <SubText>Transaction Fee</SubText>
-        <SubText className="justify-self-end" >
+        <div className="justify-self-end" >
           {isLoadingFees ? (
             <Skeleton className="w-24 h-5 animate-pulse" />
           ) : (
-            displayValue(maxTransactionFee)
+            <div className="text-right">
+              {maxTransactionFee && maxTransactionFee !== '—' && maxTransactionFee !== '0' && maxTransactionFee !== 'NaN' ? (
+                maxTransactionFee.split(' + ').map((fee, index) => (
+                  <div key={index} className="text-white/70 text-xs sm:text-sm font-normal">
+                     {fee.trim()}
+                  </div>
+                ))
+              ) : (
+                <SubText>—</SubText>
+              )}
+            </div>
           )}
-        </SubText>
+        </div>
         <SubText>Route</SubText>
         <SubText className="justify-self-end" >
           {isLoadingQuote ? (
