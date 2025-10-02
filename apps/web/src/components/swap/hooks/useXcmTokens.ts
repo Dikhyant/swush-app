@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import useAssetAggregator, { determineCurrency, type UnifiedAsset } from '@/services/xcm-router/useAssetAggregator';
 import { EXCHANGE_CHAINS } from '@paraspell/xcm-router';
 import type { TokenInfo } from '@/components/swap/types';
+import { 
+  useFromTokenState, 
+  useToTokenState, 
+  useFromNetworkState, 
+  useToNetworkState 
+} from './utils/queryParams';
 
 /**
  * Convert UnifiedAssets to TokenInfo array for UI compatibility
@@ -37,13 +43,17 @@ function convertUnifiedAssetsToTokens(assets: UnifiedAsset[]): TokenInfo[] {
  * - fromTokens: Networks where you can START a swap (source chains)
  * - toTokens: Networks where you can END a swap (destination chains)
  * 
+ * Uses URL query params for state persistence and shareable links:
+ * - /?from=DOT&to=USDC&fromNetwork=Polkadot&toNetwork=AssetHubPolkadot
+ * 
  * @returns Token selection state and helpers for XCM routing
  */
 export function useXcmTokens() {
-  // Selected tokens state
-  const [inputToken, setInputToken] = useState<TokenInfo | null>(null);
-  const [outputToken, setOutputToken] = useState<TokenInfo | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  // ✅ URL state management with nuqs - single source of truth
+  const [fromSymbol, setFromSymbol] = useFromTokenState();
+  const [toSymbol, setToSymbol] = useToTokenState();
+  const [fromNetwork, setFromNetwork] = useFromNetworkState();
+  const [toNetwork, setToNetwork] = useToNetworkState();
 
   // ✅ Memoize the exchange chains array to prevent infinite re-renders
   const exchangeChains = useMemo(() => [...EXCHANGE_CHAINS], []);
@@ -68,39 +78,74 @@ export function useXcmTokens() {
     return convertUnifiedAssetsToTokens(unifiedToAssets);
   }, [unifiedToAssets]);
 
-  // Track when assets have loaded for the first time
-  useEffect(() => {
-    if (isInitialLoad && fromTokens.length > 0 && toTokens.length > 0) {
-      setIsInitialLoad(false);
-    }
-  }, [fromTokens.length, toTokens.length, isInitialLoad]);
+  // ✅ Track initial loading state
+  const isInitialLoad = useMemo(() => {
+    return fromTokens.length === 0 || toTokens.length === 0;
+  }, [fromTokens.length, toTokens.length]);
 
-  // Auto-select default tokens from correct lists when assets load
+  // ✅ Derive inputToken from URL params (symbol + network)
+  const inputToken = useMemo<TokenInfo | null>(() => {
+    if (!fromSymbol || fromTokens.length === 0) return null;
+    
+    // If network specified, find exact match
+    if (fromNetwork) {
+      const exactMatch = fromTokens.find(t => 
+        t.symbol === fromSymbol && t.networkChain === fromNetwork
+      );
+      if (exactMatch) return exactMatch;
+    }
+    
+    // Otherwise, find first token with that symbol
+    const firstMatch = fromTokens.find(t => t.symbol === fromSymbol);
+    return firstMatch || null;
+  }, [fromSymbol, fromNetwork, fromTokens]);
+
+  // ✅ Derive outputToken from URL params (symbol + network)
+  const outputToken = useMemo<TokenInfo | null>(() => {
+    if (!toSymbol || toTokens.length === 0) return null;
+    
+    // If network specified, find exact match
+    if (toNetwork) {
+      const exactMatch = toTokens.find(t => 
+        t.symbol === toSymbol && t.networkChain === toNetwork
+      );
+      if (exactMatch) return exactMatch;
+    }
+    
+    // Otherwise, find first token with that symbol
+    const firstMatch = toTokens.find(t => t.symbol === toSymbol);
+    return firstMatch || null;
+  }, [toSymbol, toNetwork, toTokens]);
+
+  // ✅ Auto-select network when not specified in URL
   useEffect(() => {
-    if (fromTokens.length > 0 && !inputToken) {
-      // Find DOT as input token (common default)
-      const dotToken = fromTokens.find(t => t.symbol === 'DOT');
-      if (dotToken) {
-        setInputToken(dotToken);
+    if (fromSymbol && !fromNetwork && fromTokens.length > 0) {
+      const token = fromTokens.find(t => t.symbol === fromSymbol);
+      if (token?.networkChain) {
+        setFromNetwork(token.networkChain);
       }
     }
+  }, [fromSymbol, fromNetwork, fromTokens, setFromNetwork]);
 
-    if (toTokens.length > 0 && !outputToken) {
-      // Find USDC as output token (common default)
-      const usdcToken = toTokens.find(t => t.symbol === 'USDC');
-      if (usdcToken) {
-        setOutputToken(usdcToken);
+  useEffect(() => {
+    if (toSymbol && !toNetwork && toTokens.length > 0) {
+      const token = toTokens.find(t => t.symbol === toSymbol);
+      if (token?.networkChain) {
+        setToNetwork(token.networkChain);
       }
     }
-  }, [fromTokens, toTokens, inputToken, outputToken]);
-  
+  }, [toSymbol, toNetwork, toTokens, setToNetwork]);
+
+  // ✅ Token setters that update URL params
   const handleSetInputToken = useCallback((token: TokenInfo) => {
-    setInputToken(token);
-  }, []);
+    setFromSymbol(token.symbol);
+    setFromNetwork(token.networkChain || '');
+  }, [setFromSymbol, setFromNetwork]);
 
   const handleSetOutputToken = useCallback((token: TokenInfo) => {
-    setOutputToken(token);
-  }, []);
+    setToSymbol(token.symbol);
+    setToNetwork(token.networkChain || '');
+  }, [setToSymbol, setToNetwork]);
 
   return {
     inputToken,
