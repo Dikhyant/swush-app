@@ -36,7 +36,9 @@
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "@paraspell/sdk": "^11.8.4",
+    "@paraspell/xcm-router": "^11.8.4"
   },
   "devDependencies": {
     "@shadcn/ui": "^0.0.4",

@@ -16,12 +16,14 @@ export interface SwapHistoryItem {
 }
 
 export interface TokenInfo {
-  id: string;
+  id: string;              // Asset key (e.g., "USDC-1984") - used for ParaSpell integration
   name: string;
   symbol: string;
   icon: string;
   decimals: number;
-  network?: string;
+  network?: string;        // Network/chain name (e.g., "AssetHubPolkadot")
+  assetKey?: string;       // Explicit asset key for XCM operations
+  networkChain?: string;   // Explicit network chain for XCM operations
 }
 
 // Extended token information that can optionally include a network/chain label
@@ -47,7 +49,7 @@ export interface DetailedRouteInfo {
 export interface AssetListProps {
   assetGroups: AssetGroup[];
   onSelect: (asset: NetworkTokenInfo) => void;
-  currentAsset: NetworkTokenInfo;
+  currentAsset?: NetworkTokenInfo | null;
   onClose: () => void;
 }
 
@@ -76,7 +78,7 @@ export interface WalletButtonProps {
 
 export interface SwapFieldProps {
   type: 'input' | 'output';
-  token: TokenInfo;
+  token?: TokenInfo | null;
   amount: string;
   balance: string;
   onTokenSelect: (token: TokenInfo) => void;

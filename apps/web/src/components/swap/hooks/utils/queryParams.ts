@@ -5,10 +5,10 @@ import { useQueryState, parseAsString, parseAsInteger } from 'nuqs'
  * This follows nuqs best practices for organization and type safety
  */
 export const swapQueryParams = {
-  // Token selection
+  // Token selection - using symbols for XCM integration
   useFromTokenState: () => useQueryState(
     'from',
-    parseAsString.withDefault('DOT').withOptions({
+    parseAsString.withDefault('DOT').withOptions({ // Default to DOT
       shallow: false, // Trigger server re-render if needed
       history: 'replace' // Don't create history entries for token changes
     })
@@ -16,7 +16,7 @@ export const swapQueryParams = {
   
   useToTokenState: () => useQueryState(
     'to', 
-    parseAsString.withDefault('USDT').withOptions({
+    parseAsString.withDefault('USDC').withOptions({ // Default to USDC
       shallow: false,
       history: 'replace'
     })
@@ -38,10 +38,29 @@ export const swapQueryParams = {
       history: 'replace'
     })
   ),
+
+  // Network selection for XCM swaps
+  useFromNetworkState: () => useQueryState(
+    'fromNetwork',
+    parseAsString.withDefault('').withOptions({
+      shallow: false,
+      history: 'replace'
+    })
+  ),
+
+  useToNetworkState: () => useQueryState(
+    'toNetwork',
+    parseAsString.withDefault('').withOptions({
+      shallow: false,
+      history: 'replace'
+    })
+  ),
 }
 
 // Export individual hooks for convenience
 export const useFromTokenState = swapQueryParams.useFromTokenState
 export const useToTokenState = swapQueryParams.useToTokenState
 export const useAmountState = swapQueryParams.useAmountState
-export const useSlippageState = swapQueryParams.useSlippageState 
+export const useSlippageState = swapQueryParams.useSlippageState
+export const useFromNetworkState = swapQueryParams.useFromNetworkState
+export const useToNetworkState = swapQueryParams.useToNetworkState 

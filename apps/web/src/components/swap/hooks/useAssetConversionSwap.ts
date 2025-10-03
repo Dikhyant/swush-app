@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { FrontendTransactionService } from '@/services/FrontendTransactionService';
 import { getPolkadotSignerFromPjs, SignPayload, SignRaw } from 'polkadot-api/pjs-signer';
 import { getWalletBySource } from '@talismn/connect-wallets';
-import type { Signer } from '@polkadot/api/types';
 import ChopsticksService from '@/services/ChopsticksService';
 import { FrontendConnectionManager } from '@/services/FrontendConnectionManager';
 import { TransactionErrorService } from '@/services/TransactionErrorService';
@@ -126,7 +125,7 @@ export function useAssetConversionSwap({
           await wallet.enable('Swush');
         }
 
-        const signer = wallet.signer as Signer;
+        const signer = wallet.signer;
         const signPayload = signer.signPayload as SignPayload;
         const signRaw = signer.signRaw as SignRaw;
         polkadotSigner = getPolkadotSignerFromPjs(walletAddress, signPayload, signRaw);

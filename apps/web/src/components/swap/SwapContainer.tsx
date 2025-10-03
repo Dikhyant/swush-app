@@ -1,28 +1,23 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import dynamic from 'next/dynamic'
-import { SubmitButtonAction, SwapHeader, SwapField, SwapDetails } from '@/components/swap'
+import { SwapHeader } from '@/components/swap/ui/SwapHeader'
 import { HeaderActions } from '@/components/swap/ui/SwapHeader'
-
-// Dynamic imports for non-critical components
-const SwapConfirmSheet = dynamic(() => import('@/components/swap/ui/SwapConfirmSheet').then(mod => ({ default: mod.SwapConfirmSheet })), {
-  ssr: false
-})
-
-const SwapHistoryDialog = dynamic(() => import('@/components/swap/ui/SwapHistoryDialog').then(mod => ({ default: mod.SwapHistoryDialog })), {
-  ssr: false
-})
-import { useSwapTokens } from '@/components/swap/hooks/useSwapTokens'
+import { SwapField } from '@/components/swap/ui/SwapField'
+import { SwapDetails } from '@/components/swap/ui/SwapDetails'
+import { SubmitButtonAction } from '@/components/swap/ui/SwapAction'
+import { SwapConfirmSheet } from '@/components/swap/ui/SwapConfirmSheet'
+import { SwapHistoryDialog } from '@/components/swap/ui/SwapHistoryDialog'
+import { useXcmTokens } from '@/components/swap/hooks/useXcmTokens'
 import { useTokenBalances } from '@/components/swap/hooks/useTokenBalances'
-import { useSwapRoute } from '@/components/swap/hooks/useSwapRoute'
+import { useXcmRoute } from '@/components/swap/hooks/useXcmRoute'
 import { useAssetConversionSwap } from '@/components/swap/hooks/useAssetConversionSwap'
 import { useSwapConfirmation } from '@/components/swap/hooks/useSwapConfirmation'
 import { useSwapExecution } from '@/components/swap/hooks/useSwapExecution'
 import { useSwapHistory } from '@/components/swap/hooks/useSwapHistory'
 import { LoadState } from '@/components/swap/ui/LoadState'
-import { ArrowSymbolDown } from '@/components/swap'
-import { calculateMinimumReceived } from '@/components/swap'
+import { ArrowSymbolDown } from '@/components/swap/ui/ArrowSymbolDown'
+import { calculateMinimumReceived } from '@/components/swap/utils'
 import { SwapCompleteDialog } from './ui/SwapCompleteDialog'
 
 export function SwapContainer() {
@@ -39,7 +34,24 @@ export function SwapContainer() {
   const [walletAddress, setWalletAddress] = useState('')
 
   // Custom hooks - Token and Balance handling (nuqs handles URL params automatically)
-  const { inputToken, setInputToken, outputToken, setOutputToken, tokens } = useSwapTokens()
+  const { 
+    inputToken, 
+    setInputToken, 
+    outputToken, 
+    setOutputToken, 
+    // ✅ Separate token lists for input/output fields
+    fromTokens,
+    toTokens,
+    // ✅ Loading state
+    isInitialLoad,
+    // Expose helpers for Phase 2 (routing)
+    getOptimalExchanges,
+    determineCurrency,
+    getTAssetFromKey,
+    // For debugging/inspection (can be removed later)
+    unifiedFromAssets,
+    unifiedToAssets,
+  } = useXcmTokens()
 
   // Token balances
   const {
@@ -63,7 +75,7 @@ export function SwapContainer() {
     resetBalances();
   }, [resetBalances]);
 
-  // Swap route
+  // Swap route - now using real ParaSpell RouterBuilder with parallel fetching
   const {
     outputAmount,
     routeDex,
@@ -72,10 +84,18 @@ export function SwapContainer() {
     feeBreakdown,
     debouncedFetchRoute,
     isProcessing,
+    isLoadingQuote,
+    isLoadingFees,
     resetRoute
-  } = useSwapRoute({
+  } = useXcmRoute({
     inputToken,
-    outputToken
+    outputToken,
+    walletAddress,
+    slippageTolerance,
+    // Pass helpers from useXcmTokens
+    getOptimalExchanges,
+    determineCurrency,
+    getTAssetFromKey,
   })
 
   // Swap state
@@ -104,6 +124,7 @@ export function SwapContainer() {
   }, [refreshBalances]);
 
   // Asset conversion swap hook with simulation callback
+  // TODO Phase 3: Update this to use new route data structure
   const {
     executeSwap: executeAssetConversionSwap,
     isFinalized
@@ -114,7 +135,10 @@ export function SwapContainer() {
     slippageTolerance,
     inputAmount,
     outputAmount,
-    routeState,
+    routeState: {
+      ...routeState,
+      data: routeState.data as any // Type compatibility for Phase 2 - will update in Phase 3
+    },
     onSuccess: () => {
       // Reset all swap-related states
       setInputAmount('');
@@ -163,11 +187,14 @@ export function SwapContainer() {
     // Reset amounts and route state
     setInsufficientBalance(false);
 
-    // If we have both tokens and an input amount, fetch new route
+    // Only fetch route if we have an input amount (not just token selection)
     if (inputToken && outputToken && inputAmount && parseFloat(inputAmount) > 0) {
       debouncedFetchRoute(inputAmount);
+    } else {
+      // Clear route when tokens change but no amount - prevents loading state on token selection
+      resetRoute();
     }
-  }, [inputToken, outputToken, inputAmount, debouncedFetchRoute]);
+  }, [inputToken, outputToken, inputAmount, debouncedFetchRoute, resetRoute]);
 
   // Event handlers
   const handleInputChange = useCallback((value: string) => {
@@ -199,7 +226,9 @@ export function SwapContainer() {
     showHistory
   });
 
-  if (!inputToken || !outputToken) {
+  // Show loading state only during initial asset loading
+  // Once assets load once, show the UI even if they become empty later
+  if (isInitialLoad) {
     return <LoadState />
   }
 
@@ -228,7 +257,7 @@ export function SwapContainer() {
                 onAmountChange={handleInputChange}
                 openDialog={openInputDialog}
                 setOpenDialog={setOpenInputDialog}
-                availableTokens={tokens}
+                availableTokens={fromTokens}
                 percentageOptions={percentageOptions}
                 onPercentageSelect={(value) => handleInputChange((parseFloat(inputBalance) * value).toString())}
                 isLoading={isConnected && isBalanceLoading}
@@ -248,11 +277,11 @@ export function SwapContainer() {
                 }}
                 openDialog={openOutputDialog}
                 setOpenDialog={setOpenOutputDialog}
-                availableTokens={tokens}
-                isLoading={routeState.isLoading || (isConnected && isBalanceLoading)}
+                availableTokens={toTokens}
+                isLoading={isLoadingQuote || (isConnected && isBalanceLoading)}
                 balancesLoaded={balancesLoaded}
                 isConnected={isConnected}
-                isProcessing={isProcessing}
+                isProcessing={isLoadingQuote}
                 error={routeState.error}
               />
             </div>
@@ -266,6 +295,8 @@ export function SwapContainer() {
               route={routeDex || ''}
               isLoading={routeState.isLoading}
               isProcessing={isProcessing}
+              isLoadingQuote={isLoadingQuote}
+              isLoadingFees={isLoadingFees}
             />
 
             <SubmitButtonAction
@@ -279,6 +310,7 @@ export function SwapContainer() {
               }}
               insufficientBalance={insufficientBalance}
               disabled={!inputAmount || inputAmount === '' || parseFloat(inputAmount) <= 0 || insufficientBalance}
+              isLoadingQuote={isLoadingQuote}
             />
           </div>
         </div>
@@ -298,9 +330,9 @@ export function SwapContainer() {
         onClose={handleCancelSwap}
         onConfirm={handleConfirmSwap}
         inputAmount={inputAmount}
-        inputToken={inputToken.symbol}
+        inputToken={inputToken?.symbol || ''}
         outputAmount={outputAmount}
-        outputToken={outputToken.symbol}
+        outputToken={outputToken?.symbol || ''}
         slippageTolerance={slippageTolerance}
         simulationResult={simulationResult}
         isConfirming={isConfirmingSwap}
@@ -311,9 +343,9 @@ export function SwapContainer() {
         isSwappingInProgress={isSwappingInProgress}
         isSwapComplete={isSwapComplete}
         inputAmount={inputAmount}
-        inputToken={inputToken.symbol}
+        inputToken={inputToken?.symbol || ''}
         outputAmount={outputAmount}
-        outputToken={outputToken.name}
+        outputToken={outputToken?.name || ''}
         duration={4000}
         onClose={resetConfirmationState}
       />
