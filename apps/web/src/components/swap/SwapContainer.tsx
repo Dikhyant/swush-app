@@ -19,6 +19,7 @@ import { LoadState } from '@/components/swap/ui/LoadState'
 import { ArrowSymbolDown } from '@/components/swap/ui/ArrowSymbolDown'
 import { calculateMinimumReceived } from '@/components/swap/utils'
 import { SwapCompleteDialog } from './ui/SwapCompleteDialog'
+import ConnectWalletDialog from './ui/ConnectWalletDialog'
 
 export function SwapContainer() {
   // UI state
@@ -28,6 +29,7 @@ export function SwapContainer() {
   const [showHistory, setShowHistory] = useState(false)
   const [openInputDialog, setOpenInputDialog] = useState(false)
   const [openOutputDialog, setOpenOutputDialog] = useState(false)
+  const [isConnectWalletOpen, setIsConnectWalletOpen] = useState(false)
 
   // Initialize wallet state first to avoid circular dependencies
   const [isConnected, setIsConnected] = useState(false)
@@ -263,6 +265,7 @@ export function SwapContainer() {
                 isLoading={isConnected && isBalanceLoading}
                 balancesLoaded={balancesLoaded}
                 isConnected={isConnected}
+                onConnectWalletClick={() => setIsConnectWalletOpen(true)}
               />
 
               <ArrowSymbolDown />
@@ -283,6 +286,8 @@ export function SwapContainer() {
                 isConnected={isConnected}
                 isProcessing={isLoadingQuote}
                 error={routeState.error}
+                onConnectWalletClick={() => setIsConnectWalletOpen(true)}
+
               />
             </div>
 
@@ -349,6 +354,8 @@ export function SwapContainer() {
         duration={4000}
         onClose={resetConfirmationState}
       />
+
+      <ConnectWalletDialog isOpen={isConnectWalletOpen} onOpenChange={setIsConnectWalletOpen} />
     </>
   )
 } 
