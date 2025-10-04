@@ -37,8 +37,9 @@ const config: Config = {
   				'900': '#0F2922'
   			},
 			"baltic-sea": "#242C32",
+			"black-eel": "#434343",
   			blackPearl: '#01151D',
-  			darkSlateGray: '#1F3041',
+  			"dark-slate-gray": '#1F3041',
   			bluishCyan: '#022029',
 			"blueberry-blue": "#0147B4",
   			"blue-whale": '#003843',

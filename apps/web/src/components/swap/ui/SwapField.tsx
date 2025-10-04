@@ -82,7 +82,7 @@ export const SwapField = memo(function SwapField({
 
   return (
     <motion.div 
-      className={`group relative p-4 sm:p-6 rounded-2xl bg-blackPearl border-darkSlateGray border backdrop-blur-md shadow-lg shadow-black/25`}
+      className={`group relative p-4 sm:p-6 rounded-2xl bg-blackPearl border-dark-slate-gray border backdrop-blur-md shadow-lg shadow-black/25`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: isInput ? 0 : 0.1 }}
@@ -144,7 +144,7 @@ export const SwapField = memo(function SwapField({
               </div>
             </div>
           </DialogTrigger>
-          <DialogContent className="bg-blackPearl border-darkSlateGray rounded-xl w-full max-w-[90%] sm:max-w-lg">
+          <DialogContent className="bg-blackPearl border-dark-slate-gray rounded-xl w-full max-w-[90%] sm:max-w-lg">
             <DialogHeader className="relative" >
               
               <div className="w-full flex items-center justify-center" >
