@@ -9,6 +9,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { WalletButton, WalletMenu } from '@/components/swap';
+import { useWallets } from '@kheopskit/react';
 
 interface SwapHeaderProps {
   slippageTolerance: number;

@@ -130,7 +130,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
                 className="pl-4 sm:pl-8 pr-6"
               />
               <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-darkSlateGray" >
-                <div className="absolute size-[30px] rounded-full bg-burningOrange flex items-center justify-center self-center" >
+                <div className="absolute size-[30px] rounded-full bg-burning-orange flex items-center justify-center self-center" >
                   <ArrowDown className="text-white size-5" />
                 </div>
               </div>

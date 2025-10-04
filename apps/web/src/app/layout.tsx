@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { ChopsticksStatus } from '@/components/ui/ChopsticksStatus'
 import { Toaster } from 'react-hot-toast'
+import { WalletProvider } from "@/providers/wallet-provider";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,7 +25,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <NuqsAdapter>
-          {children}
+          <WalletProvider>
+            {children}
+          </WalletProvider>
         </NuqsAdapter>
         <ChopsticksStatus />
         <Toaster 
