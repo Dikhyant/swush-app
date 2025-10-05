@@ -15,7 +15,7 @@ export default function ConnectWalletDialog({
     const {wallets} = useWallets();
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange} >
-        <DialogContent className="max-w-lg p-6 rounded-xl sm:rounded-xl bg-midnight border border-darkSlateGray" isCloseIconVisible={false}
+        <DialogContent className="w-11/12 sm:w-full max-w-lg p-6 rounded-xl sm:rounded-xl bg-midnight border border-dark-slate-gray" isCloseIconVisible={false}
          >
           <div className="flex items-center justify-center relative" >
             <p className="text-white text-2xl font-medium" >Connect Wallet</p>
@@ -25,7 +25,7 @@ export default function ConnectWalletDialog({
           {
             wallets?.map((wallet) => {
               return (
-                <div key={wallet.id} className="flex items-center gap-4 p-4 rounded-xl bg-blue-charcoal border border-darkSlateGray" >
+                <div key={wallet.id} className="flex items-center gap-4 p-4 rounded-xl bg-blue-charcoal border border-dark-slate-gray" >
                   <Image src={wallet.icon} alt={`${wallet.name} icon`} width={48} height={48} className="rounded-full" />
                   <div className="ml-3 space-y-1" >
                     <p className="text-white text-base font-medium" >{wallet?.name}</p>

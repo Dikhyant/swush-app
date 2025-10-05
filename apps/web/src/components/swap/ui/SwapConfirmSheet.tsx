@@ -113,7 +113,7 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
 
   return (
     <Dialog open={isOpen || true}>
-      <DialogContent className="w-[90%] sm:w-full max-w-md px-4 py-4 sm:pb-8 bg-blackPearl border-darkSlateGray rounded-xl sm:rounded-2xl" isCloseIconVisible={false}  >
+      <DialogContent className="w-[90%] sm:w-full max-w-md px-4 py-4 sm:pb-8 bg-blackPearl border-dark-slate-gray rounded-xl sm:rounded-2xl" isCloseIconVisible={false}  >
         <div>
           <div className="relative flex items-center justify-center" >
             <DialogClose onClick={handleClose} className="absolute right-0 self-center" >
@@ -122,14 +122,14 @@ export const SwapConfirmSheet: React.FC<SwapConfirmSheetProps> = ({
             <p className="text-lg font-medium text-white h-fit" >Confirm Swap</p>
           </div>
           <div className="flex flex-col items-stretch justify-start mt-6" >
-            <div className="bg-midnight border border-darkSlateGray rounded-2xl pt-4 pb-4 shadow-[4px_4px_12px_0_rgba(0,0,0,0.25)]" >
+            <div className="bg-midnight border border-dark-slate-gray rounded-2xl pt-4 pb-4 shadow-[4px_4px_12px_0_rgba(0,0,0,0.25)]" >
               <SwapCard 
                 label="You Pay"
                 token={inputToken}
                 amount={inputAmount}
                 className="pl-4 sm:pl-8 pr-6"
               />
-              <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-darkSlateGray" >
+              <div className="flex items-center justify-center relative mt-[18px] h-[1px] bg-dark-slate-gray" >
                 <div className="absolute size-[30px] rounded-full bg-burning-orange flex items-center justify-center self-center" >
                   <ArrowDown className="text-white size-5" />
                 </div>

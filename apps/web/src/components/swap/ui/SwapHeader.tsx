@@ -42,7 +42,7 @@ export const SwapHeader = ({
               <Settings className="w-5 h-5" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-blackPearl border-darkSlateGray">
+          <DialogContent className="bg-blackPearl border-dark-slate-gray">
             <DialogHeader className="flex items-center justify-center" >
               <DialogTitle className="text-white">Settings</DialogTitle>
             </DialogHeader>

@@ -20,6 +20,7 @@ import { ArrowSymbolDown } from '@/components/swap/ui/ArrowSymbolDown'
 import { calculateMinimumReceived } from '@/components/swap/utils'
 import { SwapCompleteDialog } from './ui/SwapCompleteDialog'
 import ConnectWalletDialog from './ui/ConnectWalletDialog'
+import SelectRecipientDialog from './ui/SelectRecipientDialog'
 
 export function SwapContainer() {
   // UI state
@@ -30,6 +31,7 @@ export function SwapContainer() {
   const [openInputDialog, setOpenInputDialog] = useState(false)
   const [openOutputDialog, setOpenOutputDialog] = useState(false)
   const [isConnectWalletOpen, setIsConnectWalletOpen] = useState(false)
+  const [isSelectRecipientOpen, setIsSelectRecipientOpen] = useState(false)
 
   // Initialize wallet state first to avoid circular dependencies
   const [isConnected, setIsConnected] = useState(false)
@@ -287,6 +289,7 @@ export function SwapContainer() {
                 isProcessing={isLoadingQuote}
                 error={routeState.error}
                 onConnectWalletClick={() => setIsConnectWalletOpen(true)}
+                onSelectRecipientClick={() => setIsSelectRecipientOpen(true)}
 
               />
             </div>
@@ -356,6 +359,11 @@ export function SwapContainer() {
       />
 
       <ConnectWalletDialog isOpen={isConnectWalletOpen} onOpenChange={setIsConnectWalletOpen} />
+      <SelectRecipientDialog 
+        isOpen={isSelectRecipientOpen} 
+        onConnectWalletClick={() => setIsConnectWalletOpen(true)}
+        onOpenChange={setIsSelectRecipientOpen} 
+      />
     </>
   )
 } 
